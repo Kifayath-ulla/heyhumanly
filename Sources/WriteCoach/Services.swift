@@ -160,7 +160,7 @@ struct CoachService {
             "properties": ["from": ["type": "string"], "reason": ["type": "string"], "category": ["type": "string", "enum": cats]]]]]]
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "format": schema, "keep_alive": "30m", "options": ["temperature": 0.1, "num_predict": 60 + 40 * changes.count]])
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "format": schema, "keep_alive": "30m", "options": ["temperature": 0.1, "num_predict": 60 + 40 * changes.count]])
         struct Outer: Decodable { let response: String }
         struct Items: Decodable { struct I: Decodable { let from: String?; let category: String; let reason: String }; let items: [I] }
         guard let (data, _) = try? await URLSession.shared.data(for: request),
@@ -196,7 +196,7 @@ struct CoachService {
         let limit = min(2048, max(200, text.count / 2 + 120))
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 90
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": true, "keep_alive": "30m",
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": true, "think": false, "keep_alive": "30m",
                                                                        "options": ["temperature": 0.1, "num_predict": limit]])
         let bytes: URLSession.AsyncBytes, response: URLResponse
         do { (bytes, response) = try await URLSession.shared.bytes(for: request) }
@@ -249,7 +249,7 @@ struct CoachService {
                                      "properties": ["explanation": ["type": "string"], "exercise": ["type": "string"]]]
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "format": schema,
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "format": schema,
                                                                         "keep_alive": "30m", "options": ["temperature": 0.2, "num_predict": 350]])
         struct Outer: Decodable { let response: String }
         struct L: Decodable { let explanation: String; let exercise: String }
@@ -266,7 +266,7 @@ struct CoachService {
         guard let url = comps.url else { throw CoachError.noEndpoint }
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 3600
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "stream": true])
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "stream": true, "think": false])
         let (bytes, response) = try await URLSession.shared.bytes(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw CoachError.server((response as? HTTPURLResponse)?.statusCode ?? 0, "pull failed") }
         struct Line: Decodable { let status: String?; let total: Double?; let completed: Double?; let error: String? }
@@ -284,7 +284,7 @@ struct CoachService {
         guard let url = URL(string: endpoint) else { return }
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "keep_alive": "30m", "stream": false])
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "keep_alive": "30m", "stream": false, "think": false])
         _ = try? await URLSession.shared.data(for: request)
     }
 
@@ -308,7 +308,7 @@ struct CoachService {
         \(text)
         """
         let schema: [String: Any] = ["type": "object", "properties": ["rewrite": ["type": "string"], "explanation": ["type": "string"], "exercise": ["type": "string"]], "required": ["rewrite", "explanation", "exercise"]]
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "format": schema, "keep_alive": "30m", "options": ["temperature": 0.1, "num_predict": 700]])
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "format": schema, "keep_alive": "30m", "options": ["temperature": 0.1, "num_predict": 700]])
 
         let data: Data, response: URLResponse
         do {

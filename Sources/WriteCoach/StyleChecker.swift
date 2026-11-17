@@ -296,7 +296,7 @@ extension CoachService {
             """
             var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 40
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "keep_alive": "30m",
+            request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "keep_alive": "30m",
                                                                             "options": ["temperature": 0.2 + 0.4 * Double(attempt), "num_predict": max(60, sentence.count)]])
             struct Outer: Decodable { let response: String }
             guard let (data, _) = try? await URLSession.shared.data(for: request),

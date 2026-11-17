@@ -178,7 +178,7 @@ final class CoachModel: ObservableObject {
 
     func showCoach() {
         if coachWindow == nil {
-            let host = NSHostingView(rootView: CoachPanelView(model: self))
+            let host = NSHostingView(rootView: CoachPanelView(model: self).tint(Color.brand))
             let panel = CoachPanel(
                 contentRect: NSRect(x: 0, y: 0, width: 640, height: 720),
                 styleMask: [.titled, .closable, .resizable, .fullSizeContentView],

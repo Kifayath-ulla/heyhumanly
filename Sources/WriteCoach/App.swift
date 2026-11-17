@@ -69,7 +69,7 @@ struct HeyHumanlyApp: App {
             Divider()
             Button("Quit HeyHumanly") { NSApp.terminate(nil) }.keyboardShortcut("q")
         } label: {
-            Image(systemName: model.coachingActive ? "leaf.fill" : "leaf").accessibilityLabel(model.coachingActive ? "HeyHumanly" : "HeyHumanly, paused")
+            Image(systemName: model.coachingActive ? "bubble.left.fill" : "bubble.left").accessibilityLabel(model.coachingActive ? "HeyHumanly" : "HeyHumanly, paused")
         }
     }
 }

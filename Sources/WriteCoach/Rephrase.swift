@@ -99,15 +99,15 @@ enum RephraseService {
         let prompt = """
         You are HeyHumanly, a writing coach that edits lightly. The text may be typed or transcribed speech.
         Step 1: notice the writer's register (slang, casual, blunt, warm, formal, emoji, lowercase). Keep it. Same energy, same slang, same contractions, same punctuation style. Never make the text more formal, polite or corporate than the writer made it\(casual ? ". This one is casual: keep it casual" : "").
-        Step 2: make small cuts only. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.
-        Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure, keep the doubt; never turn a doubt into a decision. \(goal.instruction)
+        Keep the writer's capitalization and punctuation habits as they are (a message written in lowercase stays lowercase; a message with normal capitals keeps normal capitals; "!!" and "..." stay). Step 2: make small cuts only. If a sentence runs past about 25 words, split it into shorter sentences using the writer's own words. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.
+        Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure (\"I'm not sure\", \"maybe\"), keep that doubt; never drop it and never turn it into a decision. \(goal.instruction)
         Reply with ONLY the edited text.
         Text:
         \(text)
         """
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 120
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "keep_alive": "30m",
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "keep_alive": "30m",
                                                                        "options": ["temperature": 0.2, "num_predict": min(700, max(120, text.count / 2 + 80))]])
         let data: Data
         do { (data, _) = try await URLSession.shared.data(for: request) }
@@ -132,8 +132,8 @@ extension Habit {
             return Evidence(note: "In a study of web readers, cutting the word count made text measurably easier to use (about 58% better in Nielsen Norman Group's test), because most people skim instead of reading every word.",
                             name: "Nielsen Norman Group", url: "https://www.nngroup.com/articles/concise-scannable-and-objective-how-to-write-for-the-web")
         case .vague, .tooLong:
-            return Evidence(note: "Text that is easy to read makes readers judge the writer as more intelligent. Hard-to-process wording does the opposite (Oppenheimer, 2006).",
-                            name: "Applied Cognitive Psychology, 2006", url: "https://doi.org/10.1002/acp.1178")
+            return Evidence(note: "Text that is easy to read makes readers judge the writer as more intelligent. Hard-to-process wording does the opposite.",
+                            name: "Oppenheimer, 2006, Applied Cognitive Psychology", url: "https://doi.org/10.1002/acp.1178")
         case .hedging:
             return Evidence(note: "In studies of speech style, hedges lowered how authoritative a speaker seemed, though not how likable they seemed. Effects on persuasion were mixed.",
                             name: "Hosman, hedges and hesitations", url: "https://aquila.usm.edu/fac_pubs/16291")
@@ -308,7 +308,7 @@ struct RephrasePane: View {
                     Text(g.rawValue).font(.system(size: 12.5, weight: .semibold))
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(model.rephraseGoal == g ? Color.brand : Color.ink.opacity(0.06), in: Capsule())
-                        .foregroundStyle(model.rephraseGoal == g ? Color.white : Color.ink)
+                        .foregroundStyle(model.rephraseGoal == g ? Color.onAccent : Color.ink)
                 }.buttonStyle(.plain).accessibilityLabel("Make it \(g.rawValue)")
             }
             Spacer()
@@ -350,6 +350,27 @@ struct RephrasePane: View {
     }
 
     private func result(_ r: RephraseResult) -> some View {
+        let norm: (String) -> String = { $0.filter { !$0.isWhitespace }.lowercased() }
+        if norm(r.rewrite) == norm(model.rephraseOriginal) { return AnyView(unchanged(r)) }
+        return AnyView(changed(r))
+    }
+
+    private func unchanged(_ r: RephraseResult) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "checkmark.circle.fill").font(.system(size: 20)).foregroundStyle(Color.added)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("This already reads well").font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.ink)
+                Text(r.casual ? "Nothing worth trimming. It's clear, and it still sounds like you." : "Nothing worth trimming. It's clear and keeps your voice.")
+                    .font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.hairline))
+    }
+
+    private func changed(_ r: RephraseResult) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -394,7 +415,7 @@ struct RephrasePane: View {
                 .frame(width: 30, height: 30).background(Color.teach.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             VStack(alignment: .leading, spacing: 5) {
                 Text(m.habit).font(.system(size: 12, weight: .bold)).foregroundStyle(Color.teach)
-                (Text("“\(m.before)”").foregroundColor(Color.removed).strikethrough(true, color: Color.removed)
+                (Text("“\(m.before)”").foregroundColor(cutsWords(m) ? Color.removed : Color.ink.opacity(0.75)).strikethrough(cutsWords(m), color: Color.removed)
                  + Text(m.after.isEmpty ? (m.habitValue == .filler || m.habitValue == .hedging ? "  cut" : "") : "  →  “\(m.after)”").foregroundColor(m.after.isEmpty ? .secondary : Color.added))
                     .font(.system(size: 13.5, weight: .medium)).fixedSize(horizontal: false, vertical: true)
                 Text(m.why).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -403,7 +424,7 @@ struct RephrasePane: View {
                         Image(systemName: "books.vertical").font(.system(size: 11)).foregroundStyle(.tertiary).padding(.top, 2)
                         (Text("Research: ").fontWeight(.semibold) + Text(e) + Text(m.sourceName.map { "  (\($0))" } ?? ""))
                             .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                        if let u = m.sourceURL.flatMap(URL.init(string:)) { Link(destination: u) { Image(systemName: "arrow.up.right.square").font(.system(size: 11)) }.help("Open source") }
+                        if let u = m.sourceURL.flatMap(URL.init(string:)) { Button { NSWorkspace.shared.open(u) } label: { Image(systemName: "arrow.up.right.square").font(.system(size: 11)).foregroundStyle(Color.ink.opacity(0.65)) }.buttonStyle(.plain).help("Open source").accessibilityLabel("Open source: \(m.sourceName ?? "research")") }
                     }
                     .padding(.top, 2)
                 }
@@ -413,6 +434,9 @@ struct RephrasePane: View {
         .padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.hairline))
     }
+
+    /// Only habits that remove words show the words struck through.
+    private func cutsWords(_ m: Move) -> Bool { [Habit.filler, .hedging, .vague, .repetition].contains(m.habitValue) }
 
     private func countLine(_ r: RephraseResult) -> String {
         func n(_ t: String) -> Int { t.split { $0.isWhitespace }.count }

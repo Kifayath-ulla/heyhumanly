@@ -37,6 +37,7 @@ struct DashboardView: View {
         .overlay { if model.onboardingStep != nil { OnboardingView(model: model).transition(.opacity) } }
         .animation(.easeOut(duration: 0.22), value: model.section)
         .animation(.easeOut(duration: 0.2), value: model.onboardingStep)
+        .tint(Color.brand)
         .frame(minWidth: 1020, minHeight: 640)
         .ignoresSafeArea(edges: .top)
         .onAppear {
@@ -644,7 +645,7 @@ struct SettingsView: View {
                     .labelsHidden().frame(width: 150)
                 }
             }
-            Toggle("Also suggest clearer wording (violet). Off = real mistakes only (red)",
+            Toggle("Also suggest clearer wording (softer underline). Off = real mistakes only (red)",
                    isOn: Binding(get: { model.settings.suggestStyle }, set: { v in setting { $0.suggestStyle = v } }))
                 .toggleStyle(.checkbox).font(.system(size: 12.5))
             Toggle("Let me guess first (\"Which reads better?\") before showing the answer",

@@ -68,7 +68,7 @@ enum CompanionService {
                 "why": ["type": "string"], "category": ["type": "string", "enum": cats]]]]]]
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 90
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "format": schema, "keep_alive": "30m",
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "format": schema, "keep_alive": "30m",
                                                                         "options": ["temperature": 0.1, "num_predict": 120 + 70 * changes.count]])
         struct Outer: Decodable { let response: String }
         struct Parsed: Decodable { struct I: Decodable { let from: String?; let kind: String?; let level: String?; let label: String?; let why: String?; let category: String? }; let items: [I]; let tip: String? }
@@ -136,7 +136,7 @@ enum CompanionService {
         guard !endpoint.isEmpty, let url = URL(string: endpoint) else { throw CoachError.noEndpoint }
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 90
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "keep_alive": "30m",
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "keep_alive": "30m",
                                                                        "options": ["temperature": temperature, "num_predict": limit]])
         let data: Data, response: URLResponse
         do { (data, response) = try await URLSession.shared.data(for: request) }

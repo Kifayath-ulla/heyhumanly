@@ -189,7 +189,7 @@ struct Orb: View {
                 Circle().fill(Color.brand).frame(width: 5, height: 5)
             case .ready:
                 Circle().fill(session.errorCount > 0 ? Color.removed : Color.teach)
-                Text("\(session.visible.count)").font(.system(size: 12.5, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                Text("\(session.visible.count)").font(.system(size: 12.5, weight: .bold, design: .rounded)).foregroundStyle(session.errorCount > 0 ? Color.white : Color.onAccent)
                     .contentTransition(.numericText())
             case .done:
                 Circle().fill(Color.added)
