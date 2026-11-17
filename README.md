@@ -81,3 +81,10 @@ HH_NO_LOCATE=1 HeyHumanly.app/Contents/MacOS/HeyHumanly                         
 - Google Docs draws its text on a canvas and cannot be read.
 - Chrome, WhatsApp and Mail are not yet tested. See `COMPANION_SPEC.md` for the compatibility table.
 - Translation quality depends on the local model; Hindi was unreliable on `qwen2.5:7b`.
+
+## Releasing and deploying (maintainers)
+
+1. Bump `CFBundleShortVersionString` in `Resources/Info.plist`, add a `CHANGELOG.md` entry, run `./scripts/release.sh`.
+2. `gh release create vX.Y.Z dist/X.Y.Z/*.dmg dist/X.Y.Z/*.sha256 --notes-file ...`
+3. Update `site-src/release.json` (version, file, sha256, size), run `python3 scripts/build-site.py`, then `wrangler deploy -c wrangler.prod.jsonc`.
+`wrangler.jsonc` deploys the preview at `*.workers.dev` (noindex); `wrangler.prod.jsonc` also attaches heyhumanly.com. Hosting is Cloudflare Workers static assets on the free plan (100,000 requests/day).

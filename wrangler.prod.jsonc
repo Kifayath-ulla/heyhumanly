@@ -1,0 +1,10 @@
+{
+  "name": "heyhumanly",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-01",
+  "routes": [
+    { "pattern": "heyhumanly.com", "custom_domain": true },
+    { "pattern": "www.heyhumanly.com", "custom_domain": true }
+  ],
+  "assets": { "directory": "./site", "binding": "ASSETS", "run_worker_first": true, "not_found_handling": "404-page" }
+}

@@ -10,3 +10,10 @@ kc-pass
 AGENT_PROGRESS.md
 PRODUCT_PLAN.md
 docs/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example

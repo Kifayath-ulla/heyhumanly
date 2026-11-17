@@ -199,6 +199,5 @@ open(os.path.join(OUT, 'robots.txt'), 'w').write(f"User-agent: *\nAllow: /\n\nSi
 urls = ['/', '/install/', '/privacy/']
 open(os.path.join(OUT, 'sitemap.xml'), 'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + ''.join(f'<url><loc>{SITE}{u}</loc><lastmod>{R["date"]}</lastmod></url>\n' for u in urls) + '</urlset>\n')
 # Staging hosts stay out of search; production is not affected.
-open(os.path.join(OUT, '_headers'), 'w').write("https://:project.pages.dev/*\n  X-Robots-Tag: noindex\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'self'; form-action 'none'\n")
-open(os.path.join(OUT, '_redirects'), 'w').write("https://www.heyhumanly.com/* https://heyhumanly.com/:splat 301\n")
+open(os.path.join(OUT, '_headers'), 'w').write("/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'self'; form-action 'none'\n")
 print('site built', V)
