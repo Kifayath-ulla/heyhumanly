@@ -9,21 +9,21 @@ extension Color {
     }
     private static func rgb(_ r: Double, _ g: Double, _ b: Double, _ a: Double = 1) -> NSColor { NSColor(srgbRed: r, green: g, blue: b, alpha: a) }
 
-    /// Forest green accent (matches the leaf logo).
-    static let brand = adaptive(light: rgb(0.04, 0.04, 0.04), dark: rgb(0.96, 0.96, 0.96))
+    /// Graphite and silver accent (matches the icon).
+    static let brand = adaptive(light: rgb(0.075, 0.075, 0.086), dark: rgb(0.949, 0.949, 0.953))
     static let brandSoft = adaptive(light: rgb(0, 0, 0, 0.06), dark: rgb(1, 1, 1, 0.12))
     /// Neutral canvas (light grey / navy-black).
-    static let canvas = adaptive(light: rgb(0.980, 0.980, 0.980), dark: rgb(0.043, 0.043, 0.043))
+    static let canvas = adaptive(light: rgb(0.969, 0.969, 0.961), dark: rgb(0.055, 0.055, 0.063))
     /// Cards.
-    static let surface = adaptive(light: .white, dark: rgb(0.098, 0.098, 0.098))
-    static let surfaceSunken = adaptive(light: rgb(0.953, 0.953, 0.953), dark: rgb(0.075, 0.075, 0.075))
-    static let hairline = adaptive(light: rgb(0, 0, 0, 0.09), dark: rgb(1, 1, 1, 0.10))
-    static let ink = adaptive(light: rgb(0.04, 0.04, 0.04), dark: rgb(0.96, 0.96, 0.96))
+    static let surface = adaptive(light: .white, dark: rgb(0.082, 0.086, 0.094))
+    static let surfaceSunken = adaptive(light: rgb(0.937, 0.937, 0.929), dark: rgb(0.118, 0.122, 0.137))
+    static let hairline = adaptive(light: rgb(0.075, 0.075, 0.086, 0.11), dark: rgb(1, 1, 1, 0.09))
+    static let ink = adaptive(light: rgb(0.075, 0.075, 0.086), dark: rgb(0.949, 0.949, 0.953))
     static let added = adaptive(light: rgb(0.10, 0.50, 0.30), dark: rgb(0.45, 0.82, 0.58))
     static let removed = adaptive(light: rgb(0.86, 0.24, 0.26), dark: rgb(1.0, 0.48, 0.48))
     /// Text on accent-filled buttons.
-    static let onAccent = adaptive(light: .white, dark: rgb(0.04, 0.04, 0.04))
-    /// Lavender, used for Teach Me and the italic accent words.
+    static let onAccent = adaptive(light: .white, dark: rgb(0.075, 0.075, 0.086))
+    /// Neutral grey, used for Teach Me and the italic accent words.
     static let teach = adaptive(light: rgb(0.20, 0.20, 0.20), dark: rgb(0.85, 0.85, 0.85))
     static let shadow = adaptive(light: rgb(0, 0, 0, 0.08), dark: rgb(0, 0, 0, 0.5))
 
@@ -105,8 +105,8 @@ struct Mascot: View {
             }
             // cheeks
             HStack(spacing: size * 0.42) {
-                Circle().fill(Color.pink.opacity(0.35)).frame(width: size * 0.11)
-                Circle().fill(Color.pink.opacity(0.35)).frame(width: size * 0.11)
+                Circle().fill(Color.black.opacity(0.10)).frame(width: size * 0.11)
+                Circle().fill(Color.black.opacity(0.10)).frame(width: size * 0.11)
             }
             .offset(y: size * 0.07)
         }
