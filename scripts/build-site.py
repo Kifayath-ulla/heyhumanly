@@ -17,7 +17,7 @@ for f in ['favicon.png', 'apple-touch-icon.png', 'og.png', 'app.png', 'icon-192.
 
 CSS = """
 :root{color-scheme:light;--bg:#ffffff;--ink:#131316;--mute:#5b5c64;--green:#131316;--btnink:#ffffff;--btnhov:#2e2f35;--deep:#131316;--sage:#c4c6cc;--cream:#f2f2f3;--line:#e6e6e3;--card:#f7f7f5;--card2:#efefed;--win:#ffffff;--hdr:rgba(255,255,255,.86);--warn:#6b4a00;--warnbg:#f7f3e6;--warnline:#ecd6a2}
-:root[data-theme=dark]{color-scheme:dark;--bg:#0e0e10;--ink:#f2f2f3;--mute:#9b9da6;--green:#f2f2f3;--btnink:#131316;--btnhov:#d9dadd;--deep:#17181b;--sage:#c4c6cc;--line:#26272c;--card:#151618;--card2:#1e1f23;--win:#17181b;--hdr:rgba(14,14,16,.86);--warn:#e8c878;--warnbg:#241f12;--warnline:#4a3d1c}
+:root[data-theme=dark]{color-scheme:dark;--bg:#070708;--ink:#ececf0;--mute:#a3a5ae;--green:#ececf0;--btnink:#070708;--btnhov:#d4d5da;--deep:#0e0e10;--sage:#c4c6cc;--line:#222226;--card:#101012;--card2:#19191c;--win:#101012;--hdr:rgba(7,7,8,.86);--warn:#e8c878;--warnbg:#1a160b;--warnline:#4a3d1c}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--green)}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #4a4a4a;outline-offset:3px;border-radius:8px}
@@ -100,8 +100,8 @@ def page(path, title, desc, body, schema=None, noindex=False, canonical=None):
 <link rel="canonical" href="{url}"><link rel="icon" href="/favicon.png" type="image/png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website"><meta property="og:site_name" content="HeyHumanly"><meta property="og:title" content="{html.escape(title)}">
 <meta property="og:description" content="{html.escape(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{SITE}/og.png">
-<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#0a0a0a">
-<script>(function(){{try{{var t=localStorage.getItem("hhtheme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",t)}}catch(e){{}}}})()</script><style>{CSS}</style>{ld}</head><body><a class="skip" href="#main">Skip to content</a>
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#070708">
+<script>(function(){{try{{var t=localStorage.getItem("hhtheme")||"dark";document.documentElement.setAttribute("data-theme",t)}}catch(e){{}}}})()</script><style>{CSS}</style>{ld}</head><body><a class="skip" href="#main">Skip to content</a>
 <div class="bar">Free and open source. Runs on your Mac. <a href="{REL}">What's new in {V}</a></div>
 <header class="top"><div class="nav"><a class="brand" href="/"><img src="/favicon.png" alt="" width="36" height="36">HeyHumanly</a>
 <nav class="links" aria-label="Main"><a class="hide-s" href="/#how">How it works</a><a class="hide-s" href="/#styles">Rewrites</a><a class="hide-s" href="/install/">Install</a><a class="hide-s" href="/#faq">FAQ</a><a class="hide-s" href="{SRC}">GitHub</a><button class="tg" id="tg" type="button" aria-label="Switch between light and dark theme">◐</button><a class="btn sm dl" href="{DMG}" data-dl>Download for Mac</a></nav></div></header>

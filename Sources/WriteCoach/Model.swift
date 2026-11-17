@@ -101,7 +101,7 @@ final class CoachModel: ObservableObject {
 
     // MARK: Appearance
 
-    var appearanceName: String { settings.appearanceRaw ?? "System" }
+    var appearanceName: String { settings.appearanceRaw ?? "Dark" }
     var appearanceIcon: String {
         switch appearanceName { case "Light": return "sun.max"; case "Dark": return "moon"; default: return "circle.lefthalf.filled" }
     }
@@ -111,6 +111,11 @@ final class CoachModel: ObservableObject {
         settings.appearanceRaw = next; settings.save(); applyAppearance(); objectWillChange.send()
     }
     func applyAppearance() {
+        // One-time move to the new dark default; the toggle still lets people choose Light or System.
+        if !UserDefaults.standard.bool(forKey: "heyhumanly.darkDefaultV1") {
+            UserDefaults.standard.set(true, forKey: "heyhumanly.darkDefaultV1")
+            settings.appearanceRaw = "Dark"; settings.save()
+        }
         switch appearanceName {
         case "Light": NSApp?.appearance = NSAppearance(named: .aqua)
         case "Dark": NSApp?.appearance = NSAppearance(named: .darkAqua)

@@ -12,10 +12,10 @@ def vgrad(w, h, top, bot):
 def squircle_mask(size, r):
     m = Image.new('L', (size, size), 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, size - 1, size - 1), r, fill=255); return m
 def icon(out=1024, pad=0.0, mono_bg=True):
-    base = vgrad(S, S, (0x3a, 0x3c, 0x42), (0x14, 0x14, 0x17)).convert('RGBA')
+    base = vgrad(S, S, (0x1f, 0x1f, 0x22), (0x03, 0x03, 0x04)).convert('RGBA')
     d = ImageDraw.Draw(base)
     # soft top highlight
-    hl = Image.new('RGBA', (S, S), (0, 0, 0, 0)); ImageDraw.Draw(hl).ellipse((-S*0.2, -S*0.7, S*1.2, S*0.45), fill=(255, 255, 255, 14))
+    hl = Image.new('RGBA', (S, S), (0, 0, 0, 0)); ImageDraw.Draw(hl).ellipse((-S*0.2, -S*0.7, S*1.2, S*0.45), fill=(255, 255, 255, 8))
     base = Image.alpha_composite(base, hl.filter(ImageFilter.GaussianBlur(S*0.09)))
     # bubble with tail
     bx0, by0, bx1, by1 = S*0.18, S*0.21, S*0.82, S*0.69
@@ -53,7 +53,7 @@ subprocess.run(['iconutil', '-c', 'icns', iset, '-o', os.path.join(res, 'HeyHuma
 sd = os.path.join(ROOT, 'site-src')
 icon(64).save(f'{sd}/favicon.png'); icon(192).save(f'{sd}/icon-192.png'); icon(180).save(f'{sd}/apple-touch-icon.png')
 # social card
-card = vgrad(1200, 630, (0x26, 0x27, 0x2b), (0x0e, 0x0e, 0x10)).convert('RGBA')
+card = vgrad(1200, 630, (0x12, 0x12, 0x14), (0x04, 0x04, 0x05)).convert('RGBA')
 card.alpha_composite(icon(220), (90, 150))
 d = ImageDraw.Draw(card)
 def font(sz, bold=True):
