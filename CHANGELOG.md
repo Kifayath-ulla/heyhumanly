@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 (2026-11-17)
+
+- App recoloured from blue to the logo's forest green, sage and cream (light and dark).
+- Website redesigned. Still not notarized by Apple; Intel build untested.
+
 ## 0.1.0 (2026-11-17): first public release
 
 - Free, open-source (MIT) Mac app. Universal DMG (Apple silicon tested; Intel build included but untested).
