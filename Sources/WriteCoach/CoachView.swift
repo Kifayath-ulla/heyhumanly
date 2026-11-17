@@ -9,7 +9,9 @@ struct CoachPanelView: View {
         VStack(spacing: 0) {
             header
             Divider().overlay(Color.hairline)
-            if model.result.rewrite.isEmpty && !model.isLoading {
+            if model.rephraseOn {
+                RephrasePane(model: model)
+            } else if model.result.rewrite.isEmpty && !model.isLoading {
                 // Composing: the editor fills the panel.
                 VStack(alignment: .leading, spacing: 12) {
                     if let prompt = model.practicePrompt { practiceBanner(prompt) }
@@ -29,7 +31,7 @@ struct CoachPanelView: View {
                 }
             }
             Divider().overlay(Color.hairline)
-            footer
+            if model.rephraseOn { RephrasePane.footer(model) } else { footer }
         }
         .frame(minWidth: 520, minHeight: 360)
         .background(Color.canvas)
@@ -48,7 +50,7 @@ struct CoachPanelView: View {
                     .font(.system(size: 11)).foregroundStyle(.secondary)
             }
             Spacer()
-            styleMenu
+            if !model.rephraseOn { styleMenu }
             modePicker
             Button { model.closeCoach() } label: {
                 Image(systemName: "xmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
@@ -78,6 +80,7 @@ struct CoachPanelView: View {
 
     private var modePicker: some View {
         HStack(spacing: 2) {
+            rephraseTab
             modeTab(.quickFix, title: "Quick Fix", icon: "bolt.fill", tint: .brand)
             modeTab(.teach, title: "Teach Me", icon: "graduationcap.fill", tint: .teach)
         }
@@ -85,9 +88,23 @@ struct CoachPanelView: View {
         .background(Color.primary.opacity(0.06), in: Capsule())
     }
 
+    private var rephraseTab: some View {
+        let selected = model.rephraseOn
+        return Button { model.rephraseOn = true } label: {
+            Label("Rephrase", systemImage: "sparkles")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(selected ? Color.teach : .secondary)
+                .padding(.horizontal, 11).padding(.vertical, 5)
+                .background(selected ? Color.surface : .clear, in: Capsule())
+                .shadow(color: .black.opacity(selected ? 0.08 : 0), radius: 2, y: 1)
+        }
+        .buttonStyle(.plain).accessibilityLabel("Rephrase mode").accessibilityAddTraits(selected ? .isSelected : [])
+        .help("Rewrite for clarity and learn why")
+    }
+
     private func modeTab(_ mode: CoachMode, title: String, icon: String, tint: Color) -> some View {
-        let selected = model.selectedMode == mode
-        return Button { model.selectedMode = mode } label: {
+        let selected = model.selectedMode == mode && !model.rephraseOn
+        return Button { model.selectedMode = mode; model.rephraseOn = false } label: {
             Label(title, systemImage: icon)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(selected ? tint : .secondary)

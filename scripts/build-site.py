@@ -3,57 +3,58 @@
 import json, os, shutil, html
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 R = json.load(open(os.path.join(ROOT, 'site-src/release.json')))
+KEY = 'a3f9c2d17b8e4a60b5d1c9e2f7a40831'
 OUT = os.path.join(ROOT, 'site'); SITE = R['site']
 V = R['version']; REPO = R['repo']
 DMG = f"https://github.com/{REPO}/releases/download/v{V}/{R['file']}"
 REL = f"https://github.com/{REPO}/releases/tag/v{V}"
 SRC = f"https://github.com/{REPO}"
 shutil.rmtree(OUT, ignore_errors=True)
-for sub in ['install', 'privacy']: os.makedirs(os.path.join(OUT, sub), exist_ok=True)
+for sub in ['install', 'privacy', 'writing-habits', 'local-ai-writing-coach-mac']: os.makedirs(os.path.join(OUT, sub), exist_ok=True)
 for f in ['favicon.png', 'apple-touch-icon.png', 'og.png', 'app.png', 'icon-192.png']:
     s = os.path.join(ROOT, 'site-src', f)
     if os.path.exists(s): shutil.copy(s, os.path.join(OUT, f))
 
 CSS = """
-:root{--bg:#f7f4ec;--ink:#0f2a1c;--mute:#51655a;--green:#0e3b25;--deep:#082a19;--sage:#8fbc84;--cream:#fff1d6;--line:#e1dac6;--card:#fffdf6;--warn:#7a4300}
+:root{--bg:#ffffff;--ink:#0a0a0a;--mute:#5b5b5b;--green:#0a0a0a;--deep:#0a0a0a;--sage:#bdbdbd;--cream:#ffffff;--line:#e8e8e8;--card:#fafafa;--warn:#6b4a00}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-a{color:var(--green)}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #2f7d4f;outline-offset:3px;border-radius:8px}
+a{color:var(--green)}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #4a4a4a;outline-offset:3px;border-radius:8px}
 .skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:99}
 .bar{background:var(--deep);color:var(--cream);text-align:center;font-size:14.5px;padding:9px 16px}.bar a{color:var(--sage);font-weight:600}
-header.top{position:sticky;top:0;z-index:20;background:rgba(247,244,236,.88);backdrop-filter:blur(12px);border-bottom:1px solid transparent}
+header.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.88);backdrop-filter:blur(12px);border-bottom:1px solid transparent}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1160px;margin:0 auto;padding:14px 24px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:750;color:var(--ink);text-decoration:none;font-size:20px;letter-spacing:-.01em}
 .brand img{width:36px;height:36px;border-radius:9px}
 nav.links{display:flex;gap:26px;align-items:center}nav.links a{color:var(--mute);text-decoration:none;font-size:15.5px;font-weight:500}nav.links a:hover{color:var(--ink)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--green);color:#fff!important;text-decoration:none;font-weight:650;padding:15px 28px;border-radius:999px;border:0;font-size:17px;cursor:pointer;box-shadow:0 8px 22px -10px rgba(14,59,37,.7)}
-.btn:hover{background:#17533a}.btn.sm{padding:10px 20px;font-size:15px;box-shadow:none}
-.btn.ghost{background:transparent;color:var(--green)!important;border:1.5px solid rgba(14,59,37,.35);box-shadow:none}.btn.ghost:hover{background:rgba(14,59,37,.06)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--green);color:#fff!important;text-decoration:none;font-weight:650;padding:15px 28px;border-radius:999px;border:0;font-size:17px;cursor:pointer;box-shadow:0 8px 22px -10px rgba(0,0,0,.7)}
+.btn:hover{background:#2a2a2a}.btn.sm{padding:10px 20px;font-size:15px;box-shadow:none}
+.btn.ghost{background:transparent;color:var(--green)!important;border:1.5px solid rgba(0,0,0,.35);box-shadow:none}.btn.ghost:hover{background:rgba(0,0,0,.06)}
 .btn.cream{background:var(--cream);color:var(--deep)!important}.btn.cream:hover{background:#fff}
 main{overflow:hidden}.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
 .hero{text-align:center;padding:68px 0 24px}
-.eyebrow{display:inline-block;font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#2f7d4f;margin-bottom:16px}
+.eyebrow{display:inline-block;font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#4a4a4a;margin-bottom:16px}
 h1{font-weight:750;font-size:clamp(40px,7.2vw,84px);line-height:1.02;letter-spacing:-.035em;margin:0 auto 22px;max-width:15em}
-h1 em{font-style:normal;background:linear-gradient(100deg,#2f7d4f,#8fbc84);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1 em{font-style:normal;background:linear-gradient(100deg,#4a4a4a,#8fbc84);-webkit-background-clip:text;background-clip:text;color:transparent}
 h2{font-weight:750;font-size:clamp(30px,4.6vw,52px);line-height:1.06;letter-spacing:-.03em;margin:0 0 14px}h3{margin:0 0 6px;font-size:19px;letter-spacing:-.01em}
 .lede{font-size:clamp(18px,2vw,22px);color:var(--mute);margin:0 auto 30px;max-width:36em}
 .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center}.fine{font-size:14.5px;color:var(--mute);margin-top:16px}
-.stage{margin:44px auto 0;max-width:980px;border-radius:32px;padding:clamp(18px,4vw,44px);background:radial-gradient(120% 120% at 20% 0%,#1f6a43 0%,#0e3b25 45%,#082a19 100%);box-shadow:0 40px 80px -40px rgba(8,42,25,.8)}
-.win{background:#fffdf6;border-radius:18px;text-align:left;box-shadow:0 20px 50px -20px rgba(0,0,0,.55);overflow:hidden}
-.win .top{display:flex;align-items:center;gap:7px;padding:11px 14px;background:#f1ecdc;border-bottom:1px solid var(--line);font-size:13px;color:var(--mute)}
-.win .top i{width:11px;height:11px;border-radius:50%;background:#d8d0b8;display:block}.win .top span{margin-left:8px}
+.stage{margin:44px auto 0;max-width:980px;border-radius:32px;padding:clamp(18px,4vw,44px);background:radial-gradient(120% 120% at 20% 0%,#2b2b2b 0%,#0a0a0a 45%,#0a0a0a 100%);box-shadow:0 40px 80px -40px rgba(0,0,0,.45)}
+.win{background:#ffffff;border-radius:18px;text-align:left;box-shadow:0 20px 50px -20px rgba(0,0,0,.55);overflow:hidden}
+.win .top{display:flex;align-items:center;gap:7px;padding:11px 14px;background:#f1f1f1;border-bottom:1px solid var(--line);font-size:13px;color:var(--mute)}
+.win .top i{width:11px;height:11px;border-radius:50%;background:#d8d8d8;display:block}.win .top span{margin-left:8px}
 .win .body{padding:22px 24px 18px;min-height:150px;font-size:clamp(17px,2.2vw,21px);line-height:1.55;position:relative}
-.u-m{text-decoration:underline wavy #d6453d;text-underline-offset:5px;text-decoration-thickness:1.5px}
-.fixed mark{background:#d6efd0;color:#0e3b25;border-radius:5px;padding:0 3px}
+.u-m{background:#ffe3e0;color:#9b2218;border-radius:4px;padding:0 3px}.lab{font-size:11px;letter-spacing:.14em;font-weight:700;color:#8a8a8a;margin-bottom:6px}.win .body{min-height:0}.better{border-top:1px solid var(--line);opacity:0;transition:.4s}.better.on{opacity:1}.better #demo-new{font-weight:550}.rc.nx{background:#0a0a0a;border-color:#0a0a0a}.rc.nx small{color:#e5e5e5}.rc.nx .tag{background:#fff;color:#0a0a0a}
+.fixed mark{background:#e9e9e9;color:#0a0a0a;border-radius:5px;padding:0 3px}
 .dot{position:absolute;right:16px;bottom:14px;background:var(--green);color:#fff;border-radius:999px;min-width:30px;height:30px;display:grid;place-items:center;font-size:14px;font-weight:700;opacity:0;transform:scale(.6);transition:.25s}
 .dot.on{opacity:1;transform:none}
-.cards{display:grid;gap:8px;padding:0 24px 22px}.rc{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;background:#f6f2e4;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:15px;opacity:0;transform:translateY(6px);transition:.35s}
+.cards{display:grid;gap:8px;padding:0 24px 22px}.rc{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;background:#f5f5f5;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:15px;opacity:0;transform:translateY(6px);transition:.35s}
 .rc.on{opacity:1;transform:none}.rc b{font-weight:650}.rc s{color:#c0392b}.rc .gd{color:#1d7a46;font-weight:650}.rc small{display:block;color:var(--mute);font-size:13.5px;line-height:1.4;margin-top:2px}
 .tag{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#fde1de;color:#a12a22;align-self:start;margin-top:2px}.tag.t{background:#dfe9fb;color:#264f9c}.tag.g{background:#e3dcf7;color:#4a3a9a}
 section{padding:96px 0}.center{text-align:center}.center .lede{margin-left:auto;margin-right:auto}
-.proof{display:flex;flex-wrap:wrap;gap:12px 34px;justify-content:center;color:var(--mute);font-size:15.5px;padding:34px 0 0}.proof span::before{content:"✓ ";color:#2f7d4f;font-weight:800}
+.proof{display:flex;flex-wrap:wrap;gap:12px 34px;justify-content:center;color:var(--mute);font-size:15.5px;padding:34px 0 0}.proof span::before{content:"✓ ";color:#4a4a4a;font-weight:800}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:30px;box-shadow:0 24px 50px -34px rgba(14,59,37,.5)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:30px;box-shadow:0 24px 50px -34px rgba(0,0,0,.5)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:8px 16px;font:600 15px inherit;color:var(--mute);cursor:pointer}
 .tabs button[aria-selected=true]{background:var(--green);border-color:var(--green);color:#fff}
 .out{font-size:19px;line-height:1.55;min-height:132px}.orig{color:var(--mute);font-size:15px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
@@ -61,22 +62,22 @@ section{padding:96px 0}.center{text-align:center}.center .lede{margin-left:auto;
 .step{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:30px}.step .n{width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:750;margin-bottom:18px}
 .step p{margin:0;color:var(--mute);font-size:16.5px}
 .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:18px;margin-top:44px;text-align:left}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:30px;grid-column:span 2}.tile.w{grid-column:span 3}.tile.dark{background:var(--deep);color:var(--cream);border-color:var(--deep)}.tile.dark p{color:#bcd3c0}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:30px;grid-column:span 2}.tile.w{grid-column:span 3}.tile.dark{background:var(--deep);color:var(--cream);border-color:var(--deep)}.tile.dark p{color:#bdbdbd}
 .tile p{margin:0;color:var(--mute);font-size:16.5px}.tile h3{font-size:22px;margin-bottom:8px}
-.band{background:var(--deep);color:var(--cream)}.band .lede{color:#bcd3c0}.band h2{color:#fff}.band .eyebrow{color:var(--sage)}
+.band{background:var(--deep);color:var(--cream)}.band .lede{color:#bdbdbd}.band h2{color:#fff}.band .eyebrow{color:var(--sage)}
 ol.steps{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:14px;counter-reset:s;text-align:left}
 ol.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px 20px 18px 68px;position:relative;color:var(--ink)}
 ol.steps li::before{content:counter(s);position:absolute;left:20px;top:17px;width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:750;font-size:15px}
 ol.steps li p{margin:2px 0 0;color:var(--mute)}
-.note{background:#fff3da;border:1px solid #ecd6a2;border-radius:16px;padding:14px 18px;color:var(--warn);font-size:15.5px;text-align:left}
-.ok{background:#e9f4e6;border:1px solid #bcd9b6;border-radius:16px;padding:14px 18px;font-size:16px;text-align:left}
+.note{background:#f7f3e6;border:1px solid #ecd6a2;border-radius:16px;padding:14px 18px;color:var(--warn);font-size:15.5px;text-align:left}
+.ok{background:#f2f2f2;border:1px solid #dcdcdc;border-radius:16px;padding:14px 18px;font-size:16px;text-align:left}
 table{border-collapse:collapse;width:100%;font-size:16px;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;text-align:left}
-th,td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#efe9d8;width:120px}tr:last-child th,tr:last-child td{border-bottom:0}
+th,td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f1f1f1;width:120px}tr:last-child th,tr:last-child td{border-bottom:0}
 details{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;margin:10px 0;text-align:left}summary{cursor:pointer;font-weight:650;font-size:18px}
-details p{margin:10px 0 0;color:var(--mute)}code,kbd{white-space:nowrap;background:#ece6d4;border-radius:7px;padding:2px 7px;font:14.5px ui-monospace,Menlo,monospace;word-break:break-all}
-.final{margin:0 24px 80px;border-radius:40px;background:radial-gradient(120% 140% at 80% 0%,#1f6a43,#0e3b25 50%,#082a19);color:var(--cream);text-align:center;padding:clamp(48px,8vw,96px) 24px}
-.final h2{color:#fff;max-width:14em;margin-inline:auto}.final .lede{color:#bcd3c0}
-footer{background:#efe9d8;border-top:1px solid var(--line);padding:56px 0 30px;color:var(--mute);font-size:15px}
+details p{margin:10px 0 0;color:var(--mute)}code,kbd{white-space:nowrap;background:#efefef;border-radius:7px;padding:2px 7px;font:14.5px ui-monospace,Menlo,monospace;word-break:break-all}
+.final{margin:0 24px 80px;border-radius:40px;background:radial-gradient(120% 140% at 80% 0%,#2b2b2b,#0a0a0a 50%,#0a0a0a);color:var(--cream);text-align:center;padding:clamp(48px,8vw,96px) 24px}
+.final h2{color:#fff;max-width:14em;margin-inline:auto}.final .lede{color:#bdbdbd}
+footer{background:#f1f1f1;border-top:1px solid var(--line);padding:56px 0 30px;color:var(--mute);font-size:15px}
 .fgrid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:32px}footer h4{margin:0 0 12px;color:var(--ink);font-size:15px}footer a{display:block;color:var(--mute);text-decoration:none;padding:3px 0}footer a:hover{color:var(--ink)}
 .legal{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
 #notmac{display:none;margin-top:16px}
@@ -93,14 +94,14 @@ def page(path, title, desc, body, schema=None, noindex=False, canonical=None):
 <link rel="canonical" href="{url}"><link rel="icon" href="/favicon.png" type="image/png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website"><meta property="og:site_name" content="HeyHumanly"><meta property="og:title" content="{html.escape(title)}">
 <meta property="og:description" content="{html.escape(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{SITE}/og.png">
-<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#0e3b25">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#0a0a0a">
 <style>{CSS}</style>{ld}</head><body><a class="skip" href="#main">Skip to content</a>
 <div class="bar">Free and open source. Runs on your Mac. <a href="{REL}">What's new in {V}</a></div>
 <header class="top"><div class="nav"><a class="brand" href="/"><img src="/favicon.png" alt="" width="36" height="36">HeyHumanly</a>
 <nav class="links" aria-label="Main"><a class="hide-s" href="/#how">How it works</a><a class="hide-s" href="/#styles">Rewrites</a><a class="hide-s" href="/install/">Install</a><a class="hide-s" href="/#faq">FAQ</a><a class="hide-s" href="{SRC}">GitHub</a><a class="btn sm dl" href="{DMG}" data-dl>Download for Mac</a></nav></div></header>
 <main id="main">{body}</main>
 <footer><div class="wrap"><div class="fgrid"><div><a class="brand" href="/"><img src="/favicon.png" alt="" width="32" height="32">HeyHumanly</a><p style="margin:12px 0 0;max-width:22em">A free Mac writing coach that teaches the rule, with an AI model on your Mac.</p></div>
-<div><h4>Product</h4><a href="/#how">How it works</a><a href="/#styles">Rewrites</a><a href="/#privacy">Privacy</a><a href="/#faq">FAQ</a></div>
+<div><h4>Product</h4><a href="/#how">How it works</a><a href="/#styles">Rewrites</a><a href="/#privacy">Privacy</a><a href="/#faq">FAQ</a><a href="/writing-habits/">Writing habits guide</a><a href="/local-ai-writing-coach-mac/">Local AI setup</a></div>
 <div><h4>Get started</h4><a href="{DMG}" data-dl>Download for Mac</a><a href="/install/">Install help</a><a href="{REL}">Release notes &amp; checksum</a></div>
 <div><h4>Open source</h4><a href="{SRC}">Source code</a><a href="{SRC}/issues">Report a bug</a><a href="{SRC}/blob/main/LICENSE">MIT license</a><a href="/privacy/">Privacy details</a></div></div>
 <div class="legal"><span>HeyHumanly {V} · MIT License · Mac only (macOS 14+)</span><span>Models are separate downloads under their own licenses.</span></div></div></footer>
@@ -114,41 +115,43 @@ setTimeout(function(){{location.href='/install/?started=1'}},900)}}catch(e){{}}}
 
 dl = f'<a class="btn dl" href="{DMG}" data-dl>Download for Mac</a>'
 hero = f"""
-<div class="wrap hero"><span class="eyebrow">Writing coach for Mac</span>
-<h1>Don't just fix your writing. <em>Get better at it.</em></h1>
-<p class="lede">HeyHumanly marks real mistakes as you type, then teaches you the rule in one line, so you stop repeating them. The AI runs on your Mac. Free, with no account.</p>
+<div class="wrap hero"><span class="eyebrow">AI writing coach for Mac</span>
+<h1>Say it better. <em>Learn why.</em></h1>
+<p class="lede">HeyHumanly rewrites what you write or dictate so it's clearer, then shows you exactly which habits got in the way, so next time you get it right yourself.</p>
 <div class="cta">{dl}<a class="btn ghost" href="{SRC}">View source</a></div>
-<p class="fine">Version {V} · macOS 14 or later · {R['size_mb']} MB · MIT license</p>
+<p class="fine">Free · macOS 14 or later · The AI runs on your Mac · Version {V}</p>
 <p class="note" id="notmac" role="note">HeyHumanly is for Mac only. You can read about it here and download it later from a Mac.</p>
-<div class="stage" aria-label="Animated example of HeyHumanly fixing a sentence"><div class="win"><div class="top"><i></i><i></i><i></i><span>Message to Richard</span></div>
-<div class="body"><div id="demo-text" aria-live="polite">hey can u send me the reprot asap? me and him goes to the office everyday.</div><div class="dot" id="demo-dot">3</div></div>
+<div class="stage" aria-label="Animated example of HeyHumanly rephrasing a rambling message and explaining why"><div class="win"><div class="top"><i></i><i></i><i></i><span>HeyHumanly</span></div>
+<div class="body"><div class="lab">YOU WROTE</div><div id="demo-text" aria-live="polite"></div></div>
+<div class="body better" id="demo-better"><div class="lab">BETTER</div><div id="demo-new"></div></div>
 <div class="cards" id="demo-cards">
-<div class="rc"><span class="tag t">Tone</span><div><b><s>u</s> → <span class="gd">you</span></b><small>"u" is texting shorthand. Fine with friends; in a work message, spell it out.</small></div></div>
-<div class="rc"><span class="tag">Spelling</span><div><b><s>reprot</s> → <span class="gd">report</span></b><small>"reprot" is misspelled; the word is "report".</small></div></div>
-<div class="rc"><span class="tag g">Grammar</span><div><b><s>goes</s> → <span class="gd">go</span></b><small>More than one person is doing this, so the verb is "go", not "goes".</small></div></div></div></div></div>
-<div class="proof"><span>Runs on your Mac</span><span>No account</span><span>Open source (MIT)</span><span>Works in Slack, Safari, TextEdit</span></div></div>
-""" + """<script>(function(){var t=document.getElementById('demo-text'),d=document.getElementById('demo-dot'),cs=[].slice.call(document.querySelectorAll('#demo-cards .rc'));
-var raw='hey can u send me the reprot asap? me and him goes to the office everyday.';
-var marked='hey can <span class="u-m">u</span> send me the <span class="u-m">reprot</span> asap? me and him <span class="u-m">goes</span> to the office everyday.';
-var fixed='<span class="fixed">hey can <mark>you</mark> send me the <mark>report</mark> asap? me and him <mark>go</mark> to the office everyday.</span>';
-function reset(){t.textContent='';d.className='dot';cs.forEach(function(c){c.className='rc'})}
-function show(){t.innerHTML=fixed;d.className='dot';cs.forEach(function(c){c.className='rc on'})}
+<div class="rc"><span class="tag">Buried the point</span><div><small>Your main point doesn't appear until word 48 of 72. A reader decides whether to keep reading in the first sentence. Open with it.</small></div></div>
+<div class="rc"><span class="tag">Hedging</span><div><small>You hedged 6 times (“maybe”, “kind of”, “I think”, “probably”). Each one tells the reader you don't stand behind the point.</small></div></div>
+<div class="rc"><span class="tag">Filler</span><div><small>5 filler phrases in 72 words (“So basically”, “um”, “kind of”, “you know”). They add no information.</small></div></div>
+<div class="rc nx"><span class="tag">Next time</span><div><small>Finish the sentence “What I need from you is…” and start with that.</small></div></div></div></div></div>
+<div class="proof"><span>Explains every change</span><span>Tracks your habits over time</span><span>Runs on your Mac</span><span>No account</span></div></div>
+""" + """<script>(function(){var T=document.getElementById('demo-text'),B=document.getElementById('demo-better'),N=document.getElementById('demo-new'),cs=[].slice.call(document.querySelectorAll('#demo-cards .rc'));
+var raw="So basically I was thinking, um, that maybe we could kind of look at the thing about the launch, because I talked to Priya yesterday and she said, you know, the design is mostly done but there are some issues, and I think we should probably, like, maybe push the launch, but I'm not sure, so can you let me know by Friday if you think we can still ship on Monday?";
+var out="Should we push the launch? Priya said the design is mostly done but there are some issues. Can you let me know by Friday if we can still ship on Monday?";
+var ph=["So basically","um","maybe","kind of","the thing about the launch","you know","I think","probably","like","not sure"];
+function esc(x){return x.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function mark(t){var h=esc(t);ph.forEach(function(p){h=h.replace(new RegExp('(^|[^a-z])('+p+')(?![a-z])','i'),function(m,a,b){return a+'<mark class="u-m">'+b+'</mark>'})});return h}
+function reset(){T.textContent='';B.className='body better';N.textContent='';cs.forEach(function(c){c.classList.remove('on')})}
+function show(){T.innerHTML=mark(raw);B.className='body better on';N.textContent=out;cs.forEach(function(c){c.classList.add('on')})}
 if(matchMedia('(prefers-reduced-motion:reduce)').matches){show();return}
 function w(ms){return new Promise(function(r){setTimeout(r,ms)})}
-async function run(){for(;;){reset();for(var i=1;i<=raw.length;i++){t.textContent=raw.slice(0,i);await w(34)}
-await w(900);t.innerHTML=marked;d.className='dot on';await w(900);for(var k=0;k<cs.length;k++){cs[k].className='rc on';await w(420)}
-await w(1400);t.innerHTML=fixed;d.className='dot';await w(4200)}}run()})();</script>"""
+async function run(){for(;;){reset();for(var i=6;i<=raw.length;i+=6){T.textContent=raw.slice(0,i);await w(18)}T.textContent=raw;await w(700);T.innerHTML=mark(raw);await w(1100);B.className='body better on';N.textContent=out;await w(900);for(var k=0;k<cs.length;k++){cs[k].classList.add('on');await w(650)}await w(5000)}}run()})();</script>"""
 
 how = """
-<section id="how" class="center"><div class="wrap"><span class="eyebrow">How it works</span><h2>Write like normal. Learn as you go.</h2>
-<p class="lede">HeyHumanly stays out of the way until you stop typing, then helps in the app you are already using.</p>
-<div class="steps3"><div class="step"><div class="n">1</div><h3>Type anywhere</h3><p>Slack, Safari, TextEdit or any text box. After a short pause, mistakes get a red wavy underline and a small dot shows how many.</p></div>
-<div class="step"><div class="n">2</div><h3>Learn the rule</h3><p>Click the dot. Pick the better version, read the rule in one line with a way to remember it, then practise it on a new sentence.</p></div>
-<div class="step"><div class="n">3</div><h3>Or just fix it</h3><p>Press <kbd>⌃⌥↩</kbd> to fix everything at once. <kbd>⌘Z</kbd> undoes it in one step.</p></div></div></div></section>
+<section id="how" class="center"><div class="wrap"><span class="eyebrow">How it works</span><h2>Not just rephrased. Explained.</h2>
+<p class="lede">Other tools rewrite your text and leave you guessing. HeyHumanly shows you why, so you improve.</p>
+<div class="steps3"><div class="step"><div class="n">1</div><h3>Paste or dictate</h3><p>Drop in a message you wrote, or something you dictated. Rambling is fine.</p></div>
+<div class="step"><div class="n">2</div><h3>See it rephrased</h3><p>Get a clearer version that leads with the point, with your own filler, hedges and vague words highlighted.</p></div>
+<div class="step"><div class="n">3</div><h3>Learn the habit</h3><p>Each change names the habit behind it, quotes your words and tells you what to do next time. Insights shows which habits you repeat.</p></div></div></div></section>
 
 <section id="styles" class="band"><div class="wrap split"><div><span class="eyebrow">Rewrites</span><h2>Same message, the tone you want.</h2>
 <p class="lede" style="margin-left:0">Rewrite a whole message shorter, warmer, more professional, or translate it. You see the change before anything is pasted.</p>
-<p class="fine" style="color:#bcd3c0">These examples were written by the app's own model on a Mac.</p></div>
+<p class="fine" style="color:#bdbdbd">These examples were written by the app's own model on a Mac.</p></div>
 <div class="panel" style="color:var(--ink)"><div class="tabs" role="tablist" aria-label="Rewrite style">
 <button role="tab" aria-selected="true" data-k="fix">Just fixes</button><button role="tab" aria-selected="false" data-k="short">Shorter</button><button role="tab" aria-selected="false" data-k="es">Spanish</button><button role="tab" aria-selected="false" data-k="fr">French</button></div>
 <div class="orig">You wrote: "hey richard, i have exam this sunday so i might not be available, just wanted to let u know"</div><div class="out" id="tone-out" aria-live="polite"></div></div></div></section>
@@ -204,14 +207,19 @@ faqs = [
  ("Can I contribute or report a bug?", f"Yes. The code is on <a href='{SRC}'>GitHub</a>. Open an issue for bugs. Do not paste private text into public issues."),
 ]
 faq = '<section id="faq"><div class="wrap" style="max-width:820px"><h2 class="center">Questions</h2>' + ''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in faqs) + '</div></section>'
-final = f'<div class="final"><h2>Write better, starting with your next message.</h2><p class="lede">Free, open source and private by design.</p><div class="cta"><a class="btn cream dl" href="{DMG}" data-dl>Download for Mac</a></div><p class="fine" style="color:#bcd3c0">macOS 14 or later · {R["size_mb"]} MB</p></div>'
+final = f'<div class="final"><h2>Write better, starting with your next message.</h2><p class="lede">Free, open source and private by design.</p><div class="cta"><a class="btn cream dl" href="{DMG}" data-dl>Download for Mac</a></div><p class="fine" style="color:#bdbdbd">macOS 14 or later · {R["size_mb"]} MB</p></div>'
 
-schema = {"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "HeyHumanly", "operatingSystem": "macOS 14 or later",
-  "applicationCategory": "ProductivityApplication", "softwareVersion": V, "downloadUrl": DMG, "license": "https://opensource.org/license/mit",
-  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "url": SITE + "/",
-  "description": "Free, open-source Mac writing coach that marks mistakes and teaches the rule, using a local AI model."}
-page('/', 'HeyHumanly: free Mac writing coach that teaches, using a local model',
-     'HeyHumanly is a free, open-source Mac app that marks writing mistakes as you type, explains the rule, and runs on a local AI model with no account.',
+import re as _re
+_faq=[{"@type":"Question","name":q,"acceptedAnswer":{"@type":"Answer","text":_re.sub('<[^>]+>','',x)}} for q,x in faqs]
+schema = {"@context": "https://schema.org", "@graph": [
+  {"@type": "WebSite", "@id": SITE + "/#website", "url": SITE + "/", "name": "HeyHumanly", "alternateName": ["Hey Humanly", "heyhumanly.com"]},
+  {"@type": "SoftwareApplication", "@id": SITE + "/#app", "name": "HeyHumanly", "alternateName": "Hey Humanly", "operatingSystem": "macOS 14 or later",
+   "applicationCategory": "ProductivityApplication", "softwareVersion": V, "downloadUrl": DMG, "license": "https://opensource.org/license/mit",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "url": SITE + "/", "sameAs": [SRC],
+   "description": "Free, open-source Mac writing coach that rephrases your writing for clarity and explains the habits behind each change, using a local AI model."},
+  {"@type": "FAQPage", "mainEntity": _faq}]}
+page('/', 'HeyHumanly: free Mac writing coach that rephrases and explains why',
+     'HeyHumanly (Hey Humanly) is a free, open-source Mac app that rephrases what you write or dictate so it is clearer, shows the habits behind each change, and runs on a local AI model.',
      hero + how + setup + privacy + limits + faq + final, schema)
 
 inst = f"""
@@ -255,12 +263,37 @@ priv = f"""
 page('/privacy/', 'HeyHumanly privacy: what it reads, stores and sends',
      'What HeyHumanly reads, stores and sends, based on the source code: local model by default, no account, no analytics, no tracking.', priv)
 
+
+habit_items = [
+ ("Buried the point","Your main point or request comes late.","Before: “So I was thinking about the launch, and Priya said the design has issues, so can you tell me if we can still ship Monday?” After: “Can we still ship Monday? Priya says the design has issues.”","Finish the sentence “What I need from you is…” and start with that."),
+ ("Filler","Words that add nothing: um, you know, basically, kind of.","Before: “So basically, um, the report is kind of late.” After: “The report is late.”","Pause silently. A pause sounds more confident than a filler word."),
+ ("Hedging","Several maybes in a row weaken a message you mean.","Before: “I think we should probably maybe push it.” After: “Let's push it, unless the design is fixed by Thursday.”","Say it plainly, or name the condition."),
+ ("Vague wording","Words like thing and stuff make the reader guess.","Before: “Can you look at the thing about the launch?” After: “Can you review the launch checklist?”","Replace “thing” with the noun you'd use if someone asked “which one?”."),
+ ("Too much in one sentence","Several ideas joined by and, but and so.","Before: one 70-word sentence. After: three short sentences, one idea each.","Start a new sentence whenever the subject changes."),
+ ("Repetition","Saying the same idea twice.","Before: “We need to decide, we need to decide soon.” After: “We need to decide soon.”","Say it once, in the strongest place."),
+]
+hb = ''.join(f'<details open><summary>{n}</summary><p><b>What it is:</b> {d}</p><p><i>Example.</i> {ex}</p><p><b>Next time:</b> {t}</p></details>' for n,d,ex,t in habit_items)
+habits_page = f"""<section style="border:0"><div class="wrap" style="max-width:820px"><span class="eyebrow">Guide</span><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Writing habits that make messages unclear, and how to fix them</h1>
+<p class="lede" style="margin-left:0;text-align:left">Most unclear writing isn't a grammar problem. It comes from a few habits, especially when you write the way you speak. These are the six HeyHumanly looks for in your own text, with an example of each.</p>{hb}
+<p class="ok" style="margin-top:24px">HeyHumanly finds these habits in your own messages, quotes your exact words, and tracks which ones you repeat. <a href="/">See how it works</a> or <a href="{DMG}" data-dl>download it free for Mac</a>.</p></div></section>"""
+page('/writing-habits/', 'Writing habits that make messages unclear (and how to fix them) | HeyHumanly',
+     'Six writing habits that make messages unclear: buried point, filler, hedging, vague wording, long sentences and repetition. Examples and a fix for each.', habits_page)
+ol_page = f"""<section style="border:0"><div class="wrap" style="max-width:820px"><span class="eyebrow">Guide</span><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Set up a local AI writing coach on a Mac with Ollama</h1>
+<p class="lede" style="margin-left:0;text-align:left">A local model means your writing is processed on your Mac, not sent to a cloud service. HeyHumanly uses <a href="https://ollama.com">Ollama</a> to run it. This is the whole setup.</p>
+<ol class="steps"><li><h3>Check your Mac</h3><p>macOS 14 or later. 16 GB of memory is comfortable for the 7B model (about 4.7 GB). On 8 GB use the 3B model (about 1.9 GB). Allow about 5 GB of free disk.</p></li>
+<li><h3>Install Ollama</h3><p>Download it from <a href="https://ollama.com/download/mac">ollama.com</a> and open it once.</p></li>
+<li><h3>Download a model</h3><p>HeyHumanly can do this for you with a progress bar. Or in Terminal run <code>ollama pull qwen2.5:7b</code> (or <code>qwen2.5:3b</code>), then <code>ollama list</code> to confirm.</p></li>
+<li><h3>Open HeyHumanly</h3><p><a href="/install/">Install it</a>, open it, and it finds the running model automatically. Try pasting a rambling message into Rephrase.</p></li></ol>
+<h2 style="font-size:28px;margin-top:36px">Licenses and honesty notes</h2><p>Qwen 2.5 7B is Apache-2.0. The 3B model has its own Qwen license. Local models are weaker than the largest cloud models; HeyHumanly's explanations come from rules in the app and your own text, not from guesses by the model. Downloading Ollama and the model needs internet once; after that the coach works offline.</p></div></section>"""
+page('/local-ai-writing-coach-mac/', 'Set up a local AI writing coach on Mac with Ollama | HeyHumanly',
+     'How to run a local AI writing coach on a Mac: install Ollama, download Qwen 2.5, requirements for 8 GB and 16 GB Macs, and licenses.', ol_page)
 nf = '<section style="border:0;text-align:center;padding:90px 0"><h1>Page not found</h1><p class="lede" style="margin-inline:auto">That page does not exist.</p><a class="btn" href="/">Go to the home page</a></section>'
 page('/404.html', 'Page not found · HeyHumanly', 'Page not found.', nf, noindex=True, canonical='/')
 
 open(os.path.join(OUT, 'robots.txt'), 'w').write(f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n")
-urls = ['/', '/install/', '/privacy/']
+urls = ['/', '/install/', '/writing-habits/', '/local-ai-writing-coach-mac/', '/privacy/']
 open(os.path.join(OUT, 'sitemap.xml'), 'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + ''.join(f'<url><loc>{SITE}{u}</loc><lastmod>{R["date"]}</lastmod></url>\n' for u in urls) + '</urlset>\n')
 # Staging hosts stay out of search; production is not affected.
 open(os.path.join(OUT, '_headers'), 'w').write("/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'self'; form-action 'none'\n")
+open(os.path.join(OUT, KEY + '.txt'), 'w').write(KEY)
 print('site built', V)

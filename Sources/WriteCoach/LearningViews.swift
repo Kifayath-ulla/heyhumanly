@@ -11,10 +11,12 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 20) {
             SectionHeader(eyebrow: "Insights", title: "What you ", italic: "keep", after: " getting wrong", subtitle: "Patterns in your own writing, counted from sessions on this Mac. No scores, no comparisons with other people.")
             if total == 0 {
+                HabitsCard(model: model)
                 EmptyState(icon: "chart.bar.xaxis", title: "Your patterns will show up here",
                            message: "After a few Quick Fix sessions, HeyHumanly groups your corrections by type so you can see what to work on.",
                            action: ("Open coach", { model.showCoach() }))
             } else {
+                HabitsCard(model: model)
                 trendCard
                 ActivityGrid(history: model.history)
                 if let top = stats.first { focusCard(top) }
