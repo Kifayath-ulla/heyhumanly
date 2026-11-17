@@ -8,8 +8,8 @@ struct DashboardView: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color.canvas.ignoresSafeArea()
+        HStack(spacing: 0) {
+            Sidebar(model: model)
             ScrollView(.vertical) {
                 Group {
                     switch model.section {
@@ -21,24 +21,23 @@ struct DashboardView: View {
                     case .settings: SettingsView(model: model)
                     }
                 }
-                .frame(maxWidth: 940, alignment: .leading)
-                .padding(.horizontal, 40).padding(.top, 20).padding(.bottom, 48)
+                .frame(maxWidth: 980, alignment: .leading)
+                .padding(.horizontal, 40).padding(.top, 46).padding(.bottom, 48)
                 .frame(maxWidth: .infinity, alignment: .top)
                 .id(model.section)
                 .transition(.opacity.combined(with: .offset(y: 8)))
             }
             .scrollIndicators(.never)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                // Reserve the nav's height so content starts below it and scrolls underneath.
-                TopNav(model: model).padding(.top, 14).padding(.bottom, 10)
-                    .frame(maxWidth: .infinity)
-                    .background(LinearGradient(colors: [Color.canvas, Color.canvas.opacity(0)], startPoint: .top, endPoint: .bottom).padding(.bottom, -20))
-            }
+            .background(Color.panel)
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.hairline, lineWidth: 0.6))
+            .padding(.vertical, 10).padding(.trailing, 10)
         }
+        .background(Color.canvas.ignoresSafeArea())
         .overlay { if model.onboardingStep != nil { OnboardingView(model: model).transition(.opacity) } }
         .animation(.easeOut(duration: 0.22), value: model.section)
         .animation(.easeOut(duration: 0.2), value: model.onboardingStep)
-        .frame(minWidth: 980, minHeight: 640)
+        .frame(minWidth: 1020, minHeight: 640)
         .ignoresSafeArea(edges: .top)
         .onAppear {
             model.openDashboardAction = { openWindow(id: "dashboard") }
@@ -47,64 +46,71 @@ struct DashboardView: View {
     }
 }
 
-/// Floating pill navigation.
-struct TopNav: View {
+/// Left sidebar navigation.
+struct Sidebar: View {
     @ObservedObject var model: CoachModel
 
     var body: some View {
-        HStack(spacing: 4) {
-            HStack(spacing: 7) {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 9) {
                 BrandMark(size: 24)
-                Text("HeyHumanly").font(.system(size: 14.5, weight: .bold)).foregroundStyle(Color.ink)
+                Text("HeyHumanly").font(.system(size: 16, weight: .bold)).foregroundStyle(Color.ink)
             }
-            .padding(.leading, 6).padding(.trailing, 10)
+            .padding(.horizontal, 10).padding(.top, 44).padding(.bottom, 20)
             .accessibilityElement(children: .combine)
 
             ForEach(DashboardSection.allCases) { section in
                 let selected = model.section == section
                 Button { model.section = section } label: {
-                    HStack(spacing: 5) {
-                        Text(section.rawValue)
+                    HStack(spacing: 11) {
+                        Image(systemName: section.icon).font(.system(size: 14, weight: .regular)).frame(width: 20)
+                        Text(section.rawValue).font(.system(size: 14, weight: selected ? .semibold : .regular))
+                        Spacer(minLength: 0)
                         if section == .review, !model.dueReviews.isEmpty {
-                            Text("\(model.dueReviews.count)").font(.system(size: 10, weight: .bold)).foregroundStyle(Color.white)
-                                .padding(.horizontal, 5).padding(.vertical, 1).background(Color.brand, in: Capsule())
+                            Text("\(model.dueReviews.count)").font(.system(size: 10.5, weight: .bold)).foregroundStyle(Color.onAccent)
+                                .padding(.horizontal, 6).padding(.vertical, 1.5).background(Color.brand, in: Capsule())
                         }
                     }
-                    .font(.system(size: 13, weight: selected ? .semibold : .regular))
-                    .foregroundStyle(selected ? Color.ink : Color.ink.opacity(0.6))
-                    .padding(.horizontal, 11).padding(.vertical, 6)
-                    .background(selected ? Color.ink.opacity(0.07) : .clear, in: Capsule())
-                    .contentShape(Capsule())
+                    .foregroundStyle(selected ? Color.ink : Color.ink.opacity(0.65))
+                    .padding(.horizontal, 10).padding(.vertical, 8)
+                    .background(selected ? Color.ink.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(section.rawValue)
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
 
-            Rectangle().fill(Color.hairline).frame(width: 1, height: 18).padding(.horizontal, 6)
+            Spacer()
 
             Button { model.section = .settings } label: {
-                StatusDot(color: model.ollama.color)
+                HStack(spacing: 8) {
+                    StatusDot(color: model.ollama.color)
+                    Text(model.ollama.summary(model: model.settings.model)).font(.system(size: 12)).lineLimit(1)
+                }
+                .foregroundStyle(Color.ink.opacity(0.6)).padding(.horizontal, 10).padding(.vertical, 6)
             }
             .buttonStyle(.plain).help(model.ollama.summary(model: model.settings.model) + (model.privacyIsLocal ? " · runs on this Mac" : ""))
             .accessibilityLabel("AI status: \(model.ollama.summary(model: model.settings.model))")
 
             Button { model.cycleAppearance() } label: {
-                Image(systemName: model.appearanceIcon).font(.system(size: 13, weight: .medium)).foregroundStyle(Color.ink.opacity(0.7))
-                    .frame(width: 28, height: 28).contentShape(Rectangle())
+                HStack(spacing: 11) {
+                    Image(systemName: model.appearanceIcon).font(.system(size: 13)).frame(width: 20)
+                    Text("Appearance: \(model.appearanceName)").font(.system(size: 12))
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(Color.ink.opacity(0.6)).padding(.horizontal, 10).padding(.vertical, 6).contentShape(Rectangle())
             }
-            .buttonStyle(.plain).help("Appearance: \(model.appearanceName)").accessibilityLabel("Appearance: \(model.appearanceName)")
+            .buttonStyle(.plain).help("Change appearance").accessibilityLabel("Appearance: \(model.appearanceName)")
 
             Button { model.showCoach() } label: {
-                HStack(spacing: 6) { Image(systemName: "sparkles"); Text("Open coach") }
+                HStack(spacing: 6) { Image(systemName: "sparkles"); Text("Open coach") }.frame(maxWidth: .infinity)
             }
-            .buttonStyle(PrimaryButtonStyle())
+            .buttonStyle(PrimaryButtonStyle()).padding(.top, 8)
             .accessibilityLabel("Open HeyHumanly coach")
         }
-        .padding(5)
-        .background(Capsule().fill(Color.surface))
-        .overlay(Capsule().strokeBorder(Color.hairline, lineWidth: 0.6))
-        .shadow(color: .shadow, radius: 16, y: 6)
+        .padding(.horizontal, 12).padding(.bottom, 16)
+        .frame(width: 230)
     }
 }
 
@@ -245,107 +251,112 @@ struct HomeView: View {
     @ObservedObject var model: CoachModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 28) {
-            hero
+        VStack(alignment: .leading, spacing: 26) {
+            Text(welcome).font(.serif(34)).foregroundStyle(Color.ink)
 
-            HStack(spacing: 14) {
-                stat("Sessions", value: model.history.count, unit: "")
-                stat("Words coached", value: model.wordsCoached, unit: "")
-                stat("Mistakes mastered", value: model.masteredCount, unit: "")
-                stat("Day streak", value: model.dayStreak, unit: model.dayStreak == 1 ? "day" : "days")
-            }
+            HStack(alignment: .top, spacing: 20) {
+                VStack(alignment: .leading, spacing: 24) {
+                    banner
+                    if !model.dueReviews.isEmpty { reviewCard }
 
-            if !model.dueReviews.isEmpty { reviewCard }
+                    let steps = model.setupSteps
+                    if !(model.ollamaRunning && model.modelInstalled), model.ollama != .checking { ModelSetupCard(model: model) }
+                    if steps.contains(where: { !$0.done }) { setupRow(steps) }
 
-            let steps = model.setupSteps
-            if !(model.ollamaRunning && model.modelInstalled), model.ollama != .checking { ModelSetupCard(model: model) }
-            if steps.contains(where: { !$0.done }) { setupRow(steps) }
-
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .lastTextBaseline) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Eyebrow(text: "Recent")
-                        Headline(before: "Your latest ", italic: "fixes", size: 26)
-                    }
-                    Spacer()
-                    if !model.history.isEmpty {
-                        Button("See all") { model.section = .history }.buttonStyle(SecondaryButtonStyle()).accessibilityLabel("See all history")
-                    }
+                    recent
                 }
-                if model.history.isEmpty {
-                    EmptyState(icon: "text.badge.checkmark", title: "Nothing here yet",
-                               message: "Your corrected sentences and lessons will appear here after your first Quick Fix or Teach Me.",
-                               action: ("Try it with an example", {
-                                   model.clearDraft(); model.draft = "Please send me that thung when you have time."; model.showCoach()
-                               }))
-                } else {
-                    let recent = Array(model.history.prefix(5))
-                    VStack(spacing: 0) {
-                        ForEach(Array(recent.enumerated()), id: \.element.id) { index, item in
-                            if index > 0 { Divider().overlay(Color.hairline).padding(.leading, 18) }
-                            HistoryRow(model: model, item: item)
-                        }
-                    }
-                    .card(padding: 0)
-                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+
+                statsCard.frame(width: 250)
             }
         }
     }
 
-    private var hero: some View {
-        ZStack(alignment: .bottomTrailing) {
-            SkyBackground()
-            VStack(alignment: .leading, spacing: 16) {
-                Eyebrow(text: greeting, color: .white.opacity(0.85))
-                VStack(alignment: .leading, spacing: 0) {
-                    (Text("Write like ") + Text("yourself").italic() + Text(","))
-                    Text("just clearer.")
+    private var recent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Eyebrow(text: "Recent fixes", color: Color.ink.opacity(0.45))
+                Spacer()
+                if !model.history.isEmpty {
+                    Button("See all") { model.section = .history }.buttonStyle(.plain)
+                        .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Color.ink.opacity(0.65)).accessibilityLabel("See all history")
                 }
-                    .font(.serif(46)).foregroundStyle(.white)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
-                HStack(spacing: 8) {
-                    Text("Select text anywhere, press").font(.system(size: 15)).foregroundStyle(.white.opacity(0.92))
-                    ShortcutKeys(label: model.shortcutLabel, size: 13, glass: true)
-                    Text("and HeyHumanly fixes it on this Mac.").font(.system(size: 15)).foregroundStyle(.white.opacity(0.92))
+            }
+            if model.history.isEmpty {
+                EmptyState(icon: "text.badge.checkmark", title: "Nothing here yet",
+                           message: "Your corrected sentences and lessons will appear here after your first Quick Fix or Teach Me.",
+                           action: ("Try it with an example", {
+                               model.clearDraft(); model.draft = "Please send me that thung when you have time."; model.showCoach()
+                           }))
+            } else {
+                let recent = Array(model.history.prefix(5))
+                VStack(spacing: 0) {
+                    ForEach(Array(recent.enumerated()), id: \.element.id) { index, item in
+                        if index > 0 { Divider().overlay(Color.hairline).padding(.leading, 18) }
+                        HistoryRow(model: model, item: item)
+                    }
+                }
+                .card(padding: 0)
+            }
+        }
+    }
+
+    private var banner: some View {
+        HStack(alignment: .center, spacing: 20) {
+            VStack(alignment: .leading, spacing: 12) {
+                (Text("Write like ") + Text("yourself").italic() + Text(", just clearer."))
+                    .font(.serif(28)).foregroundStyle(Color.ink).fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 7) {
+                    Text("Select text anywhere, press").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65))
+                    ShortcutKeys(label: model.shortcutLabel, size: 12)
+                    Text("and it is fixed on this Mac.").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65))
                 }
                 HStack(spacing: 10) {
                     Button { model.showCoach() } label: { Label("Open the coach", systemImage: "sparkles") }
-                        .buttonStyle(GlassButtonStyle(filled: true)).accessibilityLabel("Open the coach")
+                        .buttonStyle(PrimaryButtonStyle()).accessibilityLabel("Open the coach")
                     Button { model.section = .insights } label: { Text("See your progress") }
-                        .buttonStyle(GlassButtonStyle(filled: false)).accessibilityLabel("See your progress")
+                        .buttonStyle(SecondaryButtonStyle()).accessibilityLabel("See your progress")
                 }
-                .padding(.top, 4)
+                .padding(.top, 2)
             }
-            .padding(36)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Mascot(size: 96, mood: model.history.isEmpty ? .thinking : .happy)
-                .rotationEffect(.degrees(-6))
-                .padding(28)
+            Spacer(minLength: 0)
+            Mascot(size: 84, mood: model.history.isEmpty ? .thinking : .happy)
         }
-        .frame(minHeight: 320)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Color.sky1.opacity(0.35), radius: 24, y: 12)
+        .card(padding: 26, radius: 22)
     }
 
-    private var greeting: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        let part = hour < 5 ? "Working late" : (hour < 12 ? "Good morning" : (hour < 18 ? "Good afternoon" : "Good evening"))
+    private var welcome: String {
         let first = NSFullUserName().split(separator: " ").first.map(String.init) ?? ""
-        return first.isEmpty ? part : "\(part), \(first)"
+        return first.isEmpty ? "Welcome back" : "Welcome back, \(first)"
     }
 
-    private func stat(_ title: String, value: Int, unit: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Eyebrow(text: title, color: Color.ink.opacity(0.45))
-            HStack(alignment: .firstTextBaseline, spacing: 5) {
-                Text(value.formatted()).font(.serif(34)).foregroundStyle(Color.ink)
-                    .contentTransition(.numericText())
-                if !unit.isEmpty { Text(unit).font(.system(size: 13)).foregroundStyle(Color.ink.opacity(0.5)) }
+    private var statsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 14) {
+                bigStat(model.history.count, "sessions")
+                bigStat(model.wordsCoached, "words coached")
+                bigStat(model.dayStreak, model.dayStreak == 1 ? "day streak" : "day streak")
             }
+            .padding(22)
+            Divider().overlay(Color.hairline)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Mistakes mastered").font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.ink)
+                Text(model.masteredCount == 0 ? "Fix a sentence in Review to master your first." : "\(model.masteredCount) habits you no longer repeat.")
+                    .font(.system(size: 12.5)).foregroundStyle(Color.ink.opacity(0.6)).fixedSize(horizontal: false, vertical: true)
+                Text(model.masteredCount.formatted()).font(.serif(30)).foregroundStyle(Color.ink)
+            }
+            .padding(22)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(padding: 18)
+        .card(padding: 0, radius: 22)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func bigStat(_ value: Int, _ label: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 7) {
+            Text(value.formatted()).font(.serif(34)).foregroundStyle(Color.ink).contentTransition(.numericText())
+            Text(label).font(.system(size: 14)).foregroundStyle(Color.ink.opacity(0.6))
+        }
         .accessibilityElement(children: .combine)
     }
 

@@ -29,14 +29,14 @@ def icon(out=1024, pad=0.0, mono_bg=True):
     base = Image.alpha_composite(base, sil)
     # slanted eyes
     eye = Image.new('RGBA', (S, S), (0, 0, 0, 0))
-    for cx, ang in ((S*0.39, -12), (S*0.61, 12)):
+    for cx, ang in ((S*0.385, 0), (S*0.615, 0)):
         e = Image.new('RGBA', (int(S*0.2), int(S*0.2)), (0, 0, 0, 0))
-        ImageDraw.Draw(e).rounded_rectangle((e.width*0.33, e.height*0.08, e.width*0.67, e.height*0.92), e.width*0.17, fill=(0x16, 0x16, 0x19, 255))
+        ImageDraw.Draw(e).rounded_rectangle((e.width*0.30, e.height*0.16, e.width*0.70, e.height*0.84), e.width*0.20, fill=(0x16, 0x16, 0x19, 255))
         e = e.rotate(ang, resample=Image.BICUBIC)
-        eye.alpha_composite(e, (int(cx - e.width/2), int(S*0.355 - e.height/2)))
+        eye.alpha_composite(e, (int(cx - e.width/2), int(S*0.36 - e.height/2)))
     base = Image.alpha_composite(base, eye)
     # smile
-    sm = Image.new('RGBA', (S, S), (0, 0, 0, 0)); ImageDraw.Draw(sm).arc((S*0.42, S*0.40, S*0.58, S*0.56), 25, 155, fill=(0x16, 0x16, 0x19, 255), width=int(S*0.022))
+    sm = Image.new('RGBA', (S, S), (0, 0, 0, 0)); ImageDraw.Draw(sm).arc((S*0.41, S*0.40, S*0.59, S*0.58), 20, 160, fill=(0x16, 0x16, 0x19, 255), width=int(S*0.026))
     base = Image.alpha_composite(base, sm)
     mask = squircle_mask(S, int(S*0.225))
     base.putalpha(mask)

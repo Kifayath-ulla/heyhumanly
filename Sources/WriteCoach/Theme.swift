@@ -14,6 +14,9 @@ extension Color {
     static let brandSoft = adaptive(light: rgb(0, 0, 0, 0.06), dark: rgb(1, 1, 1, 0.12))
     /// Neutral canvas (light grey / navy-black).
     static let canvas = adaptive(light: rgb(0.969, 0.969, 0.961), dark: rgb(0.055, 0.055, 0.063))
+    /// Main content panel and cards (cards are a soft tint on the panel).
+    static let panel = adaptive(light: rgb(0.996, 0.996, 0.992), dark: rgb(0.075, 0.078, 0.086))
+    static let cardFill = adaptive(light: rgb(0.961, 0.961, 0.953), dark: rgb(0.114, 0.118, 0.130))
     /// Cards.
     static let surface = adaptive(light: .white, dark: rgb(0.082, 0.086, 0.094))
     static let surfaceSunken = adaptive(light: rgb(0.937, 0.937, 0.929), dark: rgb(0.118, 0.122, 0.137))
@@ -46,9 +49,8 @@ struct CardBackground: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(padding)
-            .background(Color.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .background(Color.cardFill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Color.hairline, lineWidth: 0.5))
-            .shadow(color: .shadow, radius: 14, x: 0, y: 6)
     }
 }
 
@@ -81,7 +83,7 @@ struct Headline: View {
     }
 }
 
-/// HeyHumanly's mascot: a little speech bubble with eyes. Original artwork drawn with shapes.
+/// HeyHumanly's mascot: a friendly speech bubble with round eyes and a smile. Original artwork drawn with shapes.
 struct Mascot: View {
     var size: CGFloat = 44
     var mood: Mood = .happy
@@ -89,37 +91,38 @@ struct Mascot: View {
     var body: some View {
         ZStack {
             BubbleShape()
-                .fill(LinearGradient(colors: [Color.white, Color(white: 0.93)], startPoint: .top, endPoint: .bottom))
+                .fill(LinearGradient(colors: [Color(white: 0.99), Color(white: 0.86)], startPoint: .top, endPoint: .bottom))
                 .overlay(BubbleShape().stroke(Color.black.opacity(0.08), lineWidth: max(0.5, size * 0.015)))
-                .shadow(color: .black.opacity(0.18), radius: size * 0.08, y: size * 0.05)
-            HStack(spacing: size * 0.16) {
-                eye; eye
+                .shadow(color: .black.opacity(0.16), radius: size * 0.07, y: size * 0.04)
+            HStack(spacing: size * 0.2) { eye; eye }
+                .offset(y: -size * 0.1)
+            Group {
+                if mood == .thinking {
+                    Circle().stroke(Color(white: 0.12), lineWidth: size * 0.04).frame(width: size * 0.1)
+                } else {
+                    SmileShape().stroke(Color(white: 0.12), style: StrokeStyle(lineWidth: size * 0.045, lineCap: .round))
+                        .frame(width: size * (mood == .proud ? 0.3 : 0.24), height: size * (mood == .proud ? 0.13 : 0.09))
+                }
             }
-            .offset(y: -size * 0.06)
-            if mood != .thinking {
-                Capsule().fill(Color.brand.opacity(0.85))
-                    .frame(width: size * 0.18, height: size * 0.05)
-                    .offset(y: size * 0.13)
-            } else {
-                Circle().fill(Color.brand.opacity(0.85)).frame(width: size * 0.07).offset(y: size * 0.14)
-            }
-            // cheeks
-            HStack(spacing: size * 0.42) {
-                Circle().fill(Color.black.opacity(0.10)).frame(width: size * 0.11)
-                Circle().fill(Color.black.opacity(0.10)).frame(width: size * 0.11)
-            }
-            .offset(y: size * 0.07)
+            .offset(y: size * 0.1)
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)
     }
     private var eye: some View {
         ZStack {
-            Capsule().fill(Color(white: 0.12)).frame(width: size * 0.12, height: mood == .proud ? size * 0.06 : size * 0.17)
-            if mood != .proud {
-                Circle().fill(Color.white).frame(width: size * 0.045).offset(x: size * 0.02, y: -size * 0.04)
-            }
+            Ellipse().fill(Color(white: 0.12)).frame(width: size * 0.115, height: size * 0.16)
+            Circle().fill(Color.white).frame(width: size * 0.04).offset(x: size * 0.015, y: -size * 0.035)
         }
+    }
+}
+
+struct SmileShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        p.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.minY), control: CGPoint(x: rect.midX, y: rect.maxY * 2))
+        return p
     }
 }
 
