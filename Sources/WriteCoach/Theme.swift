@@ -9,28 +9,28 @@ extension Color {
     }
     private static func rgb(_ r: Double, _ g: Double, _ b: Double, _ a: Double = 1) -> NSColor { NSColor(srgbRed: r, green: g, blue: b, alpha: a) }
 
-    /// Sky blue accent.
-    static let brand = adaptive(light: rgb(0.16, 0.49, 0.93), dark: rgb(0.40, 0.66, 1.0))
-    static let brandSoft = adaptive(light: rgb(0.16, 0.49, 0.93, 0.10), dark: rgb(0.40, 0.66, 1.0, 0.16))
+    /// Forest green accent (matches the leaf logo).
+    static let brand = adaptive(light: rgb(0.055, 0.231, 0.145), dark: rgb(0.31, 0.56, 0.38))
+    static let brandSoft = adaptive(light: rgb(0.055, 0.231, 0.145, 0.09), dark: rgb(0.56, 0.74, 0.52, 0.18))
     /// Neutral canvas (light grey / navy-black).
-    static let canvas = adaptive(light: rgb(0.949, 0.949, 0.957), dark: rgb(0.051, 0.063, 0.086))
+    static let canvas = adaptive(light: rgb(0.969, 0.957, 0.925), dark: rgb(0.035, 0.075, 0.055))
     /// Cards.
-    static let surface = adaptive(light: .white, dark: rgb(0.090, 0.106, 0.137))
-    static let surfaceSunken = adaptive(light: rgb(0.965, 0.965, 0.973), dark: rgb(0.067, 0.082, 0.106))
+    static let surface = adaptive(light: rgb(1.0, 0.992, 0.972), dark: rgb(0.066, 0.122, 0.092))
+    static let surfaceSunken = adaptive(light: rgb(0.937, 0.918, 0.867), dark: rgb(0.050, 0.100, 0.075))
     static let hairline = adaptive(light: rgb(0, 0, 0, 0.07), dark: rgb(1, 1, 1, 0.08))
-    static let ink = adaptive(light: rgb(0.067, 0.071, 0.090), dark: rgb(0.95, 0.96, 0.98))
+    static let ink = adaptive(light: rgb(0.071, 0.149, 0.106), dark: rgb(0.96, 0.95, 0.90))
     static let added = adaptive(light: rgb(0.08, 0.56, 0.33), dark: rgb(0.40, 0.86, 0.58))
     static let removed = adaptive(light: rgb(0.86, 0.24, 0.26), dark: rgb(1.0, 0.48, 0.48))
     /// Text on accent-filled buttons.
     static let onAccent = Color.white
     /// Lavender, used for Teach Me and the italic accent words.
-    static let teach = adaptive(light: rgb(0.45, 0.38, 0.94), dark: rgb(0.70, 0.64, 1.0))
-    static let shadow = adaptive(light: rgb(0.10, 0.13, 0.25, 0.08), dark: rgb(0, 0, 0, 0.45))
+    static let teach = adaptive(light: rgb(0.27, 0.49, 0.32), dark: rgb(0.62, 0.80, 0.56))
+    static let shadow = adaptive(light: rgb(0.05, 0.20, 0.12, 0.09), dark: rgb(0, 0, 0, 0.45))
 
     /// Hero sky: daylight in light mode, dusk in dark mode.
-    static let sky1 = adaptive(light: rgb(0.31, 0.58, 0.98), dark: rgb(0.09, 0.17, 0.42))
-    static let sky2 = adaptive(light: rgb(0.56, 0.62, 1.0), dark: rgb(0.24, 0.17, 0.48))
-    static let sky3 = adaptive(light: rgb(1.0, 0.80, 0.70), dark: rgb(0.52, 0.25, 0.42))
+    static let sky1 = adaptive(light: rgb(0.055, 0.231, 0.145), dark: rgb(0.03, 0.13, 0.08))
+    static let sky2 = adaptive(light: rgb(0.36, 0.58, 0.40), dark: rgb(0.10, 0.28, 0.17))
+    static let sky3 = adaptive(light: rgb(0.99, 0.93, 0.80), dark: rgb(0.45, 0.42, 0.24))
 }
 
 extension Font {
