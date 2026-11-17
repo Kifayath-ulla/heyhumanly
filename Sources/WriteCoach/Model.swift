@@ -6,6 +6,12 @@ import os
 @MainActor
 final class CoachModel: ObservableObject {
     @Published var draft = ""
+    @Published var rephraseOn = true
+    @Published var rephraseResult: RephraseResult?
+    @Published var rephraseLoading = false
+    @Published var rephraseOriginal = ""
+    @Published var rephraseGoal: RephraseGoal = .clearer
+    @Published var habitsVersion = 0
     @Published var result = CoachResult.empty
     @Published var resultMode: CoachMode?
     @Published var loadingMode: CoachMode?
@@ -136,10 +142,10 @@ final class CoachModel: ObservableObject {
     var openDashboardAction: (() -> Void)?
 
     private var shortcutMonitor: Any?
-    private let bridge = AccessibilityBridge()
+    let bridge = AccessibilityBridge()
     private let coach = CoachService()
     private var coachWindow: NSPanel?
-    private var sourceApp: NSRunningApplication?
+    var sourceApp: NSRunningApplication?
 
     init() {
         settings = AppSettings.load()

@@ -45,7 +45,7 @@ private struct ActionButton: View {
                 Text(title).font(.system(size: 12.5, weight: .semibold))
                 if let hint { Text(hint).font(.system(size: 10.5, weight: .medium, design: .rounded)).opacity(0.7) }
             }
-            .foregroundStyle(primary ? (tint == .brand ? Color.onAccent : Color.white) : Color.ink)
+            .foregroundStyle(primary ? (Color.onAccent) : Color.ink)
             .padding(.horizontal, 11).frame(height: 28)
             .background(RoundedRectangle(cornerRadius: 6, style: .continuous)
                 .fill(primary ? tint.opacity( hover.on ? 0.92 : 1) : Color.ink.opacity( hover.on ? 0.09 : 0.055)))
