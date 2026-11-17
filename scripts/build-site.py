@@ -35,7 +35,7 @@ main{overflow:hidden}.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
 .hero{text-align:center;padding:68px 0 24px}
 .eyebrow{display:inline-block;font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#4a4a4a;margin-bottom:16px}
 h1{font-weight:750;font-size:clamp(40px,7.2vw,84px);line-height:1.02;letter-spacing:-.035em;margin:0 auto 22px;max-width:15em}
-h1 em{font-style:normal;background:linear-gradient(100deg,#4a4a4a,#8fbc84);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1 em{font-style:normal;background:linear-gradient(100deg,#4a4a4a,#777777);-webkit-background-clip:text;background-clip:text;color:transparent}
 h2{font-weight:750;font-size:clamp(30px,4.6vw,52px);line-height:1.06;letter-spacing:-.03em;margin:0 0 14px}h3{margin:0 0 6px;font-size:19px;letter-spacing:-.01em}
 .lede{font-size:clamp(18px,2vw,22px);color:var(--mute);margin:0 auto 30px;max-width:36em}
 .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center}.fine{font-size:14.5px;color:var(--mute);margin-top:16px}
@@ -150,12 +150,12 @@ how = """
 <div class="step"><div class="n">3</div><h3>Learn the habit</h3><p>Each change names the habit behind it, quotes your words and tells you what to do next time. Insights shows which habits you repeat.</p></div></div></div></section>
 
 <section id="styles" class="band"><div class="wrap split"><div><span class="eyebrow">Rewrites</span><h2>Same message, the tone you want.</h2>
-<p class="lede" style="margin-left:0">Rewrite a whole message shorter, warmer, more professional, or translate it. You see the change before anything is pasted.</p>
+<p class="lede" style="margin-left:0">Rewrite a whole message shorter, warmer or more professional. You see the change before anything is pasted.</p>
 <p class="fine" style="color:#bdbdbd">These examples were written by the app's own model on a Mac.</p></div>
 <div class="panel" style="color:var(--ink)"><div class="tabs" role="tablist" aria-label="Rewrite style">
-<button role="tab" aria-selected="true" data-k="fix">Just fixes</button><button role="tab" aria-selected="false" data-k="short">Shorter</button><button role="tab" aria-selected="false" data-k="es">Spanish</button><button role="tab" aria-selected="false" data-k="fr">French</button></div>
+<button role="tab" aria-selected="true" data-k="fix">Just fixes</button><button role="tab" aria-selected="false" data-k="short">Shorter</button></div>
 <div class="orig">You wrote: "hey richard, i have exam this sunday so i might not be available, just wanted to let u know"</div><div class="out" id="tone-out" aria-live="polite"></div></div></div></section>
-<script>(function(){var o={fix:"Hey Richard, I have an exam this Sunday, so I might not be available. Just wanted to let you know.",short:"Hey Richard, I have an exam on Sunday and might not be available. Just letting you know.",es:"Hola Richard, tengo un examen este domingo, así que quizás no esté disponible. Solo quería avisarte.",fr:"Salut Richard, j'ai un examen ce dimanche, donc je ne serai peut-être pas disponible. Je voulais juste te prévenir."};
+<script>(function(){var o={fix:"Hey Richard, I have an exam this Sunday, so I might not be available. Just wanted to let you know.",short:"Hey Richard, I have an exam on Sunday and might not be available. Just letting you know."};
 var out=document.getElementById('tone-out');out.textContent=o.fix;document.querySelectorAll('[role=tab]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('[role=tab]').forEach(function(x){x.setAttribute('aria-selected','false')});b.setAttribute('aria-selected','true');out.textContent=o[b.dataset.k]})})})();</script>
 
 <section class="center"><div class="wrap"><span class="eyebrow">Built to teach</span><h2>More than a spellchecker.</h2>
@@ -213,10 +213,13 @@ import re as _re
 _faq=[{"@type":"Question","name":q,"acceptedAnswer":{"@type":"Answer","text":_re.sub('<[^>]+>','',x)}} for q,x in faqs]
 schema = {"@context": "https://schema.org", "@graph": [
   {"@type": "WebSite", "@id": SITE + "/#website", "url": SITE + "/", "name": "HeyHumanly", "alternateName": ["Hey Humanly", "heyhumanly.com"]},
-  {"@type": "SoftwareApplication", "@id": SITE + "/#app", "name": "HeyHumanly", "alternateName": "Hey Humanly", "operatingSystem": "macOS 14 or later",
-   "applicationCategory": "ProductivityApplication", "softwareVersion": V, "downloadUrl": DMG, "license": "https://opensource.org/license/mit",
+  {"@type": "SoftwareApplication", "@id": SITE + "/#app", "name": "HeyHumanly", "alternateName": ["Hey Humanly", "HeyHumanly Mac"], "operatingSystem": "macOS 14 or later",
+   "applicationCategory": "EducationalApplication", "softwareVersion": V, "downloadUrl": DMG, "license": "https://opensource.org/license/mit",
    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "url": SITE + "/", "sameAs": [SRC],
-   "description": "Free, open-source Mac writing coach that rephrases your writing for clarity and explains the habits behind each change, using a local AI model."},
+   "description": "Free, open-source Mac writing coach that rephrases your writing for clarity and explains the habits behind each change, using a local AI model.",
+   "author": {"@type": "Person", "name": "Kifayath", "sameAs": "https://github.com/Kifayath-ulla"},
+   "contributor": [{"@type": "Thing", "name": "Claude", "description": "AI Contributor"}, {"@type": "Thing", "name": "OpenBot", "description": "AI Contributor"}]},
+  {"@type": "Organization", "@id": SITE + "/#org", "name": "HeyHumanly", "url": SITE, "logo": SITE + "/apple-touch-icon.png", "sameAs": [SRC]},
   {"@type": "FAQPage", "mainEntity": _faq}]}
 page('/', 'HeyHumanly: free Mac writing coach that rephrases and explains why',
      'HeyHumanly (Hey Humanly) is a free, open-source Mac app that rephrases what you write or dictate so it is clearer, shows the habits behind each change, and runs on a local AI model.',

@@ -54,7 +54,11 @@ Issues and pull requests are welcome. Do not paste private writing into public i
 
 ## License
 
-MIT, see `LICENSE`. Third-party word lists are credited in `THIRD_PARTY_NOTICES.md`. Models are separate downloads under their own licenses.
+## License & Contributors
+
+- **Author & Copyright:** Kifayath
+- **AI Teammates & Co-authors:** OpenBot, Claude
+- **License:** MIT, see `LICENSE`. Third-party word lists are credited in `THIRD_PARTY_NOTICES.md`. Models are separate downloads under their own licenses.
 
 ## Permissions
 

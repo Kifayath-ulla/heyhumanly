@@ -534,9 +534,13 @@ struct SettingsView: View {
             recommendation
             field("Endpoint", text: $model.settingsEndpoint, prompt: "http://localhost:11434/api/generate")
             VStack(alignment: .leading, spacing: 8) {
-                Text("Model").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                HStack {
+                    Text("Model").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                    Spacer()
+                    Text("Works with any local model in Ollama").font(.system(size: 11)).foregroundStyle(.tertiary)
+                }
                 if model.installedModels.isEmpty {
-                    Text(model.ollama == .checking ? "Looking for installed models…" : "No installed models found. Start Ollama, then run `ollama pull qwen2.5:3b`.")
+                    Text(model.ollama == .checking ? "Looking for installed models…" : "No installed models found in Ollama. Start Ollama, then run `ollama pull qwen2.5:7b` (or any model of your choice).")
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 } else {
                     VStack(spacing: 0) {
@@ -549,7 +553,7 @@ struct SettingsView: View {
                                     Text(name).font(.system(size: 13, design: .monospaced))
                                     Spacer()
                                     if model.settings.model == name {
-                                        Text("In use").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Color.brand)
+                                        Text("Active").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Color.brand)
                                             .padding(.horizontal, 7).padding(.vertical, 2).background(Color.brandSoft, in: Capsule())
                                     } else {
                                         Text("Installed").font(.system(size: 10.5)).foregroundStyle(.tertiary)
@@ -563,7 +567,9 @@ struct SettingsView: View {
                     .background(Color.surfaceSunken, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(Color.hairline))
                 }
-                field("Custom model name", text: $model.settingsModel, prompt: "qwen2.5:3b")
+                field("Custom model or tag (any Ollama model)", text: $model.settingsModel, prompt: "e.g. qwen2.5:7b, llama3.2, mistral, deepseek-r1:8b")
+                Text("HeyHumanly is model-agnostic: you can use any local model you have installed. We suggest the lowest friction baseline, but any Ollama model works seamlessly.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
             }
             if model.privacyIsLocal {
                 Label("Private: the endpoint is on this Mac, so your writing never leaves it. Works with Wi-Fi off. No account, no API key.", systemImage: "lock.shield.fill")

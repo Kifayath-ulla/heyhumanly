@@ -1,4 +1,11 @@
-# Third-party notices
+# Contributors & Third-party notices
+
+## Contributors
+- Kifayath (Creator & Maintainer)
+- Claude (AI Contributor)
+- OpenBot (AI Contributor)
+
+## Third-party notices
 
 HeyHumanly's style suggestions use word lists ported from these MIT-licensed projects:
 
