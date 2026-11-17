@@ -1,0 +1,19 @@
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      tag: { description: 'Tag to publish, e.g. v0.1.1', required: true }
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal DMG (ad-hoc signed unless secrets are added later)
+        run: ./scripts/release.sh
+      - name: Publish release
+        env: { GH_TOKEN: '${{ github.token }}', TAG: '${{ inputs.tag }}' }
+        run: |
+          V="${TAG#v}"
+          gh release create "$TAG" dist/$V/HeyHumanly-$V.dmg dist/$V/HeyHumanly-$V.dmg.sha256 \
+            --title "HeyHumanly $V" --notes-file CHANGELOG.md --prerelease
