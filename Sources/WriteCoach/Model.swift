@@ -10,7 +10,7 @@ final class CoachModel: ObservableObject {
     @Published var rephraseResult: RephraseResult?
     @Published var rephraseLoading = false
     @Published var rephraseOriginal = ""
-    @Published var rephraseGoal: RephraseGoal = .clearer
+    @Published var rephraseGoal: RephraseGoal = .sameTone
     @Published var habitsVersion = 0
     @Published var result = CoachResult.empty
     @Published var resultMode: CoachMode?

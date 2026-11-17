@@ -45,15 +45,26 @@ enum Habit: String, Codable, CaseIterable, Identifiable {
 }
 
 enum RephraseGoal: String, CaseIterable, Identifiable {
-    case clearer = "Clearer", shorter = "Shorter", professional = "Professional", warmer = "Warmer"
+    case sameTone = "Keep my tone", shorter = "Shorter", professional = "More formal"
     var id: String { rawValue }
     var instruction: String {
         switch self {
-        case .clearer: return "Make it clear and direct, the way a thoughtful person would say it out loud to a colleague."
-        case .shorter: return "Make it as short as possible without losing any fact or the reason behind it."
-        case .professional: return "Make it clear, polite and professional for a workplace reader."
-        case .warmer: return "Make it clear and warm, like a friendly message to someone you respect."
+        case .sameTone: return "Edit as lightly as possible. When there is filler or repetition, aim for roughly 10 to 30 percent fewer words; if the text is already tight, return it nearly unchanged."
+        case .shorter: return "Make it as short as possible while keeping the writer's voice, slang and every fact."
+        case .professional: return "The writer asked for a more formal register for this one message: make it polite and professional, still short."
         }
+    }
+}
+
+/// Reads the writer's register so casual messages are never judged by workplace rules.
+enum Register {
+    static func isCasual(_ text: String) -> Bool {
+        let t = text.lowercased()
+        let slang = #"\b(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)\b"#
+        let hits = (try? NSRegularExpression(pattern: slang))?.numberOfMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length)) ?? 0
+        let startsLower = text.first.map { $0.isLowercase } ?? false
+        let emoji = text.unicodeScalars.contains { $0.properties.isEmojiPresentation }
+        return hits >= 1 || startsLower || emoji
     }
 }
 
@@ -65,6 +76,10 @@ struct Move: Codable, Identifiable {
     var why: String
     /// Other places in the text where the same habit shows up (highlighted too).
     var also: [String] = []
+    /// Plain-language research note and its source (nil when there is no solid evidence to cite).
+    var evidence: String? = nil
+    var sourceName: String? = nil
+    var sourceURL: String? = nil
     var habitValue: Habit? { Habit(rawValue: habit) }
 }
 
@@ -72,23 +87,28 @@ struct RephraseResult {
     var rewrite: String
     var moves: [Move]
     var next: String
+    var casual: Bool = false
+    var goal: RephraseGoal = .sameTone
 }
 
 enum RephraseService {
     /// One short model call for the rewrite; the explanations are computed locally from the writer's own words.
     static func run(text: String, goal: RephraseGoal, endpoint: String, model: String) async throws -> RephraseResult {
         guard let url = URL(string: endpoint) else { throw CoachError.noEndpoint }
+        let casual = Register.isCasual(text)
         let prompt = """
-        You are HeyHumanly, a writing coach. The text may be transcribed speech full of restarts, filler and rambling.
-        Rewrite it so the reader gets the point in the first sentence: put the main question, decision or request first, then only the facts the reader needs. Cut filler and hedges. \(goal.instruction)
-        Keep every fact, name, number and the writer's own voice. Never invent details. If the writer is unsure or asking something, keep it as a question or a stated doubt: never turn a doubt into a decision or a request into a statement. Reply with ONLY the rewritten text.
+        You are HeyHumanly, a writing coach that edits lightly. The text may be typed or transcribed speech.
+        Step 1: notice the writer's register (slang, casual, blunt, warm, formal, emoji, lowercase). Keep it. Same energy, same slang, same contractions, same punctuation style. Never make the text more formal, polite or corporate than the writer made it\(casual ? ". This one is casual: keep it casual" : "").
+        Step 2: make small cuts only. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.
+        Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure, keep the doubt; never turn a doubt into a decision. \(goal.instruction)
+        Reply with ONLY the edited text.
         Text:
         \(text)
         """
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 120
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "keep_alive": "30m",
-                                                                       "options": ["temperature": 0.3, "num_predict": min(700, max(120, text.count / 2 + 80))]])
+                                                                       "options": ["temperature": 0.2, "num_predict": min(700, max(120, text.count / 2 + 80))]])
         let data: Data
         do { (data, _) = try await URLSession.shared.data(for: request) }
         catch let e as URLError where [.cannotConnectToHost, .cannotFindHost, .networkConnectionLost, .notConnectedToInternet].contains(e.code) { throw CoachError.ollamaNotRunning }
@@ -97,13 +117,32 @@ enum RephraseService {
         if let e = outer.error { if e.localizedCaseInsensitiveContains("not found") { throw CoachError.modelMissing(model) }; throw CoachError.server(500, e) }
         let rewrite = CoachService.cleanRewrite(outer.response ?? "")
         guard !rewrite.isEmpty else { throw CoachError.invalidResponse }
-        let moves = HabitDetector.moves(original: text, rewrite: rewrite)
+        let moves = HabitDetector.moves(original: text, rewrite: rewrite, casual: casual)
         let next = moves.first?.habitValue.map { "Next time, work on one thing: \($0.rawValue.lowercased()). \($0.tip)" } ?? "This was already clear. Keep doing what you're doing."
-        return RephraseResult(rewrite: rewrite, moves: moves, next: next)
+        return RephraseResult(rewrite: rewrite, moves: moves, next: next, casual: casual, goal: goal)
     }
 }
 
 extension Habit {
+    struct Evidence { let note: String; let name: String; let url: String }
+    /// Only habits with a real, checkable source get one. Wording stays within what the studies found.
+    var evidence: Evidence? {
+        switch self {
+        case .filler, .repetition:
+            return Evidence(note: "In a study of web readers, cutting the word count made text measurably easier to use (about 58% better in Nielsen Norman Group's test), because most people skim instead of reading every word.",
+                            name: "Nielsen Norman Group", url: "https://www.nngroup.com/articles/concise-scannable-and-objective-how-to-write-for-the-web")
+        case .vague, .tooLong:
+            return Evidence(note: "Text that is easy to read makes readers judge the writer as more intelligent. Hard-to-process wording does the opposite (Oppenheimer, 2006).",
+                            name: "Applied Cognitive Psychology, 2006", url: "https://doi.org/10.1002/acp.1178")
+        case .hedging:
+            return Evidence(note: "In studies of speech style, hedges lowered how authoritative a speaker seemed, though not how likable they seemed. Effects on persuasion were mixed.",
+                            name: "Hosman, hedges and hesitations", url: "https://aquila.usm.edu/fac_pubs/16291")
+        case .buriedPoint:
+            return Evidence(note: "Nielsen Norman Group found 79% of users scan new pages and only 16% read word by word. Evidence on the best order for news-style text is mixed.",
+                            name: "Nielsen Norman Group", url: "https://www.nngroup.com/alertbox/9710a.html")
+        default: return nil
+        }
+    }
     var tip: String {
         switch self {
         case .buriedPoint: return "Before you write or speak, finish the sentence “What I need from you is…” and start with that."
@@ -132,7 +171,7 @@ enum HabitDetector {
         return u.prefix(4).map { "“\($0)”" }.joined(separator: ", ")
     }
 
-    static func moves(original: String, rewrite: String) -> [Move] {
+    static func moves(original: String, rewrite: String, casual: Bool = false) -> [Move] {
         var out: [Move] = []
         let wc = max(1, words(original).count)
 
@@ -153,10 +192,10 @@ enum HabitDetector {
             }
             if let b = best {
                 let before = original.prefix(b.start).split(separator: " ").count
-                if Double(before) / Double(wc) > 0.3 && before >= 8 {
+                if !casual && Double(before) / Double(wc) > 0.3 && before >= 12 {
                     let phrase = b.text.split(separator: " ").prefix(6).joined(separator: " ")
                     out.append(Move(habit: Habit.buriedPoint.rawValue, before: phrase, after: String(lead.prefix(40)),
-                                    why: "Your main point doesn't appear until word \(before + 1) of \(wc). A reader decides whether to keep reading in the first sentence. Open with it: “\(lead.trimmingCharacters(in: .whitespaces))”."))
+                                    why: "Your main point doesn't appear until word \(before + 1) of \(wc). Most people skim, so leading with the point is standard advice. The research on this is mixed, so treat it as a guideline: “\(lead.trimmingCharacters(in: .whitespaces))”."))
                 }
             }
         }
@@ -174,15 +213,15 @@ enum HabitDetector {
 
         // Hedging.
         let hedges = occurrences(#"\b(maybe|probably|perhaps|i think|i guess|i feel like|not sure|might|sort of|kind of)\b"#, in: original)
-        if hedges.count >= 2 {
-            out.append(Move(habit: Habit.hedging.rawValue, before: hedges[0], after: "", why: "You hedged \(hedges.count) times (\(list(hedges))). Each one tells the reader you don't stand behind the point. If you're unsure, say what you'd need to know; if you're sure, say it plainly.", also: Array(hedges.dropFirst())))
+        if hedges.count >= 3 && !casual {
+            out.append(Move(habit: Habit.hedging.rawValue, before: hedges[0], after: "", why: "You hedged \(hedges.count) times (\(list(hedges))). Each one can make you sound less sure of the point. If you're unsure, say what you'd need to know; if you're sure, say it plainly.", also: Array(hedges.dropFirst())))
         }
 
         // Filler.
         let fillers = occurrences(#"\b(um+|uh+|you know|basically|i mean|literally|so basically|kind of|sort of)\b|,\s*like,"#, in: original)
         if !fillers.isEmpty {
             let clean = fillers.map { $0.trimmingCharacters(in: CharacterSet(charactersIn: " ,")) }
-            out.append(Move(habit: Habit.filler.rawValue, before: clean[0], after: "", why: "\(clean.count) filler \(clean.count == 1 ? "phrase" : "phrases") in \(wc) words (\(list(clean))). They add no information, and they make a reader wait for the point.", also: Array(clean.dropFirst())))
+            out.append(Move(habit: Habit.filler.rawValue, before: clean[0], after: "", why: "\(clean.count) filler \(clean.count == 1 ? "phrase" : "phrases") in \(wc) words (\(list(clean))). They add no information, and the reader has to get through them to reach the point.", also: Array(clean.dropFirst())))
         }
 
         // Vague words.
@@ -202,6 +241,7 @@ enum HabitDetector {
             }
         }
         let order: [Habit] = [.buriedPoint, .tooLong, .hedging, .filler, .vague, .repetition]
+        out = out.map { var m = $0; if let h = m.habitValue { let e = h.evidence; m.evidence = e?.note; m.sourceName = e?.name; m.sourceURL = e?.url }; return m }
         return out.sorted { (order.firstIndex(of: $0.habitValue ?? .tone) ?? 9) < (order.firstIndex(of: $1.habitValue ?? .tone) ?? 9) }.prefix(5).map { $0 }
     }
 }
@@ -277,13 +317,13 @@ struct RephrasePane: View {
 
     private var composer: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Say it the way you'd say it. We'll show you how to say it better, and why.")
+            Text("Write it the way you'd send it. We keep your tone and show what could be tighter, and why.")
                 .font(.serif(21, weight: .medium)).foregroundStyle(Color.ink).fixedSize(horizontal: false, vertical: true)
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $model.draft).modifier(NoSystemWritingTools()).font(.system(size: 15)).scrollContentBackground(.hidden)
                     .padding(.horizontal, 8).padding(.vertical, 10).frame(minHeight: 190).accessibilityLabel("Text to rephrase")
                 if model.draft.isEmpty {
-                    Text("Paste a message, or something you dictated. Rambling is fine.")
+                    Text("Paste a message or something you dictated. Slang and casual are fine.")
                         .font(.system(size: 15)).foregroundStyle(.tertiary).padding(.horizontal, 13).padding(.vertical, 10).allowsHitTesting(false)
                 }
             }
@@ -312,9 +352,17 @@ struct RephrasePane: View {
     private func result(_ r: RephraseResult) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("BETTER").font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(Color.teach)
+                HStack {
+                    Text(r.goal == .sameTone ? "MAYBE THIS READS BETTER · SAME TONE" : "MAYBE THIS READS BETTER").font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(Color.teach)
+                    Spacer()
+                    Text(countLine(r)).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                }
                 highlighted(r.rewrite, phrases: r.moves.map(\.after).filter { $0.count < 60 }, color: Color.added).font(.system(size: 16)).foregroundStyle(Color.ink)
                     .textSelection(.enabled)
+                if r.goal == .sameTone {
+                    Text(r.casual ? "Casual message, so it stays casual. Only filler, repeats and extra words are trimmed. Research on language style matching links sounding like the person you are talking to with closer connection." : "Your voice is kept. Only filler, repeats and extra words are trimmed.")
+                        .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 2)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading).padding(16)
             .background(Color.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -350,11 +398,26 @@ struct RephrasePane: View {
                  + Text(m.after.isEmpty ? (m.habitValue == .filler || m.habitValue == .hedging ? "  cut" : "") : "  →  “\(m.after)”").foregroundColor(m.after.isEmpty ? .secondary : Color.added))
                     .font(.system(size: 13.5, weight: .medium)).fixedSize(horizontal: false, vertical: true)
                 Text(m.why).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                if let e = m.evidence {
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "books.vertical").font(.system(size: 11)).foregroundStyle(.tertiary).padding(.top, 2)
+                        (Text("Research: ").fontWeight(.semibold) + Text(e) + Text(m.sourceName.map { "  (\($0))" } ?? ""))
+                            .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        if let u = m.sourceURL.flatMap(URL.init(string:)) { Link(destination: u) { Image(systemName: "arrow.up.right.square").font(.system(size: 11)) }.help("Open source") }
+                    }
+                    .padding(.top, 2)
+                }
             }
             Spacer(minLength: 0)
         }
         .padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.hairline))
+    }
+
+    private func countLine(_ r: RephraseResult) -> String {
+        func n(_ t: String) -> Int { t.split { $0.isWhitespace }.count }
+        let a = n(model.rephraseOriginal), b = n(r.rewrite)
+        return a == b ? "\(b) words" : "\(a) → \(b) words"
     }
 
     private func highlighted(_ text: String, phrases: [String], color: Color) -> Text {
