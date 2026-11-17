@@ -1,0 +1,12 @@
+.build/
+work/
+dist/
+*.app
+.DS_Store
+outputs/
+website/
+*.dmg
+kc-pass
+AGENT_PROGRESS.md
+PRODUCT_PLAN.md
+docs/
