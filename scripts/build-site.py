@@ -100,7 +100,7 @@ def page(path, title, desc, body, schema=None, noindex=False, canonical=None):
 <link rel="canonical" href="{url}"><link rel="icon" href="/favicon.png" type="image/png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website"><meta property="og:site_name" content="HeyHumanly"><meta property="og:title" content="{html.escape(title)}">
 <meta property="og:description" content="{html.escape(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{SITE}/og.png">
-<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#070708">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#070708"><meta name="google-site-verification" content="Z0gdQHwUIRf05KhmeTaF1pIuTKwzJaGXkySy6l3MHhY"><meta name="msvalidate.01" content="7214F04580277B31B88F4F83CF229AA0">
 <script>(function(){{try{{var t=localStorage.getItem("hhtheme")||"dark";document.documentElement.setAttribute("data-theme",t)}}catch(e){{}}}})()</script><style>{CSS}</style>{ld}</head><body><a class="skip" href="#main">Skip to content</a>
 <div class="bar">Free and open source. Runs on your Mac. <a href="{REL}">What's new in {V}</a></div>
 <header class="top"><div class="nav"><a class="brand" href="/"><img src="/favicon.png" alt="" width="36" height="36">HeyHumanly</a>
@@ -305,4 +305,6 @@ open(os.path.join(OUT, 'sitemap.xml'), 'w').write('<?xml version="1.0" encoding=
 # Staging hosts stay out of search; production is not affected.
 open(os.path.join(OUT, '_headers'), 'w').write("/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'self'; form-action 'none'\n")
 open(os.path.join(OUT, KEY + '.txt'), 'w').write(KEY)
+open(os.path.join(OUT, 'BingSiteAuth.xml'), 'w').write('<?xml version="1.0"?>\n<users>\n\t<user>7214F04580277B31B88F4F83CF229AA0</user>\n</users>')
+open(os.path.join(OUT, 'googlee5c1608434939199.html'), 'w').write('google-site-verification: googlee5c1608434939199.html')
 print('site built', V)
