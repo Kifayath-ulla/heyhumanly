@@ -6,6 +6,7 @@ struct HeyHumanlyApp: App {
     @StateObject private var model = CoachModel()
 
     init() {
+        Self.registerFonts()
         // Developer check: `HeyHumanly --guard "<original>" "<rewrite>"` prints what the meaning guard lets through.
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--guard"), i + 2 < args.count {
@@ -31,6 +32,13 @@ struct HeyHumanlyApp: App {
             }
             dispatchMain()
         }
+    }
+
+    /// Newsreader (headlines) and JetBrains Mono (labels), both SIL Open Font License, bundled in Resources/Fonts.
+    static func registerFonts() {
+        guard let dir = Bundle.main.resourceURL?.appendingPathComponent("Fonts"),
+              let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return }
+        for f in files where f.pathExtension.lowercased() == "ttf" { CTFontManagerRegisterFontsForURL(f as CFURL, .process, nil) }
     }
 
     var body: some Scene {

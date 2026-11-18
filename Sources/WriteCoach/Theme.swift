@@ -13,22 +13,31 @@ extension Color {
     static let brand = adaptive(light: rgb(0.075, 0.075, 0.086), dark: rgb(0.949, 0.949, 0.953))
     static let brandSoft = adaptive(light: rgb(0, 0, 0, 0.06), dark: rgb(1, 1, 1, 0.12))
     /// Neutral canvas (light grey / navy-black).
-    static let canvas = adaptive(light: rgb(0.969, 0.969, 0.961), dark: rgb(0.027, 0.027, 0.031))
+    static let canvas = adaptive(light: rgb(0.969, 0.965, 0.953), dark: rgb(0.027, 0.027, 0.031))
     /// Main content panel and cards (cards are a soft tint on the panel).
-    static let panel = adaptive(light: rgb(0.996, 0.996, 0.992), dark: rgb(0.055, 0.055, 0.063))
-    static let cardFill = adaptive(light: rgb(0.961, 0.961, 0.953), dark: rgb(0.098, 0.098, 0.110))
+    static let panel = adaptive(light: rgb(1, 1, 1), dark: rgb(0.055, 0.055, 0.063))
+    static let cardFill = adaptive(light: rgb(0.976, 0.976, 0.973), dark: rgb(0.098, 0.098, 0.110))
     /// Cards.
     static let surface = adaptive(light: .white, dark: rgb(0.055, 0.055, 0.063))
-    static let surfaceSunken = adaptive(light: rgb(0.937, 0.937, 0.929), dark: rgb(0.075, 0.075, 0.086))
-    static let hairline = adaptive(light: rgb(0.075, 0.075, 0.086, 0.11), dark: rgb(1, 1, 1, 0.075))
-    static let ink = adaptive(light: rgb(0.075, 0.075, 0.086), dark: rgb(0.925, 0.925, 0.941))
+    static let surfaceSunken = adaptive(light: rgb(0.953, 0.953, 0.957), dark: rgb(0.075, 0.075, 0.086))
+    static let hairline = adaptive(light: rgb(0, 0, 0, 0.075), dark: rgb(1, 1, 1, 0.075))
+    static let ink = adaptive(light: rgb(0.067, 0.067, 0.067), dark: rgb(0.925, 0.925, 0.941))
     static let added = adaptive(light: rgb(0.10, 0.50, 0.30), dark: rgb(0.45, 0.82, 0.58))
     static let removed = adaptive(light: rgb(0.86, 0.24, 0.26), dark: rgb(1.0, 0.48, 0.48))
+    /// Pale status colours (Lexicon-style): soft background plus readable text.
+    static let paleGreenBG = adaptive(light: rgb(0.929, 0.953, 0.925), dark: rgb(0.10, 0.18, 0.12))
+    static let paleGreenText = adaptive(light: rgb(0.204, 0.396, 0.220), dark: rgb(0.55, 0.85, 0.62))
+    static let paleRedBG = adaptive(light: rgb(0.992, 0.922, 0.925), dark: rgb(0.24, 0.11, 0.12))
+    static let paleRedText = adaptive(light: rgb(0.624, 0.184, 0.176), dark: rgb(1.0, 0.55, 0.55))
+    static let paleYellowBG = adaptive(light: rgb(0.984, 0.953, 0.859), dark: rgb(0.22, 0.18, 0.08))
+    static let paleYellowText = adaptive(light: rgb(0.584, 0.392, 0), dark: rgb(0.95, 0.80, 0.45))
+    static let paleBlueBG = adaptive(light: rgb(0.882, 0.953, 0.996), dark: rgb(0.08, 0.17, 0.25))
+    static let paleBlueText = adaptive(light: rgb(0.122, 0.424, 0.624), dark: rgb(0.55, 0.78, 0.98))
     /// Text on accent-filled buttons.
     static let onAccent = adaptive(light: .white, dark: rgb(0.075, 0.075, 0.086))
     /// Neutral grey, used for Teach Me and the italic accent words.
     static let teach = adaptive(light: rgb(0.20, 0.20, 0.20), dark: rgb(0.85, 0.85, 0.85))
-    static let shadow = adaptive(light: rgb(0, 0, 0, 0.08), dark: rgb(0, 0, 0, 0.5))
+    static let shadow = adaptive(light: rgb(0, 0, 0, 0.05), dark: rgb(0, 0, 0, 0.5))
 
     /// Hero sky: daylight in light mode, dusk in dark mode.
     static let sky1 = adaptive(light: rgb(0.06, 0.06, 0.06), dark: rgb(0.12, 0.12, 0.12))
@@ -38,7 +47,9 @@ extension Color {
 
 extension Font {
     /// Editorial serif for headlines (New York).
-    static func serif(_ size: CGFloat, weight: Font.Weight = .regular) -> Font { .system(size: size, weight: weight, design: .serif) }
+    static func serif(_ size: CGFloat, weight: Font.Weight = .regular) -> Font { .custom("Newsreader16pt-Regular", size: size).weight(weight) }
+    /// Small mono label font (JetBrains Mono), falls back to the system mono.
+    static func label(_ size: CGFloat, weight: Font.Weight = .medium) -> Font { .custom("JetBrainsMono-Regular", size: size).weight(weight) }
 }
 
 // MARK: - Building blocks
@@ -63,7 +74,7 @@ struct Eyebrow: View {
     let text: String
     var color: Color = .brand
     var body: some View {
-        Text(text.uppercased()).font(.system(size: 11, weight: .semibold)).tracking(1.4).foregroundStyle(color)
+        Text(text.uppercased()).font(.label(10.5, weight: .medium)).tracking(1.2).foregroundStyle(color)
     }
 }
 
@@ -76,7 +87,7 @@ struct Headline: View {
     var color: Color = .ink
     var accent: Color = .teach
     var body: some View {
-        (Text(before) + Text(italic).italic().foregroundColor(accent) + Text(after))
+        (Text(before) + Text(italic).font(.custom("Newsreader16pt-Italic", size: size)).foregroundColor(accent) + Text(after))
             .font(.serif(size))
             .foregroundStyle(color)
             .accessibilityElement(children: .combine)

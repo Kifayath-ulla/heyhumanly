@@ -6,6 +6,7 @@ import AppKit
 enum Habit: String, Codable, CaseIterable, Identifiable {
     case buriedPoint = "Buried the point", filler = "Filler", vague = "Vague wording", tooLong = "Too much in one sentence"
     case hedging = "Hedging", repetition = "Repetition", passive = "Passive voice", tone = "Tone", order = "Order of ideas"
+    case wordy = "Wordy phrases", openers = "Repeated openers"
     var id: String { rawValue }
     var blurb: String {
         switch self {
@@ -18,6 +19,8 @@ enum Habit: String, Codable, CaseIterable, Identifiable {
         case .passive: return "Hiding who does what."
         case .tone: return "The tone doesn't fit who is reading."
         case .order: return "Ideas arrive in the order you thought of them, not the order the reader needs."
+        case .wordy: return "Long phrases where a short word does the same job."
+        case .openers: return "Several sentences in a row that start with the same word."
         }
     }
     var icon: String {
@@ -31,6 +34,8 @@ enum Habit: String, Codable, CaseIterable, Identifiable {
         case .passive: return "arrow.uturn.right"
         case .tone: return "theatermasks"
         case .order: return "list.number"
+        case .wordy: return "text.badge.minus"
+        case .openers: return "text.alignleft"
         }
     }
     static func record(_ habits: [Habit]) {
@@ -128,7 +133,7 @@ extension Habit {
     /// Only habits with a real, checkable source get one. Wording stays within what the studies found.
     var evidence: Evidence? {
         switch self {
-        case .filler, .repetition:
+        case .filler, .repetition, .wordy:
             return Evidence(note: "In a study of web readers, cutting the word count made text measurably easier to use (about 58% better in Nielsen Norman Group's test), because most people skim instead of reading every word.",
                             name: "Nielsen Norman Group", url: "https://www.nngroup.com/articles/concise-scannable-and-objective-how-to-write-for-the-web")
         case .vague, .tooLong:
@@ -154,6 +159,8 @@ extension Habit {
         case .passive: return "Put who does the action first: “Priya reviewed it”, not “it was reviewed”."
         case .tone: return "Picture the reader and write the way you'd talk to them."
         case .order: return "Put ideas in the order the reader needs them."
+        case .wordy: return "Reach for the short word: “to” beats “in order to”, “because” beats “due to the fact that”."
+        case .openers: return "Start the next sentence with a different word or fold two sentences together."
         }
     }
 }
@@ -188,7 +195,7 @@ enum HabitDetector {
                 let cw = Set(words(clause).filter { $0.count > 3 })
                 guard !cw.isEmpty else { continue }
                 let score = Double(cw.intersection(leadWords).count) / Double(leadWords.count)
-                if score > (best?.score ?? 0.3), range.location != NSNotFound { best = (score, range.location, clause.trimmingCharacters(in: .whitespaces)) }
+                if score > (best?.score ?? 0.5), range.location != NSNotFound { best = (score, range.location, clause.trimmingCharacters(in: .whitespaces)) }
             }
             if let b = best {
                 let before = original.prefix(b.start).split(separator: " ").count
@@ -240,7 +247,29 @@ enum HabitDetector {
                 out.append(Move(habit: Habit.repetition.rawValue, before: rep.key, after: "", why: "“\(rep.key)” appears \(rep.value) times. Say it once, in the strongest place."))
             }
         }
-        let order: [Habit] = [.buriedPoint, .tooLong, .hedging, .filler, .vague, .repetition]
+        let order: [Habit] = [.buriedPoint, .tooLong, .hedging, .filler, .wordy, .vague, .repetition, .passive, .openers]
+        if !casual {
+            let hits = ProseQuality.wordyHits(in: original)
+            if let first = hits.first {
+                let pairs = hits.prefix(3).map { h -> String in
+                    let r = h.replacements.first ?? ""
+                    return r.isEmpty ? "“\(h.text)” (cut it)" : "“\(h.text)” → “\(r)”"
+                }.joined(separator: ", ")
+                out.append(Move(habit: Habit.wordy.rawValue, before: first.text, after: first.replacements.first ?? "",
+                                why: "\(hits.count) wordy \(hits.count == 1 ? "phrase" : "phrases"): \(pairs). The short version says the same thing in fewer words.",
+                                also: hits.dropFirst().map(\.text)))
+            }
+            let passive = ProseQuality.passiveHits(in: original)
+            if passive.count >= 2 {
+                out.append(Move(habit: Habit.passive.rawValue, before: passive[0], after: "",
+                                why: "\(passive.count) passive constructions (\(passive.prefix(3).map { "“\($0)”" }.joined(separator: ", "))). Passive voice hides who does what. Name the doer first when it matters.",
+                                also: Array(passive.dropFirst())))
+            }
+            if let opener = ProseQuality.repeatedOpener(in: original) {
+                out.append(Move(habit: Habit.openers.rawValue, before: opener, after: "",
+                                why: "Three sentences in a row start with “\(opener)”. Vary the start of one, or join two."))
+            }
+        }
         out = out.map { var m = $0; if let h = m.habitValue { let e = h.evidence; m.evidence = e?.note; m.sourceName = e?.name; m.sourceURL = e?.url }; return m }
         return out.sorted { (order.firstIndex(of: $0.habitValue ?? .tone) ?? 9) < (order.firstIndex(of: $1.habitValue ?? .tone) ?? 9) }.prefix(5).map { $0 }
     }
@@ -436,12 +465,15 @@ struct RephrasePane: View {
     }
 
     /// Only habits that remove words show the words struck through.
-    private func cutsWords(_ m: Move) -> Bool { [Habit.filler, .hedging, .vague, .repetition].contains(m.habitValue) }
+    private func cutsWords(_ m: Move) -> Bool { [Habit.filler, .hedging, .vague, .repetition, .wordy].contains(m.habitValue) }
 
     private func countLine(_ r: RephraseResult) -> String {
         func n(_ t: String) -> Int { t.split { $0.isWhitespace }.count }
         let a = n(model.rephraseOriginal), b = n(r.rewrite)
-        return a == b ? "\(b) words" : "\(a) → \(b) words"
+        let ra = ProseQuality.readability(model.rephraseOriginal), rb = ProseQuality.readability(r.rewrite)
+        let words = a == b ? "\(b) words" : "\(a) → \(b) words"
+        let grade = ra.gradeLabel == rb.gradeLabel ? rb.gradeLabel : "\(ra.gradeLabel) → \(rb.gradeLabel)"
+        return "\(words) · \(grade) · \(ProseQuality.clock(rb.readSeconds)) read"
     }
 
     private func highlighted(_ text: String, phrases: [String], color: Color) -> Text {

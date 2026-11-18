@@ -14,6 +14,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/HeyHumanly"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/HeyHumanly.icns "$APP/Contents/Resources/HeyHumanly.icns"
+mkdir -p "$APP/Contents/Resources/Fonts" && cp Resources/Fonts/*.ttf "$APP/Contents/Resources/Fonts/"
 lipo -archs "$APP/Contents/MacOS/HeyHumanly"
 if [ -n "${DEVELOPER_ID:-}" ]; then
   codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID" "$APP"

@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "HeyHumanly",
+  "version": "0.1.4",
+  "description": "Tighten what you write on any website in your own voice, and learn why each change helps. Runs on your local Ollama model.",
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "action": { "default_title": "HeyHumanly", "default_popup": "popup.html", "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png" } },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["activeTab", "scripting", "storage", "contextMenus"],
+  "host_permissions": ["http://localhost:11434/*", "http://127.0.0.1:11434/*"],
+  "commands": { "tighten": { "suggested_key": { "default": "Alt+Shift+H", "mac": "Alt+Shift+H" }, "description": "Tighten the selected text" } },
+  "homepage_url": "https://heyhumanly.com/extension/"
+}

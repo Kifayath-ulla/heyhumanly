@@ -1,0 +1,26 @@
+# HeyHumanly
+
+> Free, open-source writing coach for Mac and Chrome. It keeps the writer's tone, trims filler, repeated words and extra words, and explains the habit behind each change with research. It runs on a local AI model (Ollama) on the user's own computer.
+
+## Quick links
+
+- [Website](https://heyhumanly.com/)
+- [Chrome extension](https://heyhumanly.com/extension/)
+- [Install help](https://heyhumanly.com/install/)
+- [Privacy](https://heyhumanly.com/privacy/)
+- [Writing habits guide](https://heyhumanly.com/writing-habits/)
+- [Source code](https://github.com/Kifayath-ulla/heyhumanly)
+- [Releases](https://github.com/Kifayath-ulla/heyhumanly/releases)
+- [License (MIT)](https://github.com/Kifayath-ulla/heyhumanly/blob/main/LICENSE)
+
+## What it is
+
+A teaching-first alternative to cloud writing tools. Casual messages stay casual. Each suggestion names the writing habit, quotes the writer's own words, and links the study behind the tip (Nielsen Norman Group on concise writing, Oppenheimer 2006 on plain writing, Hosman on hedging). Where evidence is mixed, it says so.
+
+## Key details
+
+- Version: 0.1.4
+- License: MIT
+- Platforms: macOS 14+ app, Chrome extension
+- Models: any model installed in Ollama
+- Privacy: no account, no analytics, no cloud; text goes only to the user's local Ollama address

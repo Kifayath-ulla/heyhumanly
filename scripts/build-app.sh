@@ -18,6 +18,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/HeyHumanly"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/HeyHumanly.icns "$APP/Contents/Resources/HeyHumanly.icns"
+mkdir -p "$APP/Contents/Resources/Fonts" && cp Resources/Fonts/*.ttf "$APP/Contents/Resources/Fonts/"
 # Sign with the local dev identity when present so macOS keeps Accessibility permission across rebuilds
 # (ad-hoc signatures change every build). Falls back to ad-hoc signing.
 DEV_DIR="$HOME/Library/Application Support/HeyHumanlyDev"
