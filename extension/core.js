@@ -179,7 +179,7 @@
     return ((await r.json()).models || []).map((m) => m.name);
   }
   function httpError(status) {
-    const e = new Error(status === 403 ? 'Ollama blocked the extension. Run: launchctl setenv OLLAMA_ORIGINS "chrome-extension://*", then quit and reopen Ollama.' : 'Ollama returned an error (' + status + ').');
+    const e = new Error(status === 403 ? 'Ollama blocked the extension. In the HeyHumanly Mac app press Settings, Chrome extension, Allow. Or run: launchctl setenv OLLAMA_ORIGINS "chrome-extension://*", then quit and reopen Ollama.' : 'Ollama returned an error (' + status + ').');
     e.code = status === 403 ? 'blocked' : 'http'; return e;
   }
   async function pickModel(endpoint, wanted) {

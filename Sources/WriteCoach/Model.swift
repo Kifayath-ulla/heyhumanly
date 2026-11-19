@@ -10,6 +10,9 @@ final class CoachModel: ObservableObject {
     @Published var rephraseResult: RephraseResult?
     @Published var rephraseLoading = false
     @Published var rephraseOriginal = ""
+    @Published var browserAllowed: Bool? = nil
+    @Published var browserBusy = false
+    @Published var browserNote: String? = nil
     @Published var rephraseGoal: RephraseGoal = .sameTone
     @Published var habitsVersion = 0
     @Published var result = CoachResult.empty

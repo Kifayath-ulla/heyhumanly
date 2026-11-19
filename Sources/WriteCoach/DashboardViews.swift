@@ -517,6 +517,7 @@ struct SettingsView: View {
             styleCard
             learningCard
             aiCard
+            browserCard
             shortcutCard
             permissionsCard
             dataCard
@@ -836,6 +837,49 @@ struct SettingsView: View {
                 .font(.system(size: 11.5)).foregroundStyle(.secondary)
         }
         .card()
+    }
+
+    private var browserCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardTitle("Chrome extension", icon: "globe")
+            HStack(spacing: 12) {
+                Image(systemName: "puzzlepiece.extension").font(.system(size: 18)).foregroundStyle(Color.brand)
+                    .frame(width: 34, height: 34).background(Color.brandSoft, in: RoundedRectangle(cornerRadius: 8))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Let the browser extension use your local model").font(.system(size: 13, weight: .semibold))
+                    Text("Ollama blocks browser extensions by default. This allows only extensions and local pages to reach it on this Mac, keeps that after a restart, and restarts Ollama once.")
+                        .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                if model.browserBusy {
+                    ProgressView().controlSize(.small)
+                } else if model.browserAllowed == true {
+                    Label("Allowed", systemImage: "checkmark.circle.fill").font(.system(size: 12, weight: .medium)).foregroundStyle(Color.added)
+                } else {
+                    Button("Allow") {
+                        model.browserBusy = true; model.browserNote = nil
+                        Task {
+                            model.browserNote = await BrowserAccess.enable()
+                            model.browserAllowed = await BrowserAccess.isAllowed(endpoint: "http://localhost:11434")
+                            model.browserBusy = false; model.refreshStatus()
+                        }
+                    }.buttonStyle(PrimaryButtonStyle()).accessibilityLabel("Allow the Chrome extension to use Ollama")
+                }
+            }
+            if let note = model.browserNote { Text(note).font(.system(size: 11.5)).foregroundStyle(Color.removed) }
+            HStack(spacing: 14) {
+                Button("Get the extension") { NSWorkspace.shared.open(URL(string: "https://heyhumanly.com/extension/")!) }
+                    .buttonStyle(.plain).font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.ink.opacity(0.7))
+                if model.browserAllowed == true && !model.browserBusy {
+                    Button("Turn off") {
+                        model.browserBusy = true
+                        Task { await BrowserAccess.disable(); model.browserAllowed = await BrowserAccess.isAllowed(endpoint: "http://localhost:11434"); model.browserBusy = false; model.refreshStatus() }
+                    }.buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .card()
+        .task { model.browserAllowed = await BrowserAccess.isAllowed(endpoint: "http://localhost:11434") }
     }
 
     private var permissionsCard: some View {

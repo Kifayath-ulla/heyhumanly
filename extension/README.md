@@ -5,7 +5,7 @@ Runs on your local Ollama model. No server, no account, no analytics.
 
 ## Install (until the Chrome Web Store listing)
 1. Install Ollama and a model, for example `ollama pull qwen2.5:3b`.
-2. Let Chrome reach Ollama: `launchctl setenv OLLAMA_ORIGINS "chrome-extension://*"`, then quit and reopen Ollama.
+2. Let Chrome reach Ollama: in the HeyHumanly Mac app press Settings, Chrome extension, Allow. Or run `launchctl setenv OLLAMA_ORIGINS "chrome-extension://*"`, then quit and reopen Ollama.
 3. Open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick this folder.
 4. Select text in any text box and press Alt+Shift+H (or right-click, Tighten with HeyHumanly).
 
