@@ -13,7 +13,7 @@ EXT = f"https://github.com/{REPO}/releases/download/v{V}/{EXT_FILE}"
 REL = f"https://github.com/{REPO}/releases/tag/v{V}"
 SRC = f"https://github.com/{REPO}"
 shutil.rmtree(OUT, ignore_errors=True)
-for sub in ['install', 'privacy', 'writing-habits', 'local-ai-writing-coach-mac', 'extension', 'fonts']: os.makedirs(os.path.join(OUT, sub), exist_ok=True)
+for sub in ['install', 'privacy', 'writing-habits', 'local-ai-writing-coach-mac', 'extension', 'fonts', 'grammarly-alternative', 'private-writing-assistant']: os.makedirs(os.path.join(OUT, sub), exist_ok=True)
 for f in ['favicon.png', 'apple-touch-icon.png', 'og.png', 'app.png', 'icon-192.png', 'grain.png']:
     s = os.path.join(ROOT, 'site-src', f)
     if os.path.exists(s): shutil.copy(s, os.path.join(OUT, f))
@@ -137,7 +137,12 @@ main>section:first-child,main>.wrap:first-child{}
 
 def page(path, title, desc, body, schema=None, noindex=False, canonical=None):
     url = SITE + canonical if canonical is not None else SITE + path
-    ld = f'<script type="application/ld+json">{json.dumps(schema)}</script>' if schema else ''
+    crumbs = ''
+    if path not in ('/', '/404.html'):
+        crumbs = '<script type="application/ld+json">' + json.dumps({"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "HeyHumanly", "item": SITE + "/"},
+            {"@type": "ListItem", "position": 2, "name": title.split(' | ')[0].split(':')[0], "item": SITE + path}]}) + '</script>'
+    ld = (f'<script type="application/ld+json">{json.dumps(schema)}</script>' if schema else '') + crumbs
     robots = '<meta name="robots" content="noindex">' if noindex else ''
     out = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}</title><meta name="description" content="{html.escape(desc)}">{robots}
@@ -152,7 +157,7 @@ def page(path, title, desc, body, schema=None, noindex=False, canonical=None):
 <nav class="links" aria-label="Main"><a class="hide-s" href="/#how">How it works</a><a class="hide-s" href="/#features">Features</a><a class="hide-s" href="/extension/">Chrome</a><a class="hide-s" href="/install/">Install</a><a class="hide-s" href="/#faq">FAQ</a><a class="hide-s" href="{SRC}">GitHub</a><button class="tg" id="tg" type="button" aria-label="Switch between light and dark theme">◐</button><a class="btn sm dl" href="{DMG}" data-dl>Download for Mac</a></nav></div></header>
 <main id="main">{body}</main>
 <footer><div class="wrap"><div class="fgrid"><div><a class="brand" href="/"><img src="/favicon.png" alt="" width="28" height="28">HeyHumanly</a><p style="margin:12px 0 0;max-width:22em">A free writing coach for Mac and Chrome. It keeps your tone and teaches you why each change helps, with an AI model on your own computer.</p></div>
-<div><h4>Product</h4><a href="/#how">How it works</a><a href="/#features">Features</a><a href="/extension/">Chrome extension</a><a href="/#privacy">Privacy</a><a href="/#faq">FAQ</a><a href="/writing-habits/">Writing habits guide</a><a href="/local-ai-writing-coach-mac/">Local AI setup</a></div>
+<div><h4>Product</h4><a href="/#how">How it works</a><a href="/#features">Features</a><a href="/extension/">Chrome extension</a><a href="/#privacy">Privacy</a><a href="/#faq">FAQ</a><a href="/writing-habits/">Writing habits guide</a><a href="/local-ai-writing-coach-mac/">Local AI setup</a><a href="/grammarly-alternative/">Grammarly alternative</a><a href="/private-writing-assistant/">Private writing assistant</a></div>
 <div><h4>Get started</h4><a href="{DMG}" data-dl>Download for Mac</a><a href="{EXT}">Chrome extension (zip)</a><a href="/install/">Install help</a><a href="{REL}">Release notes &amp; checksum</a></div>
 <div><h4>Open source</h4><a href="{SRC}">Source code</a><a href="{SRC}/issues">Report a bug</a><a href="{SRC}/blob/main/LICENSE">MIT license</a><a href="/privacy/">Privacy details</a><a href="/llms.txt">llms.txt</a></div></div>
 <div class="legal"><span>HeyHumanly {V} · MIT License · Mac (macOS 14+) and Chrome</span><span>Design inspired by Lexicon (MIT). Models are separate downloads under their own licenses.</span></div></div></footer>
@@ -301,8 +306,8 @@ schema = {"@context": "https://schema.org", "@graph": [
    "contributor": [{"@type": "Thing", "name": "Claude", "description": "AI Contributor"}, {"@type": "Thing", "name": "OpenBot", "description": "AI Contributor"}]},
   {"@type": "Organization", "@id": SITE + "/#org", "name": "HeyHumanly", "url": SITE, "logo": SITE + "/apple-touch-icon.png", "sameAs": [SRC]},
   {"@type": "FAQPage", "mainEntity": _faq}]}
-page('/', 'HeyHumanly: free writing coach for Mac and Chrome that keeps your tone and explains why',
-     'HeyHumanly is a free, open-source writing coach for Mac and Chrome. It keeps your tone, trims filler and extra words, and explains each change with research, using a local AI model.',
+page('/', 'HeyHumanly: free writing coach for Mac and Chrome',
+     'Free, open-source writing coach for Mac and Chrome. Keeps your tone, trims filler, and explains every change with research. Runs on a local AI model.',
      hero + how + setup + manifesto + privacy + limits + faq + final, schema)
 
 ext_page = f"""
@@ -388,14 +393,49 @@ ol_page = f"""<section style="border:0"><div class="wrap" style="max-width:820px
 <h2 style="font-size:28px;margin-top:36px">Licenses and honesty notes</h2><p>Qwen 2.5 7B is Apache-2.0. The 3B model has its own Qwen license. Local models are weaker than the largest cloud models; HeyHumanly's explanations come from rules in the app and your own text, not from guesses by the model. Downloading Ollama and the model needs internet once; after that the coach works offline.</p></div></section>"""
 page('/local-ai-writing-coach-mac/', 'Set up a local AI writing coach on Mac with Ollama | HeyHumanly',
      'How to run a local AI writing coach on a Mac: install Ollama, download Qwen 2.5, requirements for 8 GB and 16 GB Macs, and licenses.', ol_page)
+
+ga = f"""<section style="padding-top:140px"><div class="wrap" style="max-width:820px"><span class="eyebrow">Comparison</span><h1 style="margin-left:0;text-align:left;font-size:clamp(32px,5vw,54px)">A Grammarly alternative that keeps your tone and runs on your computer</h1>
+<p class="lede" style="margin-left:0;text-align:left">Grammarly is a polished tool, and for many people it is the right one. HeyHumanly is built for a different job: keeping your voice, teaching you why a change helps, and never sending your writing to a server.</p>
+<h2 style="font-size:30px;margin-top:34px">The short comparison</h2>
+<table><tr><th></th><td><b>HeyHumanly</b></td><td><b>Cloud grammar tools</b></td></tr>
+<tr><th>Where text goes</th><td>A model on your own computer (Ollama). Nothing is uploaded.</td><td>Sent to the company's servers to be checked.</td></tr>
+<tr><th>Your tone</th><td>Kept. Casual stays casual; only filler, repeats and extra words are trimmed.</td><td>Varies by tool and setting. Many push towards a polished, formal register.</td></tr>
+<tr><th>Explains why</th><td>Names the habit, quotes your words, links the study behind the tip.</td><td>Usually shows the fix and a short rule.</td></tr>
+<tr><th>Price</th><td>Free and open source (MIT). No account.</td><td>Free tier plus paid plans.</td></tr>
+<tr><th>Platforms</th><td>Mac app and Chrome extension.</td><td>Most platforms and apps.</td></tr>
+<tr><th>Grammar depth</th><td>Good, not exhaustive. Depends on the model you run.</td><td>Mature, large rule sets and years of tuning.</td></tr></table>
+<h2 style="font-size:30px;margin-top:38px">Who HeyHumanly is for</h2>
+<p style="color:var(--mute)">People who want to get better at writing, not just have sentences fixed. People who write things they would not want on someone else's server. People who find formal rewrites sound unlike them.</p>
+<h2 style="font-size:30px;margin-top:30px">Who should stay with a cloud tool</h2>
+<p style="color:var(--mute)">If you need deep grammar coverage across Windows, mobile and Office apps, or team features and style guides, HeyHumanly does not replace that today. It also needs a local model, which takes disk space and a few minutes to download.</p>
+<div class="cta" style="justify-content:flex-start;margin-top:26px">{dl}<a class="btn ghost" href="/extension/">Add to Chrome</a></div>
+<p class="fine" style="text-align:left;margin-top:18px">See also: <a href="/private-writing-assistant/">private writing assistant</a> · <a href="/writing-habits/">writing habits guide</a> · <a href="/">home</a></p></div></section>"""
+page('/grammarly-alternative/', 'A free Grammarly alternative that keeps your tone | HeyHumanly',
+     'Compare HeyHumanly with cloud grammar tools: it runs on your computer, keeps your tone, explains why, and is free and open source. See who it suits.', ga)
+
+pw = f"""<section style="padding-top:140px"><div class="wrap" style="max-width:820px"><span class="eyebrow">Guide</span><h1 style="margin-left:0;text-align:left;font-size:clamp(32px,5vw,54px)">A private writing assistant: how to check your writing without uploading it</h1>
+<p class="lede" style="margin-left:0;text-align:left">Most writing helpers send what you type to a server. If you write contracts, health notes, job applications, or just things you would rather keep private, there is another way: run the model on your own computer.</p>
+<h2 style="font-size:30px;margin-top:30px">How a local writing assistant works</h2>
+<ol class="steps"><li><h3>A model runs on your computer</h3><p>Tools like <a href="https://ollama.com">Ollama</a> download an open model and run it locally. Your text never leaves the machine, and it works offline once the model is downloaded.</p></li>
+<li><h3>An app asks the model for an edit</h3><p>HeyHumanly sends your text only to the Ollama address on your own computer, by default <code>localhost</code>. It keeps your tone and trims filler, repeats and extra words.</p></li>
+<li><h3>Rules explain the change</h3><p>The explanations come from fixed rules and your own words, not from guesses by the model, so each tip names a habit and links its source.</p></li></ol>
+<h2 style="font-size:30px;margin-top:34px">What to check in any "private" tool</h2>
+<ul style="color:var(--mute);margin:12px 0 0 20px;display:grid;gap:8px"><li>Does it work with the network turned off?</li><li>Is the source code public so you can see what it sends?</li><li>Does it need an account, and does it send analytics?</li><li>Where do saved sessions live, and can you delete them?</li></ul>
+<p style="margin-top:14px">HeyHumanly's answers: yes it works offline after setup, the code is on <a href="{SRC}">GitHub</a>, there is no account or analytics, and sessions are stored in the app's preferences on your Mac and can be cleared in Settings. Read the full <a href="/privacy/">privacy page</a>.</p>
+<h2 style="font-size:30px;margin-top:34px">Honest limits</h2>
+<p style="color:var(--mute)">Local models are smaller than the biggest cloud models, so they miss some mistakes. The first setup downloads a model of 2 to 5 GB. In return, nothing you write is uploaded.</p>
+<div class="cta" style="justify-content:flex-start;margin-top:26px">{dl}<a class="btn ghost" href="/local-ai-writing-coach-mac/">Local AI setup guide</a></div>
+<p class="fine" style="text-align:left;margin-top:18px">See also: <a href="/grammarly-alternative/">Grammarly alternative</a> · <a href="/extension/">Chrome extension</a> · <a href="/">home</a></p></div></section>"""
+page('/private-writing-assistant/', 'A private writing assistant that runs on your computer | HeyHumanly',
+     'How to check and improve your writing without uploading it: run a local model, keep your tone, and see why each change helps. Free and open source.', pw)
 nf = '<section style="border:0;text-align:center;padding:90px 0"><h1>Page not found</h1><p class="lede" style="margin-inline:auto">That page does not exist.</p><a class="btn" href="/">Go to the home page</a></section>'
 page('/404.html', 'Page not found · HeyHumanly', 'Page not found.', nf, noindex=True, canonical='/')
 
 open(os.path.join(OUT, 'robots.txt'), 'w').write(f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n")
-urls = ['/', '/extension/', '/install/', '/writing-habits/', '/local-ai-writing-coach-mac/', '/privacy/']
+urls = ['/', '/extension/', '/grammarly-alternative/', '/private-writing-assistant/', '/install/', '/writing-habits/', '/local-ai-writing-coach-mac/', '/privacy/']
 open(os.path.join(OUT, 'sitemap.xml'), 'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + ''.join(f'<url><loc>{SITE}{u}</loc><lastmod>{R["date"]}</lastmod></url>\n' for u in urls) + '</urlset>\n')
 # Staging hosts stay out of search; production is not affected.
-open(os.path.join(OUT, '_headers'), 'w').write("/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'self'; form-action 'none'\n")
+open(os.path.join(OUT, '_headers'), 'w').write("/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'self'; form-action 'none'\n\n/fonts/*\n  Cache-Control: public, max-age=31536000, immutable\n\n/*.png\n  Cache-Control: public, max-age=604800\n")
 open(os.path.join(OUT, KEY + '.txt'), 'w').write(KEY)
 open(os.path.join(OUT, 'llms.txt'), 'w').write(f"""# HeyHumanly
 
