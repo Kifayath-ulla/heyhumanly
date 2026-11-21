@@ -15,14 +15,14 @@
     if (sel && sel.rangeCount && String(sel).trim()) {
       const range = sel.getRangeAt(0).cloneRange();
       const editable = el && (el.isContentEditable || (range.commonAncestorContainer.parentElement && range.commonAncestorContainer.parentElement.isContentEditable));
-      return { kind: editable ? 'rich' : 'page', range, text: String(sel) };
+      return { kind: editable ? 'rich' : 'page', range, text: String(sel), snap: String(range) };
     }
-    if (el && el.isContentEditable && el.innerText.trim()) { const range = document.createRange(); range.selectNodeContents(el); return { kind: 'rich', range, text: el.innerText }; }
+    if (el && el.isContentEditable && el.innerText.trim()) { const range = document.createRange(); range.selectNodeContents(el); return { kind: 'rich', range, text: el.innerText, snap: String(range) }; }
     return null;
   }
   function changed() {
     if (target.kind === 'field') return !target.el.isConnected || target.el.value.slice(target.a, target.b) !== target.text;
-    if (target.kind === 'rich') return String(target.range) !== target.text;
+    if (target.kind === 'rich') return String(target.range) !== target.snap;
     return false;
   }
   function apply(text) {
