@@ -57,6 +57,9 @@ enum RewriteGuard {
         for w in fromWords where !toWords.contains(w) {
             if slang.contains(w) || keep.contains(w) { return .drop }
         }
+        // Numbers are facts: a changed or dropped number ("4,200" → "4,000") is never accepted.
+        let fromDigits = from.filter(\.isNumber)
+        if !fromDigits.isEmpty, fromDigits != to.filter(\.isNumber) { return .drop }
         if from.isEmpty || to.isEmpty { return .keep }
         // "5pm" → "5 p.m.", "10k" → "10K": formatting taste, not a mistake.
         let a = alnum(from), b = alnum(to)
