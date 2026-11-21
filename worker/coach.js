@@ -99,7 +99,7 @@ export async function handleCoach(request, env, now = Date.now()) {
   const enabled = env.COACH_ENABLED === 'true' && env.AI && env.ALLOWANCE && env.IP_SALT;
   const day = today(now);
   if (request.method === 'GET' && url.pathname === '/api/v1/allowance') {
-    const install = url.searchParams.get('install') || '';
+    const install = (url.searchParams.get('install') || '').toLowerCase();
     if (!INSTALL.test(install)) return json({ error: 'bad_request' }, 400);
     if (!enabled) return json({ ...base(env, 0, now), available: false, error: 'unavailable' }, 503);
     const p = await ledgerOf(env).peek(install, day);
@@ -110,7 +110,7 @@ export async function handleCoach(request, env, now = Date.now()) {
   if (!(request.headers.get('Content-Type') || '').startsWith('application/json')) return json({ error: 'bad_request' }, 415);
   let body; try { body = await request.json(); } catch { return json({ error: 'bad_request' }, 400); }
   const text = typeof body?.text === 'string' ? body.text.trim() : '', goal = GOALS.has(body?.goal) ? body.goal : 'sameTone';
-  const install = typeof body?.install === 'string' ? body.install : '';
+  const install = typeof body?.install === 'string' ? body.install.toLowerCase() : '';
   if (!INSTALL.test(install) || !text) return json({ error: 'bad_request' }, 400);
   if (text.length > LIMITS.maxChars) return json({ error: 'too_long', maxChars: LIMITS.maxChars }, 413);
   if (!enabled) return json({ ...base(env, 0, now), error: 'unavailable' }, 503);
