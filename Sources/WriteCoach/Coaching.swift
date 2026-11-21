@@ -267,6 +267,8 @@ struct ChangeSet {
         }.joined()
     }
 
+    private static let alphanumerics = CharacterSet.letters.union(.decimalDigits)
+
     /// Cheap, reliable categories for mechanical edits; nil means "ask the model".
     static func guessCategory(from: String, to: String) -> MistakeCategory? {
         if from.isEmpty || to.isEmpty {
@@ -279,7 +281,7 @@ struct ChangeSet {
         // Contractions: "dont" → "don't", "its" → "it's".
         if from.replacingOccurrences(of: "'", with: "").lowercased() == to.replacingOccurrences(of: "'", with: "").replacingOccurrences(of: "’", with: "").lowercased(),
            from.contains("'") != (to.contains("'") || to.contains("’")) { return .spelling }
-        let strip: (String) -> String = { $0.unicodeScalars.filter { CharacterSet.letters.union(.decimalDigits).contains($0) }.map(String.init).joined() }
+        let strip: (String) -> String = { String(String.UnicodeScalarView($0.unicodeScalars.filter { alphanumerics.contains($0) })) }
         if strip(from).lowercased() == strip(to).lowercased() {
             return strip(from) == strip(to) ? .punctuation : (from.contains("'") || to.contains("'") ? .spelling : .capitalization)
         }
