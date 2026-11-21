@@ -33,14 +33,20 @@ enum RewriteGuard {
     static func sanitize(original: String, rewrite: String, preserve: [String]) -> String {
         let set = ChangeSet(original: original, rewrite: rewrite)
         guard !set.changes.isEmpty else { return rewrite }
-        let gone = dismissed
         let keep = Set(preserve.map { $0.lowercased() })
+        // First allow numbers the rewrite moved; if that loses one (its new spot was reverted), keep every number in place.
+        let lenient = apply(set, original: original, rewrite: rewrite, keep: keep, allowMoves: true)
+        if covers(lenient, original) { return lenient }
+        return apply(set, original: original, rewrite: rewrite, keep: keep, allowMoves: false)
+    }
+
+    private static func apply(_ set: ChangeSet, original: String, rewrite: String, keep: Set<String>, allowMoves: Bool) -> String {
+        let gone = dismissed
         var accepted = Set<UUID>()
         var overrides: [UUID: String] = [:]
         for c in set.changes {
             if gone.contains(key(from: c.from, to: c.to)) { continue }
-            // A number cut here but kept elsewhere in the rewrite was moved, not lost.
-            let moved = numbersSurvive(c.from, original: original, rewrite: rewrite)
+            let moved = allowMoves && numbersSurvive(c.from, original: original, rewrite: rewrite)
             switch verdict(from: c.from, to: c.to, keep: keep, numbersMoved: moved) {
             case .keep: accepted.insert(c.id)
             case .drop: break
@@ -88,12 +94,21 @@ enum RewriteGuard {
 
     // MARK: Helpers
 
-    private static func numbers(_ s: String) -> [String] { s.split(whereSeparator: { !$0.isNumber }).map(String.init) }
+    /// Whole numbers as written: "12.50", "4,200", "10:30" and "12/3" are one token each.
+    private static func numbers(_ s: String) -> [String] {
+        let re = try! NSRegularExpression(pattern: "\\d+(?:[.,:/]\\d+)*")
+        return re.matches(in: s, range: NSRange(s.startIndex..., in: s)).compactMap { Range($0.range, in: s).map { String(s[$0]) } }
+    }
+    private static func count(_ n: String, in list: [String]) -> Int { list.filter { $0 == n }.count }
     private static func numbersSurvive(_ cut: String, original: String, rewrite: String) -> Bool {
         let runs = numbers(cut)
         guard !runs.isEmpty else { return false }
         let before = numbers(original), after = numbers(rewrite)
-        return runs.allSatisfy { n in after.filter { $0 == n }.count >= before.filter { $0 == n }.count }
+        return runs.allSatisfy { count($0, in: after) >= count($0, in: before) }
+    }
+    private static func covers(_ text: String, _ original: String) -> Bool {
+        let before = numbers(original), after = numbers(text)
+        return before.allSatisfy { count($0, in: after) >= count($0, in: before) }
     }
 
     private static func words(_ s: String) -> [String] {
