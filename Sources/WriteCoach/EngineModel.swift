@@ -71,7 +71,9 @@ extension CoachModel {
     /// (the coach window asks before anything goes online). Upgrades keep the Ollama path they had.
     func autoPickEngine() async {
         guard settings.engine == nil else { return }
-        if settings.onboarded == true { setEngine(.ollama); return }
+        let chooserKey = "heyhumanly.engineChooserSeen"
+        if settings.onboarded == true, !UserDefaults.standard.bool(forKey: chooserKey) { setEngine(.ollama); return }
+        UserDefaults.standard.set(true, forKey: chooserKey)
         if AppleModel.isAvailable { setEngine(.appleOnDevice); return }
         if case .running(let models) = await OllamaStatus.check(endpoint: settings.endpoint),
            let pick = models.contains(settings.model) ? settings.model : models.first(where: { !$0.localizedCaseInsensitiveContains("embed") && !Self.isCloudModel($0) }) {
