@@ -42,7 +42,7 @@
     'Repeated openers': 'Start the next sentence with a different word or fold two sentences together.',
   };
   const CUTS = new Set(['Filler', 'Vague wording', 'Repetition', 'Wordy phrases']);
-  const occurs = (phrase, text) => phrase ? find(new RegExp('(?<![\\p{L}\\p{N}])' + esc(phrase) + '(?![\\p{L}\\p{N}])', 'iu'), text).length : 0;
+  const occurs = (phrase, text) => phrase ? find(new RegExp('(?<![\\p{L}\\p{N}])' + esc(phrase).replace(/ +/g, '[^\\p{L}\\p{N}]+') + '(?![\\p{L}\\p{N}])', 'iu'), text).length : 0;
   // A "cut" card is only true if the rewrite has fewer copies of the phrase than the original.
   function confirmed(m, original, rewrite) {
     if (!CUTS.has(m.habit) || rewrite === original) return m;

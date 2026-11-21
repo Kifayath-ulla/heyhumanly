@@ -185,7 +185,7 @@ enum HabitDetector {
     private static let cutHabits: Set<Habit> = [.filler, .vague, .repetition, .wordy]
     private static func count(_ phrase: String, in text: String) -> Int {
         guard !phrase.isEmpty else { return 0 }
-        return occurrences("(?<![\\p{L}\\p{N}])" + NSRegularExpression.escapedPattern(for: phrase) + "(?![\\p{L}\\p{N}])", in: text).count
+        return occurrences("(?<![\\p{L}\\p{N}])" + NSRegularExpression.escapedPattern(for: phrase).replacingOccurrences(of: " ", with: "[^\\p{L}\\p{N}]+") + "(?![\\p{L}\\p{N}])", in: text).count
     }
     /// A "cut" card is only true if the rewrite has fewer copies of the phrase than the original.
     static func confirmed(_ move: Move, original: String, rewrite: String) -> Move? {
