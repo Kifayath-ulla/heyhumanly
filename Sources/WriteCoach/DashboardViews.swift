@@ -33,6 +33,7 @@ struct DashboardView: View {
             .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.hairline, lineWidth: 0.6))
             .padding(.vertical, 10).padding(.trailing, 10)
         }
+        .accessibilityHidden(model.onboardingStep != nil)   // the tour is modal for VoiceOver too
         .background(Color.canvas.ignoresSafeArea())
         .overlay { if model.onboardingStep != nil { OnboardingView(model: model).transition(.opacity) } }
         .animation(.easeOut(duration: 0.22), value: model.section)
@@ -86,7 +87,7 @@ struct Sidebar: View {
 
             Button { model.section = .settings } label: {
                 HStack(spacing: 8) {
-                    StatusDot(color: model.ollama.color)
+                    StatusDot(color: model.ollama.color(model: model.settings.model))
                     Text(model.ollama.summary(model: model.settings.model)).font(.system(size: 12)).lineLimit(1)
                 }
                 .foregroundStyle(Color.ink.opacity(0.6)).padding(.horizontal, 10).padding(.vertical, 6)
@@ -118,6 +119,11 @@ struct Sidebar: View {
 extension OllamaStatus {
     var color: Color {
         switch self { case .running: return .added; case .checking: return .orange; default: return .removed }
+    }
+    /// Green only when the selected model can actually run; orange while checking or when it still needs downloading.
+    func color(model: String) -> Color {
+        if case .running(let models) = self, !models.contains(model) { return .orange }
+        return color
     }
     func summary(model: String) -> String {
         switch self {
@@ -157,7 +163,7 @@ struct EmptyState: View {
         VStack(spacing: 12) {
             Mascot(size: 64, mood: .thinking)
             Text(title).font(.serif(22)).foregroundStyle(Color.ink)
-            Text(message).font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.6)).multilineTextAlignment(.center).frame(maxWidth: 420)
+            Text(message).font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.6)).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).frame(maxWidth: 420)
             if let action {
                 Button(action.title, action: action.run).buttonStyle(PrimaryButtonStyle()).padding(.top, 6).accessibilityLabel(action.title)
             }
@@ -307,16 +313,15 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 12) {
                 (Text("Write like ") + Text("yourself").italic() + Text(", just clearer."))
                     .font(.serif(28)).foregroundStyle(Color.ink).fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: 7) {
-                    Text("Select text anywhere, press").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65))
-                    ShortcutKeys(label: model.shortcutLabel, size: 12)
-                    Text("and it is fixed on this Mac.").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65))
+                // One line when it fits, otherwise break after the shortcut instead of truncating.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 7) { bannerPress; bannerRest }
+                    VStack(alignment: .leading, spacing: 6) { HStack(spacing: 7) { bannerPress }; bannerRest }
+                    VStack(alignment: .leading, spacing: 6) { bannerPress; bannerRest }
                 }
-                HStack(spacing: 10) {
-                    Button { model.showCoach() } label: { Label("Open the coach", systemImage: "sparkles") }
-                        .buttonStyle(PrimaryButtonStyle()).accessibilityLabel("Open the coach")
-                    Button { model.section = .insights } label: { Text("See your progress") }
-                        .buttonStyle(SecondaryButtonStyle()).accessibilityLabel("See your progress")
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) { bannerButtons }
+                    VStack(alignment: .leading, spacing: 8) { bannerButtons }
                 }
                 .padding(.top, 2)
             }
@@ -324,6 +329,22 @@ struct HomeView: View {
             Mascot(size: 84, mood: model.history.isEmpty ? .thinking : .happy)
         }
         .card(padding: 26, radius: 22)
+    }
+
+    @ViewBuilder private var bannerPress: some View {
+        Text("Select text anywhere, press").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65)).fixedSize()
+        ShortcutKeys(label: model.shortcutLabel, size: 12)
+    }
+
+    private var bannerRest: some View {
+        Text("and it is fixed on this Mac.").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65)).fixedSize()
+    }
+
+    @ViewBuilder private var bannerButtons: some View {
+        Button { model.showCoach() } label: { Label("Open the coach", systemImage: "sparkles").fixedSize() }
+            .buttonStyle(PrimaryButtonStyle()).accessibilityLabel("Open the coach")
+        Button { model.section = .insights } label: { Text("See your progress").fixedSize() }
+            .buttonStyle(SecondaryButtonStyle()).accessibilityLabel("See your progress")
     }
 
     private var welcome: String {
@@ -386,7 +407,8 @@ struct HomeView: View {
                 Button { model.refreshStatus() } label: { Label("Recheck", systemImage: "arrow.clockwise") }
                     .buttonStyle(SecondaryButtonStyle()).accessibilityLabel("Recheck setup")
             }
-            HStack(spacing: 12) {
+            // Wraps to more rows instead of squeezing five cards until their titles break mid-word.
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12, alignment: .top)], alignment: .leading, spacing: 12) {
                 ForEach(Array(steps.enumerated()), id: \.element.id) { index, step in
                     setupCard(index: index + 1, step: step)
                 }
@@ -402,8 +424,9 @@ struct HomeView: View {
                 Image(systemName: step.done ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 15)).foregroundStyle(step.done ? Color.brand : Color.ink.opacity(0.25))
             }
-            Text(step.title).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Color.ink).lineLimit(2).padding(.top, 8)
-            Text(step.detail).font(.system(size: 11.5)).foregroundStyle(Color.ink.opacity(0.55)).lineLimit(2)
+            Text(step.title).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Color.ink)
+                .fixedSize(horizontal: false, vertical: true).padding(.top, 8)
+            Text(step.detail).font(.system(size: 11.5)).foregroundStyle(Color.ink.opacity(0.55)).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             if !step.done, let action = action(for: index) {
                 Button(action.0, action: action.1).buttonStyle(.plain).font(.system(size: 12, weight: .semibold))
@@ -539,7 +562,7 @@ struct SettingsView: View {
             HStack {
                 cardTitle("Local AI", icon: "cpu")
                 Spacer()
-                StatusDot(color: model.ollama.color)
+                StatusDot(color: model.ollama.color(model: model.settings.model))
                 Text(model.ollama.summary(model: model.settings.model)).font(.system(size: 12)).foregroundStyle(.secondary)
                 Button { model.saveConnection() } label: { Image(systemName: "arrow.clockwise") }
                     .buttonStyle(.plain).foregroundStyle(.secondary).help("Check again").accessibilityLabel("Check Ollama again")
@@ -605,7 +628,7 @@ struct SettingsView: View {
                 cardTitle("Companion", icon: "text.cursor")
                 Spacer()
                 Toggle("Check as I type", isOn: Binding(get: { model.settings.autoCheck }, set: { v in setting { $0.autoCheck = v } }))
-                    .toggleStyle(.switch).controlSize(.small).tint(.brand)
+                    .toggleStyle(.switch).controlSize(.small).tint(.switchOn)
             }
             Text(model.privacyIsLocal
                  ? "When you pause typing in a text field, HeyHumanly reads that one field and checks it on this Mac. Password fields and paused apps are never read. Nothing is saved unless you accept a suggestion or start a lesson."
@@ -706,7 +729,7 @@ struct SettingsView: View {
                         Text(category.title).font(.system(size: 13, weight: .medium)).foregroundStyle(on ? Color.ink : Color.ink.opacity(0.45))
                         Spacer()
                         Toggle("", isOn: Binding(get: { on }, set: { model.setMuted(category, !$0) }))
-                            .labelsHidden().toggleStyle(.switch).controlSize(.small).tint(.brand)
+                            .labelsHidden().toggleStyle(.switch).controlSize(.small).tint(.switchOn)
                     }
                     .padding(.horizontal, 12).padding(.vertical, 9)
                     .background(Color.surfaceSunken, in: RoundedRectangle(cornerRadius: 10, style: .continuous))

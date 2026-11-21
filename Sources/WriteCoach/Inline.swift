@@ -209,6 +209,9 @@ final class InlineSession: ObservableObject {
         var f = card.frame
         if !cardAbove { f.origin.y += f.height - h }   // keep the top (arrow) in place
         f.size.height = h
+        if let vf = (card.screen ?? NSScreen.main)?.visibleFrame {   // growing must not push it off screen
+            f.origin.y = min(max(f.origin.y, vf.minY + 4), vf.maxY - h - 4)
+        }
         card.setFrame(f, display: true)
     }
 
@@ -632,6 +635,13 @@ final class InlineSession: ObservableObject {
         } else if CGRect(origin: origin, size: size).intersects(anchor.insetBy(dx: -2, dy: -2)) {
             above = true
             origin.y = anchor.maxY + 8
+        }
+        // Never past the top of the screen: if there is no room above, go below the span, else pin to the top edge.
+        if let screen = NSScreen.screens.first(where: { $0.frame.intersects(firstLine) }) ?? NSScreen.main,
+           origin.y + size.height > screen.visibleFrame.maxY - 4 {
+            let below = lastLine.minY - size.height - 8
+            if below >= screen.visibleFrame.minY + 4 { origin.y = below; above = false }
+            else { origin.y = screen.visibleFrame.maxY - size.height - 4 }
         }
         cardAbove = above
         cardArrowX = max(18, min(size.width - 30, firstLine.minX - origin.x + min(firstLine.width, 40) / 2))

@@ -179,7 +179,7 @@
   function buildPrompt(text, goal, casual) {
     return 'You are HeyHumanly, a writing coach that edits lightly. The text may be typed or transcribed speech.\n' +
       'Step 1: notice the writer’s register (slang, casual, blunt, warm, formal, emoji, lowercase). Keep it. Same energy, same slang, same contractions, same punctuation style. Never make the text more formal, polite or corporate than the writer made it' + (casual ? '. This one is casual: keep it casual' : '') + '.\n' +
-      'Keep the writer’s capitalization and punctuation habits as they are (a message written in lowercase stays lowercase; a message with normal capitals keeps normal capitals; "!!" and "..." stay). ' +
+      'Keep the writer’s capitalization and punctuation habits as they are (a message written in lowercase stays lowercase; a message with normal capitals keeps normal capitals; "!!" and "..." stay). Leave anything between backticks (`like this`) exactly as written. ' +
       'Step 2: make small cuts only. If a sentence runs past about 25 words, split it into shorter sentences using the writer’s own words. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.\n' +
       'Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure ("I\'m not sure", "maybe"), keep that doubt; never drop it and never turn it into a decision. ' + (GOALS[goal] || GOALS.sameTone) + '\n' +
       'Reply with ONLY the edited text.\nText:\n' + text;
@@ -189,6 +189,48 @@
     s = s.replace(/^(here(?:'|’)s|here is)[^\n:]*:\s*/i, '').trim();
     if (/^["“].*["”]$/s.test(s)) s = s.slice(1, -1).trim();
     return s;
+  }
+  // Same clean-ups as TextSafety.swift: code in backticks stays as written, known typos get the intended word.
+  const TYPOS = { teh: 'the', hte: 'the', adn: 'and', nad: 'and', taht: 'that', thta: 'that', wiht: 'with', whit: 'with', becuase: 'because', becasue: 'because',
+    recieve: 'receive', recieved: 'received', seperate: 'separate', definately: 'definitely', occured: 'occurred', untill: 'until', wich: 'which', thier: 'their',
+    freind: 'friend', beleive: 'believe', tommorow: 'tomorrow', tomorow: 'tomorrow', alot: 'a lot', youre: 'you\'re', dont: 'don\'t' };
+  const CODE = /`[^`\n]+`/g;
+  function restoreCode(original, rewrite) {
+    const spans = original.match(CODE) || []; if (!spans.length) return rewrite;
+    const target = rewrite.match(CODE) || []; if (target.length !== spans.length) return original;
+    // Each rewrite span gets the closest original span, so reordered code keeps its own text.
+    const unused = spans.slice();
+    return rewrite.replace(CODE, (s) => {
+      let best = 0;
+      unused.forEach((o, k) => { if (editDistance(o, s) < editDistance(unused[best], s)) best = k; });
+      return unused.splice(best, 1)[0];
+    });
+  }
+  function matchCase(word, like) { return like[0] && like[0] !== like[0].toLowerCase() ? (like.length > 1 && like === like.toUpperCase() ? word.toUpperCase() : word[0].toUpperCase() + word.slice(1)) : word; }
+  function editDistance(a, b) {
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) { const cur = [i]; for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+    return prev[b.length];
+  }
+  function fixTypos(original, rewrite) {
+    let out = rewrite;
+    const had = new Set(words(original));
+    for (const [typo, right] of Object.entries(TYPOS)) {
+      const re = new RegExp('\\b' + typo + '\\b', 'gi'), hits = original.match(re);
+      if (!hits) continue;
+      if (re.test(out)) { out = out.replace(re, (m) => matchCase(right, m)); continue; }
+      // The model swapped the typo for a different near word ("teh" → "tbh"): use the intended one.
+      // Only a new word with the same first letter, once per typo, so unrelated new words are left alone.
+      if (!new RegExp('\\b' + right + '\\b', 'i').test(out)) {
+        let left = hits.length;
+        out = out.replace(/[A-Za-z']+/g, (w) => {
+          const l = w.toLowerCase();
+          if (left > 0 && !had.has(l) && l[0] === typo[0] && editDistance(l, typo) <= 2) { left--; return matchCase(right, w); }
+          return w;
+        });
+      }
+    }
+    return out;
   }
   // ---------- talking to Ollama ----------
   const MAX_CHARS = 6000, GENERATE_MS = 180000;
@@ -276,7 +318,8 @@
     if (!res.ok) { if (res.status === 404) throw fail('model', 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.'); throw httpError(res.status); }
     const j = await res.json(); if (j.error) throw fail('model', /not found/i.test(j.error) ? 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.' : 'Ollama said: ' + j.error);
     if (j.done_reason === 'length') throw fail('cutoff', 'The rewrite stopped before the end of your text, so it isn’t shown. Select a shorter part and try again.');
-    const rewrite = cleanRewrite(j.response); if (!rewrite) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
+    const cleaned = cleanRewrite(j.response); if (!cleaned) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
+    const rewrite = restoreCode(text, fixTypos(text, cleaned));
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
@@ -294,6 +337,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, isCasual, detect, tighten, analyse, quickCheck, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

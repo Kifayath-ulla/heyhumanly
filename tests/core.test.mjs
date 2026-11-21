@@ -105,3 +105,18 @@ test('tighten rejects empty text', async () => {
   mockFetch({});
   await assert.rejects(HH.tighten('   '));
 });
+
+test('restoreCode keeps backtick spans exactly; a lost span returns the original', () => {
+  assert.equal(HH.restoreCode('use `i => i*2` here', 'Use `i => i * 2` here.'), 'Use `i => i*2` here.');
+  assert.equal(HH.restoreCode('fix `x.lenght` now', 'Fix (x.length now.'), 'fix `x.lenght` now');
+  assert.equal(HH.restoreCode('no code here', 'No code here.'), 'No code here.');
+  assert.equal(HH.restoreCode('Use `foo` instead of `bar`', '`bar` should be replaced by `foo`.'), '`bar` should be replaced by `foo`.');
+});
+
+test('fixTypos: "teh" becomes "the", never a different near word like "tbh"', () => {
+  assert.equal(HH.fixTypos('send teh file', 'send tbh file'), 'send the file');
+  assert.equal(HH.fixTypos('send teh file', 'send teh file'), 'send the file');
+  assert.equal(HH.fixTypos('Teh end', 'The end'), 'The end');
+  assert.equal(HH.fixTypos('tbh it is fine', 'tbh it is fine'), 'tbh it is fine');
+  assert.equal(HH.fixTypos('send teh file', 'send tbh new file'), 'send the new file');
+});

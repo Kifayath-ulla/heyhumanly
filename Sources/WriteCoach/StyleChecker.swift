@@ -92,8 +92,10 @@ enum StyleChecker {
             sentences.first { NSLocationInRange(loc, $0) } ?? NSRange(location: 0, length: ns.length)
         }
         var out: [StyleFinding] = []
+        let code = TextSafety.codeRanges(ns)
         func add(_ kind: StyleKind, _ r: NSRange, _ message: String, _ replacements: [String] = []) {
             guard r.location != NSNotFound, r.length > 0 else { return }
+            if code.contains(where: { NSIntersectionRange($0, r).length > 0 }) { return }   // code in backticks is not prose
             // One finding per span; earlier (higher-priority) rules win.
             if out.contains(where: { NSIntersectionRange(NSRange(location: $0.location, length: $0.length), r).length > 0 }) { return }
             let s = sentence(for: r.location)

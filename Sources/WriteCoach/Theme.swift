@@ -33,6 +33,9 @@ extension Color {
     static let paleYellowText = adaptive(light: rgb(0.584, 0.392, 0), dark: rgb(0.95, 0.80, 0.45))
     static let paleBlueBG = adaptive(light: rgb(0.882, 0.953, 0.996), dark: rgb(0.08, 0.17, 0.25))
     static let paleBlueText = adaptive(light: rgb(0.122, 0.424, 0.624), dark: rgb(0.55, 0.78, 0.98))
+    /// "On" track for switches: the graphite accent in light mode, green in dark mode where the silver accent
+    /// would sit next to the white knob and look the same as "off".
+    static let switchOn = adaptive(light: rgb(0.075, 0.075, 0.086), dark: rgb(0.20, 0.62, 0.36))
     /// Text on accent-filled buttons.
     static let onAccent = adaptive(light: .white, dark: rgb(0.075, 0.075, 0.086))
     /// Neutral grey, used for Teach Me and the italic accent words.
@@ -169,6 +172,7 @@ struct KeyCap: View {
     var body: some View {
         Text(key)
             .font(.system(size: size, weight: .medium, design: .rounded))
+            .lineLimit(1).fixedSize()
             .foregroundStyle(glass ? Color.white : Color.ink)
             .padding(.horizontal, key.count > 1 ? size * 0.6 : 0)
             .frame(minWidth: size * 2, minHeight: size * 2)
@@ -187,6 +191,7 @@ struct ShortcutKeys: View {
     var glass = false
     var body: some View {
         HStack(spacing: size * 0.35) { ForEach(Array(Self.keys(label).enumerated()), id: \.offset) { KeyCap(key: $0.element, size: size, glass: glass) } }
+            .fixedSize()
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Shortcut \(label)")
     }
@@ -301,27 +306,64 @@ enum WordDiff {
     }
 
     /// Word-level LCS diff. Whitespace is kept attached to the preceding word.
+    /// Results are cached, because SwiftUI views call this on every redraw.
     static func diff(_ old: String, _ new: String) -> [Piece] {
+        let key = old + "\u{0}" + new
+        cacheLock.lock(); let hit = cache[key]; cacheLock.unlock()
+        if let hit { return hit }
+        let result = compute(old, new)
+        cacheLock.lock()
+        if cache.count >= 64 { cache.removeAll(keepingCapacity: true) }
+        cache[key] = result
+        cacheLock.unlock()
+        return result
+    }
+
+    nonisolated(unsafe) private static var cache: [String: [Piece]] = [:]
+    private static let cacheLock = NSLock()
+
+    private static func compute(_ old: String, _ new: String) -> [Piece] {
         let a = tokens(old), b = tokens(new)
-        guard a.count * b.count < 400_000 else { return [Piece(text: new, kind: .same)] }
-        let n = a.count, m = b.count
-        var lcs = Array(repeating: Array(repeating: 0, count: m + 1), count: n + 1)
-        for i in stride(from: n - 1, through: 0, by: -1) {
-            for j in stride(from: m - 1, through: 0, by: -1) {
-                lcs[i][j] = norm(a[i]) == norm(b[j]) ? lcs[i + 1][j + 1] + 1 : max(lcs[i + 1][j], lcs[i][j + 1])
+        // Compare words by integer id, so the table fill does no string work.
+        var ids: [String: Int32] = [:]
+        func id(_ t: String) -> Int32 { let k = norm(t); if let v = ids[k] { return v }; let v = Int32(ids.count); ids[k] = v; return v }
+        let ka = a.map(id), kb = b.map(id)
+        // Unchanged words at both ends need no table (most rewrites only touch a few words).
+        var pre = 0
+        while pre < a.count, pre < b.count, ka[pre] == kb[pre] { pre += 1 }
+        var suf = 0
+        while suf < a.count - pre, suf < b.count - pre, ka[a.count - 1 - suf] == kb[b.count - 1 - suf] { suf += 1 }
+        let n = a.count - pre - suf, m = b.count - pre - suf
+        var out: [Piece] = []
+        for k in 0..<pre { out.append(Piece(text: b[k], kind: .same, old: a[k])) }
+        if n * m > 4_000_000 {
+            // Too large to align word by word: show the middle as one replacement.
+            out += (0..<n).map { Piece(text: a[pre + $0], kind: .removed) }
+            out += (0..<m).map { Piece(text: b[pre + $0], kind: .added) }
+        } else {
+            let w = m + 1
+            var lcs = [Int32](repeating: 0, count: (n + 1) * w)
+            lcs.withUnsafeMutableBufferPointer { t in
+                for i in stride(from: n - 1, through: 0, by: -1) {
+                    let x = ka[pre + i]
+                    for j in stride(from: m - 1, through: 0, by: -1) {
+                        t[i * w + j] = x == kb[pre + j] ? t[(i + 1) * w + j + 1] + 1 : max(t[(i + 1) * w + j], t[i * w + j + 1])
+                    }
+                }
             }
+            // Walk the table; inside each run of changes emit all removed words, then all added words,
+            // so "thung" → "thing" reads as one replacement instead of interleaved fragments.
+            var removed: [Piece] = []; var added: [Piece] = []
+            func flush() { out += removed; out += added; removed = []; added = [] }
+            var i = 0, j = 0
+            while i < n || j < m {
+                if i < n, j < m, ka[pre + i] == kb[pre + j] { flush(); out.append(Piece(text: b[pre + j], kind: .same, old: a[pre + i])); i += 1; j += 1 }
+                else if i < n, j == m || lcs[(i + 1) * w + j] >= lcs[i * w + j + 1] { removed.append(Piece(text: a[pre + i], kind: .removed)); i += 1 }
+                else { added.append(Piece(text: b[pre + j], kind: .added)); j += 1 }
+            }
+            flush()
         }
-        // Walk the table; inside each run of changes emit all removed words, then all added words,
-        // so "thung" → "thing" reads as one replacement instead of interleaved fragments.
-        var out: [Piece] = []; var removed: [Piece] = []; var added: [Piece] = []
-        func flush() { out += removed; out += added; removed = []; added = [] }
-        var i = 0, j = 0
-        while i < n || j < m {
-            if i < n, j < m, norm(a[i]) == norm(b[j]) { flush(); out.append(Piece(text: b[j], kind: .same, old: a[i])); i += 1; j += 1 }
-            else if i < n, j == m || lcs[i + 1][j] >= lcs[i][j + 1] { removed.append(Piece(text: a[i], kind: .removed)); i += 1 }
-            else { added.append(Piece(text: b[j], kind: .added)); j += 1 }
-        }
-        flush()
+        for k in 0..<suf { out.append(Piece(text: b[b.count - suf + k], kind: .same, old: a[a.count - suf + k])) }
         return out
     }
 

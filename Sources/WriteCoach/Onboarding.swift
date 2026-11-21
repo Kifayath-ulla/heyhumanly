@@ -6,6 +6,7 @@ struct OnboardingView: View {
     @ObservedObject var model: CoachModel
     private let last = 4
     private let poll = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
+    @State private var returnMonitor: Any?
 
     var body: some View {
         let step = min(max(model.onboardingStep ?? 0, 0), last)
@@ -61,6 +62,19 @@ struct OnboardingView: View {
             .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.hairline))
             .shadow(color: .black.opacity(0.28), radius: 40, y: 18)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityAddTraits(.isModal)
+        .onAppear {
+            // Return advances every step. A `.defaultAction` shortcut alone stops firing once the Back button appears.
+            returnMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                guard [36, 76].contains(event.keyCode),
+                      event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function]).isEmpty,
+                      !(event.window is NSPanel), let current = model.onboardingStep else { return event }
+                if current >= last { model.finishOnboarding() } else { model.onboardingStep = current + 1 }
+                return nil
+            }
+        }
+        .onDisappear { if let m = returnMonitor { NSEvent.removeMonitor(m); returnMonitor = nil } }
         .onReceive(poll) { _ in
             // Permission and model status update while the tour is open, so "Allowed" appears without a restart.
             if model.accessibilityTrusted != AccessibilityBridge.isTrusted { model.accessibilityTrusted = AccessibilityBridge.isTrusted }

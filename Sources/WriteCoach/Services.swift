@@ -187,7 +187,7 @@ struct CoachService {
         let prompt = """
         You are HeyHumanly, a writing coach.
         \(style.instruction)
-        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links, line breaks and technical terms exactly. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.
+        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links, line breaks and technical terms exactly, and leave anything between backticks (`like this`) exactly as written. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.
         If the writer repeats a phrase back to back ("I don't know, I don't know"), keep it once. Never introduce a repeated phrase.\(preserveRule)\(context)
         Reply with ONLY the corrected text. No quotes, no labels, no notes.
         Text:
@@ -212,13 +212,19 @@ struct CoachService {
         struct Chunk: Decodable { let response: String?; let error: String? }
         var out = ""
         let started = Date(); var firstToken: TimeInterval?
+        // Tokens go to the UI in batches (~10 a second): a main-actor hop and redraw per token falls behind on long text.
+        var pending = "", lastSent = Date.distantPast
         defer { appLog.notice("rewrite \(model, privacy: .public): first token \(firstToken ?? -1, format: .fixed(precision: 2))s, total \(Date().timeIntervalSince(started), format: .fixed(precision: 2))s, \(out.count) chars") }
         for try await line in bytes.lines {
             if firstToken == nil { firstToken = Date().timeIntervalSince(started) }
             guard let chunk = try? JSONDecoder().decode(Chunk.self, from: Data(line.utf8)) else { continue }
             if let error = chunk.error { throw CoachError.server(500, error) }
-            if let token = chunk.response, !token.isEmpty { out += token; await onToken(token) }
+            if let token = chunk.response, !token.isEmpty {
+                out += token; pending += token
+                if Date().timeIntervalSince(lastSent) >= 0.1 { await onToken(pending); pending = ""; lastSent = Date() }
+            }
         }
+        if !pending.isEmpty { await onToken(pending) }
         let cleaned = cleanRewrite(out)
         guard !cleaned.isEmpty else { throw CoachError.invalidResponse }
         return cleaned
@@ -302,7 +308,7 @@ struct CoachService {
         let prompt = """
         You are HeyHumanly, a writing coach.
         \(style.instruction)
-        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links and technical terms exactly. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.\(preserveRule)\(context)
+        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links and technical terms exactly, and leave anything between backticks (`like this`) exactly as written. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.\(preserveRule)\(context)
         Return ONLY JSON with string fields rewrite, explanation, exercise. rewrite = the full corrected text. \(modeRules)
         Text:
         \(text)
