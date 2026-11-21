@@ -27,7 +27,8 @@ export const resetsAt = (now = Date.now()) => { const d = new Date(now); d.setUT
 export class Ledger {
   constructor(store) { this.store = store; }
   async roll(day) {
-    if ((await this.store.get('day')) !== day) { await this.store.deleteAll(); await this.store.put('day', day); }
+    const cur = await this.store.get('day');
+    if (!cur || day > cur) { await this.store.deleteAll(); await this.store.put('day', day); }
   }
   async peek(install, day) {
     await this.roll(day);
