@@ -33,6 +33,7 @@ struct DashboardView: View {
             .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.hairline, lineWidth: 0.6))
             .padding(.vertical, 10).padding(.trailing, 10)
         }
+        .accessibilityHidden(model.onboardingStep != nil)   // the tour is modal for VoiceOver too
         .background(Color.canvas.ignoresSafeArea())
         .overlay { if model.onboardingStep != nil { OnboardingView(model: model).transition(.opacity) } }
         .animation(.easeOut(duration: 0.22), value: model.section)
