@@ -178,8 +178,8 @@ struct EngineSettingsCard: View {
                 option(.appleOnDevice, detail: model.appleAvailability == "available" ? "Apple Intelligence on this Mac. Never leaves your Mac." : AppleModel.unavailableReason,
                        enabled: model.appleAvailability == "available")
                 Divider().overlay(Color.hairline)
-                option(.offlineManaged, detail: OfflineRuntime.isInstalled ? "Private Ollama run by HeyHumanly (\(model.settings.managedModel)). Never leaves your Mac." : "Download once, then unlimited and works with Wi-Fi off.",
-                       enabled: OfflineRuntime.isInstalled)
+                option(.offlineManaged, detail: offlineReady ? "Private Ollama run by HeyHumanly (\(model.settings.managedModel)). Never leaves your Mac." : "Download once, then unlimited and works with Wi-Fi off.",
+                       enabled: true)
                 Divider().overlay(Color.hairline)
                 option(.ollama, detail: model.ollamaDetected ? "Use my Ollama (found \(model.writingModels.count) model\(model.writingModels.count == 1 ? "" : "s")). Never leaves your Mac." : "Ollama isn't running on \(URLComponents(string: model.settings.endpoint)?.port.map(String.init) ?? "11434").",
                        enabled: model.ollamaDetected)
@@ -189,7 +189,7 @@ struct EngineSettingsCard: View {
             }
             .background(Color.surfaceSunken, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(Color.hairline))
-            if !OfflineRuntime.isInstalled || runtime.phase != .idle { OfflineSetupCard(model: model, closable: false) }
+            if !offlineReady || runtime.phase != .idle { OfflineSetupCard(model: model, closable: false) }
             if model.settings.onlineConsent {
                 HStack {
                     Text("You allowed online coaching.").font(.system(size: 12)).foregroundStyle(.secondary)
@@ -214,6 +214,9 @@ struct EngineSettingsCard: View {
         .card()
     }
 
+    /// Set only when setup finished (runtime + model + test), so an interrupted setup offers to continue instead.
+    private var offlineReady: Bool { OfflineRuntime.isInstalled && model.settings.managedModelRaw != nil }
+
     private func saveEndpoint() {
         var v = onlineEndpoint.trimmingCharacters(in: .whitespaces)
         if v.isEmpty { v = AppSettings.defaultOnlineEndpoint }
@@ -226,6 +229,7 @@ struct EngineSettingsCard: View {
     private func option(_ e: CoachEngine, detail: String, enabled: Bool) -> some View {
         Button {
             if e == .online && !model.settings.onlineConsent { model.showConsent = true; model.showCoach() }
+            else if e == .offlineManaged && !offlineReady { model.runtime.prepare() }
             else { model.setEngine(e) }
         } label: {
             HStack(alignment: .top) {
