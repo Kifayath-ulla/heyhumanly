@@ -1,0 +1,1777 @@
+[
+  {
+    "model": "qwen2.5:3b",
+    "id": "casual-slang",
+    "casual": true,
+    "rewrite": "Yo bro, gonna be 10 mins late lol, traffic is insane rn. U still at the cafe on 5th?",
+    "ms": 8289,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "keepsLowercase": false,
+      "keepsSlang": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 8,
+    "total": 9,
+    "cut": 10,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "casual-lowercase-doubt",
+    "casual": true,
+    "rewrite": "Hey so not sure if you're free, maybe we could grab lunch tomorrow?",
+    "ms": 4645,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "keepsLowercase": false,
+      "keepsSlang": false,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 8,
+    "total": 10,
+    "cut": 28,
+    "novel": [
+      "you're",
+      "tomorrow"
+    ]
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "formal-email",
+    "casual": false,
+    "rewrite": "Dear Ms. Patel, I am writing to follow up on invoice #4471 for $2,350, which was due on March 3. Could you let me know when the payment will be made? Kind regards, Tom",
+    "ms": 10845,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 8,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "rambling-meeting",
+    "casual": true,
+    "rewrite": "So basically, at the end of the day, we should push the launch to Thursday because the design isn't done; Priya is out sick, and I'm not sure Sam can cover. So yeah.",
+    "ms": 8394,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 8,
+    "cut": 30,
+    "novel": [
+      "cover."
+    ]
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "mixed-update",
+    "casual": true,
+    "rewrite": "Hey team — quick update. The Q3 report is 80% done. I think the numbers look off in the APAC section though, maybe we should double check before Friday? 🙏",
+    "ms": 6024,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 8,
+    "total": 8,
+    "cut": 7,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "already-tight",
+    "casual": false,
+    "rewrite": "The meeting is at 3pm in room 204. Bring your laptop.",
+    "ms": 3023,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "two-questions",
+    "casual": false,
+    "rewrite": "Can you send me the file? Also, did Maria approve the budget or is she still waiting on finance?",
+    "ms": 4058,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "numbers",
+    "casual": false,
+    "rewrite": "We shipped 1,204 orders in October, up 12% from September, and refunds dropped to 0.8%.",
+    "ms": 4606,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 5,
+    "total": 5,
+    "cut": 11,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "url-email",
+    "casual": false,
+    "rewrite": "Please review the doc at https://example.com/specs/v2 and email feedback to dana@example.org by Monday.",
+    "ms": 3835,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 13,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "inline-code",
+    "casual": false,
+    "rewrite": "So basically, `parseDate()` returns null when the input is like '2024-02-30', so we need to validate first.",
+    "ms": 5573,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 5,
+    "total": 6,
+    "cut": 14,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "spanish",
+    "casual": false,
+    "rewrite": "Hola, básicamente no puedo ir a la reunión de las 10 mañana, lo siento mucho.",
+    "ms": 4066,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "keepsLanguage": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 21,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "arabic-rtl",
+    "casual": false,
+    "rewrite": "مرحبا، أريد أن أقول، يعني، سأتأخر عن الاجتماع غداً عشر دقائق.",
+    "ms": 3871,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "noAddedFormality": true,
+      "keepsScript": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 7,
+    "cut": 8,
+    "novel": [
+      "دقائق."
+    ]
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "very-long-sentence",
+    "casual": false,
+    "rewrite": "I wanted to let everyone know that the vendor called this morning and said the shipment is delayed again due to the port in Rotterdam being backed up. They are not sure when it will clear but think it might be next Tuesday or Wednesday. They will call us back when they know more. So we should probably hold the customer emails until then.",
+    "ms": 10757,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": false,
+      "noBloat": true,
+      "noInvention": true,
+      "splitsLongSentence": true
+    },
+    "passed": 7,
+    "total": 8,
+    "cut": 4,
+    "novel": [
+      "being",
+      "wednesday.",
+      "more."
+    ]
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "emoji-short",
+    "casual": true,
+    "rewrite": "lol 😂😂 same",
+    "ms": 1710,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "doubt-question",
+    "casual": false,
+    "rewrite": "I'm not sure we can afford the new server, maybe we wait until the Q4 budget is approved?",
+    "ms": 3629,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "goal-formal",
+    "casual": true,
+    "rewrite": "Hey, can you send the deck by Friday? Need it for the client call.",
+    "ms": 3881,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true
+    },
+    "passed": 3,
+    "total": 3,
+    "cut": 0,
+    "novel": [
+      "friday",
+      "call."
+    ]
+  },
+  {
+    "model": "qwen2.5:3b",
+    "id": "goal-shorter",
+    "casual": false,
+    "rewrite": "Um, so I just wanted to quickly check in and see if you had a chance to look at the contract from Acme that I sent over on Monday. No rush though.",
+    "ms": 6509,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "noNewQuestion": true,
+      "noAddedFormality": true,
+      "cutsEnough": false
+    },
+    "passed": 4,
+    "total": 6,
+    "cut": 3,
+    "novel": [
+      "monday."
+    ]
+  },
+  {
+    "model": "llama3.2",
+    "id": "casual-slang",
+    "casual": true,
+    "rewrite": "yo bro gonna be like 10 mins late lol, traffic is insane rn. u still at the cafe on 5th?",
+    "ms": 5642,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "keepsSlang": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 9,
+    "total": 9,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "casual-lowercase-doubt",
+    "casual": true,
+    "rewrite": "hey so i was thinking maybe we could grab lunch tmrw? not sure if ur free tho",
+    "ms": 2995,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "keepsSlang": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 10,
+    "total": 10,
+    "cut": 6,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "formal-email",
+    "casual": false,
+    "rewrite": "Dear Ms. Patel,\n\nI'm following up on invoice #4471 for $2,350, which was due on March 3. Can you let me know when the payment will be made?\n\nKind regards,\nTom",
+    "ms": 7691,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 16,
+    "novel": [
+      "following"
+    ]
+  },
+  {
+    "model": "llama3.2",
+    "id": "rambling-meeting",
+    "casual": true,
+    "rewrite": "So basically, at the end of the day, I think we should push the launch to Thursday. The design isn't done because Priya is out sick. I'm not sure if Sam can cover for her. Yeah.",
+    "ms": 8296,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 8,
+    "cut": 23,
+    "novel": [
+      "thursday.",
+      "sick.",
+      "her."
+    ]
+  },
+  {
+    "model": "llama3.2",
+    "id": "mixed-update",
+    "casual": true,
+    "rewrite": "Hey team, quick update: Q3 report is 80% done. Numbers look off in APAC section, maybe double check before Friday? 🙏",
+    "ms": 6190,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 8,
+    "total": 8,
+    "cut": 33,
+    "novel": [
+      "update:"
+    ]
+  },
+  {
+    "model": "llama3.2",
+    "id": "already-tight",
+    "casual": false,
+    "rewrite": "The meeting is at 3pm in room 204. Bring your laptop.",
+    "ms": 2823,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "two-questions",
+    "casual": false,
+    "rewrite": "Can you send me the file? Did Maria approve the budget or is she still waiting on finance?",
+    "ms": 3250,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "numbers",
+    "casual": false,
+    "rewrite": "We shipped 1,204 orders in October, which is up 12% from September. Refunds dropped to 0.8%.",
+    "ms": 5667,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 5,
+    "total": 5,
+    "cut": 6,
+    "novel": [
+      "september."
+    ]
+  },
+  {
+    "model": "llama3.2",
+    "id": "url-email",
+    "casual": false,
+    "rewrite": "Please review the doc at https://example.com/specs/v2 and email feedback to dana@example.org by Monday.",
+    "ms": 8992,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 13,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "inline-code",
+    "casual": false,
+    "rewrite": "The bug is that `parseDate()` returns null when the input is like '2024-02-30', we need to validate first.",
+    "ms": 7167,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 10,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "spanish",
+    "casual": false,
+    "rewrite": "Hola, eh, básicamente quería decirte que mañana no puedo ir a la reunión de las 10, lo siento mucho.",
+    "ms": 4732,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "noAddedFormality": true,
+      "keepsLanguage": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 7,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "arabic-rtl",
+    "casual": false,
+    "rewrite": "مرحبا، أريد أن أقول، يعني، سأتأخر عشر دقائق عن الاجتماع غدا.",
+    "ms": 5390,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "noAddedFormality": true,
+      "keepsScript": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 7,
+    "cut": 8,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "very-long-sentence",
+    "casual": false,
+    "rewrite": "I wanted to let everyone know that the vendor called this morning and said the shipment is delayed again because the port in Rotterdam is backed up. They're not sure when it will clear, but they think it might be next Tuesday or Wednesday. They'll call us back when they know more, so we should probably hold customer emails until then.",
+    "ms": 11271,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": true,
+      "noBloat": true,
+      "noInvention": true,
+      "splitsLongSentence": true
+    },
+    "passed": 8,
+    "total": 8,
+    "cut": 9,
+    "novel": [
+      "they're",
+      "wednesday.",
+      "they'll"
+    ]
+  },
+  {
+    "model": "llama3.2",
+    "id": "emoji-short",
+    "casual": true,
+    "rewrite": "lol 😂😂 same",
+    "ms": 1286,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "llama3.2",
+    "id": "doubt-question",
+    "casual": false,
+    "rewrite": "I'm not sure we can afford the new server. Maybe we wait until Q4 budget is approved.",
+    "ms": 4631,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": false,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 7,
+    "cut": 6,
+    "novel": [
+      "server.",
+      "approved."
+    ]
+  },
+  {
+    "model": "llama3.2",
+    "id": "goal-formal",
+    "casual": true,
+    "rewrite": "Can you please send the deck by Friday? I need it for the client call.",
+    "ms": 3361,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true
+    },
+    "passed": 3,
+    "total": 3,
+    "cut": -7,
+    "novel": [
+      "please",
+      "friday",
+      "call."
+    ]
+  },
+  {
+    "model": "llama3.2",
+    "id": "goal-shorter",
+    "casual": false,
+    "rewrite": "I just wanted to check in and see if you looked at the contract from Acme that I sent over on Monday, no rush.",
+    "ms": 6087,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noNewQuestion": true,
+      "noAddedFormality": true,
+      "cutsEnough": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 27,
+    "novel": [
+      "looked",
+      "rush."
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "casual-slang",
+    "casual": true,
+    "rewrite": "yo bro, gonna be like 10 mins late, lol. traffic is insane rn. u still at the cafe on 5th?",
+    "ms": 28586,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "keepsSlang": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 9,
+    "total": 9,
+    "cut": 5,
+    "novel": [
+      "lol."
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "casual-lowercase-doubt",
+    "casual": true,
+    "rewrite": "hey, so I was thinking maybe we could grab lunch tomorrow? Not sure if you're free though.",
+    "ms": 11090,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "keepsSlang": false,
+      "noBloat": true,
+      "noInvention": false
+    },
+    "passed": 8,
+    "total": 10,
+    "cut": 6,
+    "novel": [
+      "tomorrow",
+      "you're",
+      "though."
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "formal-email",
+    "casual": false,
+    "rewrite": "Dear Ms. Patel, I am writing to follow up on invoice #4471 for $2,350, due on March 3. When can you let me know about the payment? Kind regards, Tom",
+    "ms": 19770,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 18,
+    "novel": [
+      "about"
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "rambling-meeting",
+    "casual": true,
+    "rewrite": "So basically, at the end of the day, I think we should push the launch to Thursday because the design isn't done. The design isn't done because Priya is out sick, and I'm not sure if Sam can cover for her.",
+    "ms": 19830,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 8,
+    "cut": 13,
+    "novel": [
+      "done.",
+      "her."
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "mixed-update",
+    "casual": true,
+    "rewrite": "Hey team — quick update. The Q3 report is 80% done. I think the numbers look off in the APAC section, maybe we should double-check before Friday? 🙏",
+    "ms": 14020,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 8,
+    "total": 8,
+    "cut": 13,
+    "novel": [
+      "double-check"
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "already-tight",
+    "casual": false,
+    "rewrite": "The meeting is at 3pm in room 204. Bring your laptop.",
+    "ms": 6330,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "two-questions",
+    "casual": false,
+    "rewrite": "Can you send me the file? Did Maria approve the budget, or is she still waiting on finance?",
+    "ms": 7113,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "numbers",
+    "casual": false,
+    "rewrite": "We shipped 1,204 orders in October, up 12% from September, and refunds dropped to 0.8%.",
+    "ms": 9648,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 5,
+    "total": 5,
+    "cut": 11,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "url-email",
+    "casual": false,
+    "rewrite": "Please review the doc at https://example.com/specs/v2 and email feedback to dana@example.org by Monday.",
+    "ms": 8481,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 13,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "inline-code",
+    "casual": false,
+    "rewrite": "The bug is that `parseDate()` returns null when the input is like '2024-02-30', so we need to validate first.",
+    "ms": 14248,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "spanish",
+    "casual": false,
+    "rewrite": "Hola, mañana no puedo ir a la reunión de las 10. Lo siento mucho.",
+    "ms": 7092,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "keepsLanguage": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 26,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "arabic-rtl",
+    "casual": false,
+    "rewrite": "مرحبا، أريد أن أقول إنني سأتأخر عشر دقائق عن الاجتماع غدا.",
+    "ms": 5749,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "keepsScript": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 8,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "very-long-sentence",
+    "casual": false,
+    "rewrite": "I wanted to let everyone know the vendor called this morning. The shipment is delayed again because the port in Rotterdam is backed up. They're not sure when it will clear but think it might be next Tuesday or Wednesday. They'll call back when they know more. We should probably hold customer emails until then.",
+    "ms": 17747,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": true,
+      "noBloat": true,
+      "noInvention": true,
+      "splitsLongSentence": true
+    },
+    "passed": 8,
+    "total": 8,
+    "cut": 18,
+    "novel": [
+      "morning.",
+      "they're",
+      "wednesday.",
+      "they'll",
+      "more."
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "emoji-short",
+    "casual": true,
+    "rewrite": "lol 😂😂 same",
+    "ms": 2054,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "doubt-question",
+    "casual": false,
+    "rewrite": "I'm not sure we can afford the new server. Maybe we wait until the Q4 budget is approved?",
+    "ms": 6451,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": [
+      "server."
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "goal-formal",
+    "casual": true,
+    "rewrite": "Can you send the deck by Friday? Need it for the client call.",
+    "ms": 4577,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true
+    },
+    "passed": 3,
+    "total": 3,
+    "cut": 7,
+    "novel": [
+      "friday",
+      "call."
+    ]
+  },
+  {
+    "model": "qwen2.5:7b",
+    "id": "goal-shorter",
+    "casual": false,
+    "rewrite": "So I just wanted to quickly check in and see if you had a chance to look at the contract from Acme that I sent over on Monday. No rush though.",
+    "ms": 8787,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noNewQuestion": true,
+      "noAddedFormality": true,
+      "cutsEnough": false
+    },
+    "passed": 5,
+    "total": 6,
+    "cut": 6,
+    "novel": [
+      "monday."
+    ]
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "casual-slang",
+    "casual": true,
+    "rewrite": "yo bro gonna be like 10 mins late lol, traffic is insane rn. u still at the cafe on 5th?",
+    "ms": 39841,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "keepsSlang": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 9,
+    "total": 9,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "casual-lowercase-doubt",
+    "casual": true,
+    "rewrite": "hey so um i was thinking maybe we could grab lunch tmrw? not sure if ur free tho",
+    "ms": 21951,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "keepsSlang": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 9,
+    "total": 10,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "formal-email",
+    "casual": false,
+    "rewrite": "Dear Ms. Patel, I'm writing to follow up on invoice #4471 for $2,350, due on March 3. When will the payment be made? Kind regards, Tom",
+    "ms": 23223,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 29,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "rambling-meeting",
+    "casual": true,
+    "rewrite": "So basically, at the end of the day, I think we should probably push the launch to Thursday. The design isn't done because Priya is out sick, and I'm not sure if Sam can cover for her. So yeah.",
+    "ms": 24823,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 8,
+    "cut": 17,
+    "novel": [
+      "thursday.",
+      "her."
+    ]
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "mixed-update",
+    "casual": true,
+    "rewrite": "Hey team — quick update. The Q3 report is 80% done. I think the numbers look kind of off in the APAC section though, maybe we should double check before Friday? 🙏",
+    "ms": 20580,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 8,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "already-tight",
+    "casual": false,
+    "rewrite": "The meeting is at 3pm in room 204. Bring your laptop.",
+    "ms": 12485,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "two-questions",
+    "casual": false,
+    "rewrite": "Can you send me the file? Also, did Maria approve the budget, or is she still waiting on finance?",
+    "ms": 14154,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "numbers",
+    "casual": false,
+    "rewrite": "We shipped 1,204 orders in October. That's up 12% from September, and refunds dropped to 0.8%.",
+    "ms": 19004,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 5,
+    "total": 5,
+    "cut": 6,
+    "novel": [
+      "october.",
+      "that's"
+    ]
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "url-email",
+    "casual": false,
+    "rewrite": "Please review the doc at https://example.com/specs/v2 and email feedback to dana@example.org by Monday.",
+    "ms": 15964,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 13,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "inline-code",
+    "casual": false,
+    "rewrite": "The bug is that `parseDate()` returns null for inputs like '2024-02-30', so we need to validate first.",
+    "ms": 18679,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 14,
+    "novel": [
+      "inputs"
+    ]
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "spanish",
+    "casual": false,
+    "rewrite": "Hola, básicamente quería decirte que mañana no puedo ir a la reunión de las 10. Lo siento mucho.",
+    "ms": 16554,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "keepsLanguage": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "arabic-rtl",
+    "casual": false,
+    "rewrite": "مرحبا، أريد أن أقول إنني سأتأخر عشر دقائق عن الاجتماع غدا.",
+    "ms": 15527,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "keepsScript": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 8,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "very-long-sentence",
+    "casual": false,
+    "rewrite": "I wanted to let everyone know that the vendor called this morning. They said the shipment is delayed again because the port in Rotterdam is backed up. They are not sure when it will clear, but think it might be next Tuesday or maybe Wednesday. They will call us back when they know more. So we should probably hold the customer emails until then.",
+    "ms": 38177,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": false,
+      "noBloat": true,
+      "noInvention": true,
+      "splitsLongSentence": true
+    },
+    "passed": 7,
+    "total": 8,
+    "cut": 4,
+    "novel": [
+      "morning.",
+      "wednesday.",
+      "more."
+    ]
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "emoji-short",
+    "casual": true,
+    "rewrite": "lol 😂😂 same",
+    "ms": 10601,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "doubt-question",
+    "casual": false,
+    "rewrite": "I'm not sure we can afford the new server. Maybe we wait until the Q4 budget is approved?",
+    "ms": 14990,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": [
+      "server."
+    ]
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "goal-formal",
+    "casual": true,
+    "rewrite": "Hey, can you send the deck by Friday? I need it for the client call.",
+    "ms": 14059,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true
+    },
+    "passed": 3,
+    "total": 3,
+    "cut": -7,
+    "novel": [
+      "friday",
+      "call."
+    ]
+  },
+  {
+    "model": "qwen3.5:9b",
+    "id": "goal-shorter",
+    "casual": false,
+    "rewrite": "I just wanted to quickly check in and see if you had a chance to look at the contract from Acme that I sent over on Monday. No rush though.",
+    "ms": 18758,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noNewQuestion": true,
+      "noAddedFormality": true,
+      "cutsEnough": false
+    },
+    "passed": 5,
+    "total": 6,
+    "cut": 9,
+    "novel": [
+      "monday."
+    ]
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "casual-slang",
+    "casual": true,
+    "rewrite": "yo bro gonna be like 10 mins late lol, traffic is insane rn. u still at the cafe on 5th?",
+    "ms": 37803,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "keepsSlang": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 9,
+    "total": 9,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "casual-lowercase-doubt",
+    "casual": true,
+    "rewrite": "i was thinking maybe we could grab lunch tmrw? not sure if ur free tho",
+    "ms": 23685,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "keepsSlang": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 10,
+    "total": 10,
+    "cut": 17,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "formal-email",
+    "casual": false,
+    "rewrite": "Dear Ms. Patel, I am writing to follow up on invoice #4471 for $2,350, which was due on March 3. Could you please let me know when the payment will be made? Kind regards, Tom",
+    "ms": 29515,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "rambling-meeting",
+    "casual": true,
+    "rewrite": "I think we should push the launch to Thursday because the design isn't done. Priya is out sick, and I'm not sure if Sam can cover for her.",
+    "ms": 25762,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 8,
+    "total": 8,
+    "cut": 40,
+    "novel": [
+      "done.",
+      "her."
+    ]
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "mixed-update",
+    "casual": true,
+    "rewrite": "Hey team — quick update. The Q3 report is 80% done. I think the numbers look kind of off in the APAC section though, maybe we should double check before Friday? 🙏",
+    "ms": 26447,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": false,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 8,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "already-tight",
+    "casual": false,
+    "rewrite": "The meeting is at 3pm in room 204. Bring your laptop.",
+    "ms": 17480,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "two-questions",
+    "casual": false,
+    "rewrite": "Can you send me the file? Did Maria approve the budget, or is she still waiting on finance?",
+    "ms": 22335,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 5,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "numbers",
+    "casual": false,
+    "rewrite": "We shipped 1,204 orders in October, up 12% from September, and refunds dropped to 0.8%.",
+    "ms": 27145,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 5,
+    "total": 5,
+    "cut": 11,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "url-email",
+    "casual": false,
+    "rewrite": "Review the doc at https://example.com/specs/v2 and email feedback to dana@example.org by Monday.",
+    "ms": 19423,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 20,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "inline-code",
+    "casual": false,
+    "rewrite": "The bug is that `parseDate()` returns null when the input is '2024-02-30', so we need to validate first.",
+    "ms": 21883,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 6,
+    "total": 6,
+    "cut": 10,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "spanish",
+    "casual": false,
+    "rewrite": "Hola, quería decirte que mañana no puedo ir a la reunión de las 10, lo siento mucho.",
+    "ms": 19048,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "keepsLanguage": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 11,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "arabic-rtl",
+    "casual": false,
+    "rewrite": "مرحبا، سأتأخر عشر دقائق عن الاجتماع غدا.",
+    "ms": 16540,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noAddedFormality": true,
+      "keepsScript": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 42,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "very-long-sentence",
+    "casual": false,
+    "rewrite": "the vendor called this morning and said the shipment is delayed again because the port in Rotterdam is backed up. they are not sure when it will clear but they think it might be next Tuesday or maybe Wednesday. they will call us back when they know more, so we should probably hold the customer emails until then.",
+    "ms": 29994,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "cutsEnough": true,
+      "noBloat": true,
+      "noInvention": true,
+      "splitsLongSentence": true
+    },
+    "passed": 8,
+    "total": 8,
+    "cut": 13,
+    "novel": [
+      "wednesday."
+    ]
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "emoji-short",
+    "casual": true,
+    "rewrite": "lol 😂😂 same",
+    "ms": 13618,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "noAddedFormality": true,
+      "keepsLowercase": true,
+      "lightTouch": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "doubt-question",
+    "casual": false,
+    "rewrite": "I'm not sure we can afford the new server, maybe we wait until the Q4 budget is approved?",
+    "ms": 17695,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true,
+      "keepsDoubt": true,
+      "noAddedFormality": true,
+      "noBloat": true,
+      "noInvention": true
+    },
+    "passed": 7,
+    "total": 7,
+    "cut": 0,
+    "novel": []
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "goal-formal",
+    "casual": true,
+    "rewrite": "Could you please send the deck by Friday? I need it for the client call.",
+    "ms": 16919,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "keepsQuestion": true
+    },
+    "passed": 3,
+    "total": 3,
+    "cut": -7,
+    "novel": [
+      "could",
+      "please",
+      "friday",
+      "call."
+    ]
+  },
+  {
+    "model": "gemma4:12b",
+    "id": "goal-shorter",
+    "casual": false,
+    "rewrite": "just wanted to quickly check in and see if you had a chance to look at the contract from Acme that I sent over on Monday, no rush though.",
+    "ms": 19522,
+    "checks": {
+      "nonEmpty": true,
+      "keepsFacts": true,
+      "removesFiller": true,
+      "noNewQuestion": true,
+      "noAddedFormality": true,
+      "cutsEnough": false
+    },
+    "passed": 5,
+    "total": 6,
+    "cut": 12,
+    "novel": []
+  }
+]
