@@ -27,7 +27,7 @@ extension CoachModel {
     var engineIsLocal: Bool {
         switch settings.engine {
         case .appleOnDevice, .offlineManaged: return true
-        case .ollama: return CompanionService.isLocal(settings.endpoint)
+        case .ollama: return CompanionService.isLocal(settings.endpoint) && !Self.isCloudModel(settings.model)
         case .online, nil: return false
         }
     }
@@ -62,7 +62,9 @@ extension CoachModel {
     }
 
     /// Ollama models that can write (embedding models can't).
-    var writingModels: [String] { installedModels.filter { !$0.localizedCaseInsensitiveContains("embed") } }
+    var writingModels: [String] { installedModels.filter { !$0.localizedCaseInsensitiveContains("embed") && !Self.isCloudModel($0) } }
+    /// Ollama "cloud" models (e.g. gpt-oss:120b-cloud) forward text to ollama.com, so they never count as on this Mac.
+    static func isCloudModel(_ name: String) -> Bool { name.lowercased().contains("cloud") }
     var ollamaDetected: Bool { ollamaRunning && !writingModels.isEmpty }
 
     /// First launch: Apple's model if it's ready, else the user's Ollama with a writing model, else nothing
@@ -72,7 +74,7 @@ extension CoachModel {
         if settings.onboarded == true { setEngine(.ollama); return }
         if AppleModel.isAvailable { setEngine(.appleOnDevice); return }
         if case .running(let models) = await OllamaStatus.check(endpoint: settings.endpoint),
-           let pick = models.contains(settings.model) ? settings.model : models.first(where: { !$0.localizedCaseInsensitiveContains("embed") }) {
+           let pick = models.contains(settings.model) ? settings.model : models.first(where: { !$0.localizedCaseInsensitiveContains("embed") && !Self.isCloudModel($0) }) {
             settings.model = pick; settingsModel = pick
             setEngine(.ollama)
         }
