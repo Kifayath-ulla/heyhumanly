@@ -28,7 +28,7 @@ Status as of 2026-11-21. Merge order matters: #2 → #3 → #6 (retarget to `mai
 - [ ] P1-E6 editors inside iframes (TinyMCE, CKEditor, some webmail)
 - [ ] P1-W4 real screenshots/GIF on the website (the store screenshots in #4 can be reused)
 - [ ] P1-R3 Homebrew cask
-- [ ] Mac visual audit findings (child session still running) — triage P0/P1s
+- [ ] Mac visual audit: V-P0-1 (coach freezes on long text) and V-P1-1…13 in AUDIT.md (V-P1-2 is on hold with the shortcut)
 - [ ] Mac/Windows `OLLAMA_ORIGINS` commands from #2 tried on real machines
 
 ## Release steps (owner only — not done by Devin)

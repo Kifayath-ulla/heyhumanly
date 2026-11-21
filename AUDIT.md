@@ -212,13 +212,48 @@ The automatic checks are deliberately simple. The JSON file has each rewrite so 
 
 Latency is CPU-only. On an Apple-silicon Mac it will be several times faster.
 
+## Mac app visual audit (macOS 26.6, real Ollama + qwen2.5:3b, Accessibility granted)
+
+Done in a separate macOS session. Screenshots for every screen in light and dark are in that session; file names are given below. Replace worked in Notes, Safari, Chrome and Mail. Slack is not installed, so it wasn't tested.
+
+### P0
+- **V-P0-1 The coach freezes on a long sentence.** A 386-word sentence in Quick Fix took about 11.5 minutes on CPU. After that the app sat at about 98% CPU for minutes, showing "Working…". A CPU sample points to `WordDiff.diff` (Theme.swift), which is recomputed on every redraw of the result view. (`12-edge-longsentence-light`)
+
+### P1
+- **V-P1-1** The sidebar status dot is green when the default model (qwen2.5:7b) is not installed. (`02-home-light`)
+- **V-P1-2** Settings flags the default ⌃⌥Space in red ("may not reach HeyHumanly"), yet it worked in all 4 apps. The shortcut is on hold. (`07-settings-6-light`)
+- **V-P1-3** Tour: Return only advances from step 1 to step 2. (`01-tour-2-light`)
+- **V-P1-4** Tour: VoiceOver can reach the dashboard behind the tour card. (`01-tour-1-light`)
+- **V-P1-5** Home is cut off at the default 1120 px: "Install qwen2.5…", "Allow Accessi…". (`02-home-*`)
+- **V-P1-6** Coach at its 520×392 minimum: mode tabs wrap mid-word ("Rep/hra/se"). The size is remembered. (`13-small-coach-*`)
+- **V-P1-7** Dashboard at its 1020×672 minimum: the "Space" keycap stacks letter by letter and the hero buttons wrap. (`13-small-dashboard-home-*`)
+- **V-P1-8** Settings in dark mode: on and off toggles look almost the same. (`07-settings-5-dark`)
+- **V-P1-9** Rephrase changes "thung" to "thing", but the card says "Nothing to change". (`08-coach-rephrase-result-dark`)
+- **V-P1-10** Grammar isn't taught: "i shoud of went their" becomes one generic "Clarity" change. A lowercase "i" at the start was missed, and the lesson spun for over 40 s. (`10-coach-teach-result-dark`)
+- **V-P1-11** The inline card goes off the top of the screen for fields near the top of a Safari window. (`16-safari-card-clipped-light`)
+- **V-P1-12** Code inside backticks gets edited: "x.lenght" becomes "(x.length", and "i => i*2" is flagged as a doubled word. (`12-edge-code-light`)
+- **V-P1-13** "teh" becomes "tbh", labelled "Word choice". (`12-edge-urls-light`)
+
+### P2
+- The inline dot count (3) doesn't match the card ("1 of 1").
+- The shortcut shows the inline dot in Notes and Safari but opens the coach in Chrome and Mail.
+- First launch says "Welcome back, devin".
+- Undo is shown as ⌘Z in the tour but ⌃⌥Z in Settings.
+- The tour says "leaf" in the menu bar, but the icon is a speech bubble.
+- Tour step 5 shows "Step 2 ·" inside "5 of 5".
+- The tour example opens Rephrase, but the Home example opens Quick Fix.
+- Teach Me shows the stale Quick Fix card until it is run.
+- Insights shows two stacked empty states.
+- Settings segmented controls are misaligned.
+- The dark tour card barely stands out from the background.
+- Tour step 4 has two primary buttons.
+- With empty input, Fix it does nothing and shows no message.
+- In mixed Arabic and English text, the box stays left-aligned and the "?" moves.
+- A 2,160-word input is accepted with no limit or Cancel.
+
+Not tested: Slack, VoiceOver speech (only the accessibility tree was checked), the default qwen2.5:7b model, sending Mail, multiple monitors.
+
 ## Not covered yet
-- **Mac app visual audit:**
-  - Every screen in light and dark.
-  - VoiceOver labels; 95 `accessibilityLabel`s exist for about 98 buttons.
-  - Small windows and long text.
-  - Replace-in-app in Slack, Safari, Notes, Mail and Chrome.
-  - This needs a macOS session with Accessibility granted.
 - Real-device mobile Safari check of the site (Chrome mobile emulation only).
 - Firefox/Edge install test.
 
