@@ -128,3 +128,27 @@ test('the Durable Object only runs ledger operations', async () => {
   const d = new Allowance({ storage: new Store() });
   assert.equal((await d.fetch(new Request('https://allowance/', { method: 'POST', body: JSON.stringify({ op: 'constructor', args: [] }) }))).status, 400);
 });
+
+test('review fixes: casing, truncation, timeout cost, late requests, missing salt', async () => {
+  let { env, ledger } = makeEnv(ok);
+  await post(env, { text: TEXT, install: ID.toUpperCase() });
+  assert.equal((await (await peek(env, ID)).json()).remaining, LIMITS.perInstall - 1);
+
+  ({ env, ledger } = makeEnv(async () => ({ choices: [{ message: { content: 'can you send the' }, finish_reason: 'length' }] })));
+  assert.equal((await post(env, { text: TEXT, install: ID })).status, 502);
+  assert.equal((await (await peek(env)).json()).remaining, LIMITS.perInstall);
+
+  ({ env, ledger } = makeEnv(() => new Promise(() => {}), { COACH_TIMEOUT_MS: '5' }));
+  assert.equal((await post(env, { text: TEXT, install: ID })).status, 504);
+  assert.equal((await (await peek(env)).json()).remaining, LIMITS.perInstall);
+  assert.ok((await ledger.store.get('neurons')) > 0);
+
+  ({ env, ledger } = makeEnv(ok));
+  const tomorrow = NOW + 864e5;
+  await post(env, { text: TEXT, install: ID }, '1.2.3.4', tomorrow);
+  await post(env, { text: TEXT, install: ID2 }, '1.2.3.4', NOW);
+  assert.equal((await (await peek(env, ID, tomorrow)).json()).remaining, LIMITS.perInstall - 1);
+
+  ({ env } = makeEnv(ok, { IP_SALT: '' }));
+  assert.equal((await post(env, { text: TEXT, install: ID })).status, 503);
+});
