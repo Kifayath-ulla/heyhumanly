@@ -1,0 +1,15 @@
+#!/bin/zsh
+# Runs the app's --guard developer check on fixed cases and fails if the meaning guard lets a bad change through.
+set -uo pipefail
+BIN="${1:-HeyHumanly.app/Contents/MacOS/HeyHumanly}"
+fail=0
+check() { # original rewrite expected
+  local got; got="$("$BIN" --guard "$1" "$2")"
+  if [[ "$got" == "$3" ]]; then echo "ok   $1 -> $got"; else echo "FAIL $1 -> $got (expected: $3)"; fail=1; fi
+}
+check "Ship it today." "Ship it today." "Ship it today."
+check "I has went to the store yesterday." "I went to the store yesterday." "I went to the store yesterday."
+check "idk if gng can come tbh" "I don't know if the gang can come, to be honest" "idk if gng can come tbh"
+check "send the thung to priya" "send the file to priya" "send the thung to priya"
+check "The invoice is 4,200 dollars, due on 12 March." "The invoice is 4,000 dollars, due on 12 March." "The invoice is 4,200 dollars, due on 12 March."
+exit $fail

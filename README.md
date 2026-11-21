@@ -79,6 +79,13 @@ HeyHumanly.app/Contents/MacOS/HeyHumanly --guard "<original>" "<model rewrite>" 
 HH_NO_LOCATE=1 HeyHumanly.app/Contents/MacOS/HeyHumanly                                      # treat every field like Slack (no word positions)
 ```
 
+Automated tests (run in CI on every pull request):
+
+```bash
+node --test tests/*.test.mjs                               # extension, worker and repo rules (Node 22+)
+./scripts/smoke-mac.sh HeyHumanly.app/Contents/MacOS/HeyHumanly   # meaning-guard cases (Mac)
+```
+
 ## Known limits
 
 - Slack and Discord do not report where each word is on screen, so there are no underlines there; the dot, lessons and fixes still work.

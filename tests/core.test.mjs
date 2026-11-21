@@ -1,0 +1,107 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+const HH = createRequire(import.meta.url)('../extension/core.js');
+
+test('isCasual: slang, lowercase start and emoji are casual; formal text is not', () => {
+  assert.equal(HH.isCasual('yo gang we going rn'), true);
+  assert.equal(HH.isCasual('lowercase start'), true);
+  assert.equal(HH.isCasual('Great work 🎉'), true);
+  assert.equal(HH.isCasual('Dear Ms Rao, the invoice is attached.'), false);
+});
+
+test('cleanRewrite strips think blocks, "Here is" preambles and wrapping quotes', () => {
+  assert.equal(HH.cleanRewrite('<think>plan</think>Here is the edited text: "Ship it."'), 'Ship it.');
+  assert.equal(HH.cleanRewrite('“Ship it.”'), 'Ship it.');
+  assert.equal(HH.cleanRewrite(''), '');
+  assert.equal(HH.cleanRewrite(undefined), '');
+});
+
+test('wordyHits and passiveHits find Lexicon-style patterns', () => {
+  assert.deepEqual(HH.wordyHits('In order to win, due to the fact that we can.').map((h) => h.reps[0]), ['to', 'because']);
+  assert.deepEqual(HH.passiveHits('The report was written by Priya. We shipped it.'), ['was written']);
+  assert.deepEqual(HH.wordyHits('Ship it today.'), []);
+});
+
+test('readability counts words and labels a grade', () => {
+  const r = HH.readability('The cat sat. The dog ran.');
+  assert.equal(r.words, 6);
+  assert.match(r.label, /^Grade \d+/);
+});
+
+test('analyse explains cuts with checkable sources', () => {
+  const r = HH.analyse('So basically I just think that we should meet up tomorrow in order to discuss the plan.', 'We should meet tomorrow to discuss the plan.', false, 'm');
+  const habits = r.moves.map((m) => m.habit);
+  assert.ok(habits.includes('Filler'));
+  assert.ok(habits.includes('Wordy phrases'));
+  for (const m of r.moves) if (m.sourceURL) assert.match(m.sourceURL, /^https:\/\//);
+  assert.ok(r.stats.wordsAfter < r.stats.wordsBefore);
+});
+
+test('analyse treats case/whitespace-only edits as unchanged with no moves', () => {
+  const r = HH.analyse('Ship it.', 'ship  it.', false, 'm');
+  assert.equal(r.unchanged, true);
+  assert.deepEqual(r.moves, []);
+});
+
+test('quickCheck runs with no model', () => {
+  const habits = HH.quickCheck('So basically the thing is in order to win we must.').moves.map((m) => m.habit);
+  assert.ok(habits.includes('Filler') && habits.includes('Wordy phrases'));
+});
+
+test('buildPrompt keeps the text verbatim and asks to preserve facts, questions and doubt', () => {
+  const p = HH.buildPrompt('idk if we ship thu?', 'sameTone', true);
+  assert.ok(p.endsWith('Text:\nidk if we ship thu?'));
+  assert.match(p, /keep it casual/);
+  assert.match(p, /it stays a question/);
+  assert.match(p, /keep that doubt/);
+  assert.match(HH.buildPrompt('x', 'shorter', false), /as short as possible/);
+});
+
+function mockFetch(routes) {
+  const calls = [];
+  globalThis.fetch = async (url, opts = {}) => {
+    calls.push({ url, opts });
+    const path = new URL(url).pathname;
+    const h = routes[path];
+    if (!h) throw new TypeError('fetch failed');
+    const [status, body] = h(opts.body ? JSON.parse(opts.body) : null);
+    return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  };
+  return calls;
+}
+
+test('tighten talks only to the configured local endpoint and returns an analysed rewrite', async () => {
+  const calls = mockFetch({
+    '/api/tags': () => [200, { models: [{ name: 'nomic-embed-text' }, { name: 'qwen2.5:3b' }] }],
+    '/api/show': () => [200, {}],
+    '/api/generate': (b) => [200, { response: 'We should meet tomorrow to discuss the plan.', done: true, done_reason: 'stop', model: b.model }],
+  });
+  const r = await HH.tighten('So basically we should meet up tomorrow in order to discuss the plan.', { endpoint: 'http://localhost:11434' });
+  assert.equal(r.model, 'qwen2.5:3b');
+  assert.equal(r.rewrite, 'We should meet tomorrow to discuss the plan.');
+  for (const c of calls) assert.ok(c.url.startsWith('http://localhost:11434/api/'), c.url);
+  const gen = JSON.parse(calls.find((c) => c.url.endsWith('/api/generate')).opts.body);
+  assert.equal(gen.stream, false);
+  assert.ok(gen.prompt.endsWith('discuss the plan.'));
+});
+
+test('tighten reports a blocked origin (403) with code "blocked"', async () => {
+  mockFetch({ '/api/tags': () => [200, { models: [{ name: 'qwen2.5:3b' }] }], '/api/show': () => [403, {}], '/api/generate': () => [403, {}] });
+  await assert.rejects(HH.tighten('Hello there.', { endpoint: 'http://localhost:11434' }), (e) => e.code === 'blocked');
+});
+
+test('tighten reports Ollama offline with code "offline"', async () => {
+  mockFetch({});
+  await assert.rejects(HH.tighten('Hello there.', { endpoint: 'http://localhost:11434' }), (e) => e.code === 'offline');
+});
+
+test('tighten reports no installed models with code "nomodel"', async () => {
+  mockFetch({ '/api/tags': () => [200, { models: [] }] });
+  await assert.rejects(HH.tighten('Hello there.', { endpoint: 'http://localhost:11434' }), (e) => e.code === 'nomodel');
+});
+
+test('tighten rejects empty text', async () => {
+  mockFetch({});
+  await assert.rejects(HH.tighten('   '));
+});
