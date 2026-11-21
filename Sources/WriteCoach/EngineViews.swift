@@ -215,8 +215,11 @@ struct EngineSettingsCard: View {
     }
 
     private func saveEndpoint() {
-        let v = onlineEndpoint.trimmingCharacters(in: .whitespaces)
-        guard v != model.settings.onlineEndpoint, URL(string: v)?.scheme?.hasPrefix("http") == true else { return }
+        var v = onlineEndpoint.trimmingCharacters(in: .whitespaces)
+        if v.isEmpty { v = AppSettings.defaultOnlineEndpoint }
+        // Plain http only for a stand-in on this Mac; anything remote must be https.
+        guard v != model.settings.onlineEndpoint, let url = URL(string: v),
+              url.scheme == "https" || (url.scheme == "http" && CompanionService.isLocal(v)) else { return }
         model.settings.onlineEndpoint = v; model.settings.save(); model.allowance = nil; model.refreshAllowance()
     }
 
