@@ -55,3 +55,20 @@ $('origin').textContent = HH.extensionOrigin();
 showOS(HH.platform());
 chrome.commands.getAll((cmds) => { const c = cmds.find((x) => x.name === 'tighten'); $('key').textContent = (c && c.shortcut) || 'your shortcut (none is set: choose one at chrome://extensions/shortcuts)'; });
 chrome.storage.local.get({ endpoint: HH.DEFAULTS.endpoint }, (s) => { endpoint = s.endpoint; $('ep').textContent = s.endpoint; check(); });
+
+// Chrome's built-in model: no Ollama needed when Chrome can run it. Its one-time download must start from a click.
+async function builtin() {
+  const st = await HH.builtinStatus(), box = $('builtin');
+  if (st === 'unsupported' || st === 'unavailable') { box.hidden = true; return; }
+  box.hidden = false;
+  if (st === 'available') { $('b-note').textContent = 'Ready. HeyHumanly uses it automatically, so you can skip the Ollama steps below.'; $('b-get').hidden = true; $('done').hidden = false; return; }
+  $('b-note').textContent = st === 'downloading' ? 'Chrome is downloading its model…' : 'This computer can run Chrome’s own model, so you can skip Ollama. Chrome downloads it once (a few GB, needs 22 GB free disk space).';
+  $('b-get').hidden = st === 'downloading';
+}
+$('b-get').addEventListener('click', async () => {
+  $('b-get').disabled = true; $('b-bar').hidden = false;
+  try { const s = await HH.builtinSession((f) => { $('b-bar').value = f; }); s.destroy(); }
+  catch (e) { $('b-note').textContent = 'Chrome couldn’t download its model (' + (e.message || e) + '). You can use Ollama below instead.'; }
+  $('b-get').disabled = false; $('b-bar').hidden = true; builtin();
+});
+builtin();
