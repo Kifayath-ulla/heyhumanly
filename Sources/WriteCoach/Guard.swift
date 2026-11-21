@@ -40,8 +40,8 @@ enum RewriteGuard {
         for c in set.changes {
             if gone.contains(key(from: c.from, to: c.to)) { continue }
             // A number cut here but kept elsewhere in the rewrite was moved, not lost.
-            if c.to.isEmpty, numbersSurvive(c.from, original: original, rewrite: rewrite) { accepted.insert(c.id); continue }
-            switch verdict(from: c.from, to: c.to, keep: keep) {
+            let moved = numbersSurvive(c.from, original: original, rewrite: rewrite)
+            switch verdict(from: c.from, to: c.to, keep: keep, numbersMoved: moved) {
             case .keep: accepted.insert(c.id)
             case .drop: break
             case .replace(let word): accepted.insert(c.id); overrides[c.id] = word
@@ -53,7 +53,7 @@ enum RewriteGuard {
 
     enum Verdict: Equatable { case keep, drop, replace(String) }
 
-    static func verdict(from: String, to: String, keep: Set<String> = []) -> Verdict {
+    static func verdict(from: String, to: String, keep: Set<String> = [], numbersMoved: Bool = false) -> Verdict {
         let fromWords = words(from), toWords = Set(words(to))
         // Slang, shorthand and the user's own dictionary words stay as written.
         for w in fromWords where !toWords.contains(w) {
@@ -61,7 +61,7 @@ enum RewriteGuard {
         }
         // Numbers are facts: a changed or dropped number ("4,200" → "4,000") is never accepted.
         let fromDigits = from.filter(\.isNumber)
-        if !fromDigits.isEmpty, fromDigits != to.filter(\.isNumber) { return .drop }
+        if !numbersMoved, !fromDigits.isEmpty, fromDigits != to.filter(\.isNumber) { return .drop }
         if from.isEmpty || to.isEmpty { return .keep }
         // "5pm" → "5 p.m.", "10k" → "10K": formatting taste, not a mistake.
         let a = alnum(from), b = alnum(to)
