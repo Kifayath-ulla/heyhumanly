@@ -27,7 +27,11 @@ The local model only proposes the corrected text. Before anything is shown, `Rew
 3. Open HeyHumanly. The first-run tour checks for [Ollama](https://ollama.com) and the model. **Get Ollama** opens its download page; **Download model** pulls the model with a progress bar.
 4. Allow Accessibility when asked (needed to read the text box you are typing in), then try the example.
 
-**Unsigned release:** version 0.1.0 is ad-hoc signed and not notarized, so macOS may refuse the first open. After checking the checksum, use System Settings › Privacy & Security › Open Anyway. See [heyhumanly.com/install](https://heyhumanly.com/install/#gatekeeper).
+**Unsigned release:** releases are ad-hoc signed and not notarized, so macOS may refuse the first open. After checking the checksum, use System Settings › Privacy & Security › Open Anyway. See [heyhumanly.com/install](https://heyhumanly.com/install/#gatekeeper).
+
+## Chrome extension (Mac, Windows, Linux)
+
+The extension in `extension/` brings the same tone-keeping rewrite to any website: select text and press `Alt+Shift+H`, use the toolbar button, or right-click › Tighten with HeyHumanly. It talks only to Ollama on your own computer (`localhost:11434`). Setup steps for each system: [heyhumanly.com/extension](https://heyhumanly.com/extension/). Until it is in the Chrome Web Store, load it from `chrome://extensions` › Developer mode › Load unpacked.
 
 ## Requirements
 
@@ -50,9 +54,7 @@ The website lives in `site-src/` and `scripts/build-site.py` (static, deployed t
 
 ## Contributing and reporting problems
 
-Issues and pull requests are welcome. Do not paste private writing into public issues. For security problems, use a private advisory (see `SECURITY.md`).
-
-## License
+Issues and pull requests are welcome; see `CONTRIBUTING.md`. Do not paste private writing into public issues. For security problems, use a private advisory (see `SECURITY.md`).
 
 ## License & Contributors
 
@@ -88,7 +90,7 @@ HH_NO_LOCATE=1 HeyHumanly.app/Contents/MacOS/HeyHumanly                         
 
 ## Releasing and deploying (maintainers)
 
-1. Bump `CFBundleShortVersionString` in `Resources/Info.plist`, add a `CHANGELOG.md` entry, run `./scripts/release.sh`.
+1. Bump the version in `Resources/Info.plist` (`CFBundleShortVersionString`), `extension/manifest.json` and `site-src/release.json`, add a `CHANGELOG.md` entry, check with `python3 scripts/check-versions.py`, then run `./scripts/release.sh`.
 2. `gh release create vX.Y.Z dist/X.Y.Z/*.dmg dist/X.Y.Z/*.sha256 --notes-file ...`
 3. Update `site-src/release.json` (version, file, sha256, size), run `python3 scripts/build-site.py`, then `wrangler deploy -c wrangler.prod.jsonc`.
 `wrangler.jsonc` deploys the preview at `*.workers.dev` (noindex); `wrangler.prod.jsonc` also attaches heyhumanly.com. Hosting is Cloudflare Workers static assets on the free plan (100,000 requests/day).
