@@ -129,6 +129,7 @@ export async function handleCoach(request, env, now = Date.now()) {
       env.AI.run(model, { messages: [{ role: 'user', content: prompt }], max_tokens: maxOut, temperature: 0.2, chat_template_kwargs: { enable_thinking: false } }),
       new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('timeout')), Number(env.COACH_TIMEOUT_MS) || LIMITS.timeoutMs); }),
     ]);
+    if (out?.choices?.[0]?.finish_reason === 'length') throw new Error('truncated');
     const raw = out?.choices?.[0]?.message?.content ?? out?.response ?? '';
     const cleaned = HH.cleanRewrite(raw);
     const rewrite = cleaned && HH.restoreCode(text, HH.fixTypos(text, cleaned));
