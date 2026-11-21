@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Try coaching right away: the coach window works with no Ollama, no API key and no Accessibility permission.
+- Engines: Apple's on-device model (macOS 26, Apple Intelligence), free online coaching (asks first; 10 a day), in-app offline coaching (downloads a private Ollama and a model; works with Wi-Fi off), or your own Ollama. Settings › Coaching.
+- Accessibility is now the last, optional onboarding step ("Coach in other apps").
+
 ## 0.1.5 (2026-11-19)
 
 - Settings › Chrome extension › **Allow**: one button lets the Chrome extension use your local Ollama, without Terminal. The setting is kept after a restart, and Ollama restarts once.

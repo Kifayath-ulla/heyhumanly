@@ -14,6 +14,8 @@ HeyHumanly's style suggestions use word lists ported from these MIT-licensed pro
 - no-cliches 0.3.6, Copyright (c) duereg
 - Lexicon, Copyright (c) 2026 Aashish Harishchandre (https://github.com/AashishH15/Lexicon). The passive-voice check, the wordy-phrase list, the repeated-opener check, the readability formula and the visual design language (paper background, serif headlines, mono labels, pale status colours) are adapted from Lexicon.
 
+Offline coaching downloads (it is not bundled) Ollama 0.40.17 from https://github.com/ollama/ollama, MIT License, Copyright (c) Ollama. It runs as a separate program on this Mac.
+
 Bundled fonts (SIL Open Font License 1.1): Newsreader (Production Type), Geist (Vercel), JetBrains Mono (JetBrains).
 
 The MIT License

@@ -72,7 +72,7 @@ enum CompanionService {
                                                                         "options": ["temperature": 0.1, "num_predict": 120 + 70 * changes.count]])
         struct Outer: Decodable { let response: String }
         struct Parsed: Decodable { struct I: Decodable { let from: String?; let kind: String?; let level: String?; let label: String?; let why: String?; let category: String? }; let items: [I]; let tip: String? }
-        guard let (data, _) = try? await URLSession.shared.data(for: request),
+        guard let (data, _) = try? await LLM.data(for: request),
               let outer = try? JSONDecoder().decode(Outer.self, from: data),
               let parsed = try? JSONDecoder().decode(Parsed.self, from: Data(outer.response.utf8)) else { return nil }
         let norm = { (s: String) in s.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)) }
@@ -139,7 +139,7 @@ enum CompanionService {
         request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "keep_alive": "30m",
                                                                        "options": ["temperature": temperature, "num_predict": limit]])
         let data: Data, response: URLResponse
-        do { (data, response) = try await URLSession.shared.data(for: request) }
+        do { (data, response) = try await LLM.data(for: request) }
         catch let error as URLError where [.cannotConnectToHost, .cannotFindHost, .networkConnectionLost, .notConnectedToInternet].contains(error.code) {
             throw CoachError.ollamaNotRunning
         }
