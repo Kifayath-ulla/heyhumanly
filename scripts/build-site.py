@@ -49,7 +49,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 header.top{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;z-index:50;padding:14px 0;border-bottom:1px solid var(--line);background:var(--nav);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);transition:top .45s cubic-bezier(.22,1,.36,1),width .45s cubic-bezier(.22,1,.36,1),border-radius .45s,padding .45s,box-shadow .45s}
 header.top.scrolled{top:14px;width:min(calc(100% - 28px),1120px);border-radius:999px;border-bottom:0;padding:10px 0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 12px 40px -12px rgba(0,0,0,.18)}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1160px;margin:0 auto;padding:0 28px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:500;color:var(--ink);text-decoration:none;font-size:1.3rem}.brand img{width:28px;height:28px;border-radius:7px}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;white-space:nowrap;font-weight:500;color:var(--ink);text-decoration:none;font-size:1.3rem}.brand img{width:28px;height:28px;border-radius:7px}
 nav.links{display:flex;gap:28px;align-items:center}nav.links a{color:var(--ink);opacity:.6;text-decoration:none;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;font-weight:500}nav.links a:hover{opacity:1}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--btn);color:var(--btnink)!important;text-decoration:none;font-weight:500;padding:13px 24px;border-radius:10px;border:1px solid var(--btn);font-size:15px;cursor:pointer;transition:.25s}
 .btn:hover{background:var(--btnhov);transform:translateY(-1px)}.btn.sm{padding:9px 16px;font-size:14px;border-radius:999px}
@@ -58,7 +58,7 @@ nav.links a.btn{opacity:1;text-transform:none;font-family:var(--sans);letter-spa
 .btn.cream{background:#f7f6f3;color:#111!important;border-color:#f7f6f3}.btn.cream:hover{background:#fff}
 .tg{width:36px;height:36px;border-radius:50%;border:1px solid var(--line2);background:var(--surface);color:var(--ink);cursor:pointer;font-size:15px;display:grid;place-items:center}.tg:hover{background:var(--subtle)}
 /* hero */
-.hero{text-align:center;padding:150px 0 10px}
+.hero{text-align:center;padding-top:150px;padding-bottom:10px}
 .lede{font-size:clamp(17px,1.9vw,20px);color:var(--mute);margin:0 auto 28px;max-width:38em}
 .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center}.fine{font-size:13px;color:var(--mute);margin-top:14px;font-family:var(--mono)}
 .stage{margin:48px auto 0;max-width:960px;border-radius:24px;padding:clamp(14px,3vw,34px);background:radial-gradient(110% 120% at 15% 0%,#ece6d8 0%,#e9e5dc 40%,#e4e1da 100%);box-shadow:var(--lift);border:1px solid var(--line)}
@@ -98,7 +98,7 @@ section{padding:80px 0}.center{text-align:center}.center .lede{margin-left:auto;
 .ext .bar{display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--mute);margin-bottom:16px}
 .ext .shell{border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--bg)}
 .ext .chrome{display:flex;align-items:center;gap:7px;padding:9px 12px;background:var(--subtle);border-bottom:1px solid var(--line)}.ext .chrome i{width:10px;height:10px;border-radius:50%;background:var(--line2);display:block}
-.ext .url{margin-left:10px;flex:1;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-family:var(--mono);font-size:11.5px;color:var(--mute)}
+.ext .url{margin-left:10px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-family:var(--mono);font-size:11.5px;color:var(--mute)}
 .ext .pill{font-family:var(--mono);font-size:11px;background:var(--greenbg);color:var(--greentx);padding:3px 10px;border-radius:999px}
 .ext .compose{padding:22px;background:var(--surface)}.ext .meta{font-family:var(--mono);font-size:12px;color:var(--mute);margin-bottom:10px}
 .ext .chip{margin-top:14px;display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface2);border:1px solid var(--line2);border-radius:12px;padding:8px 12px;font-size:14px}
@@ -111,15 +111,15 @@ section{padding:80px 0}.center{text-align:center}.center .lede{margin-left:auto;
 .manifesto p.t{max-width:40em;margin:0 auto 14px;color:var(--mute);font-size:17px}
 .trust{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:34px;text-align:left}.trust div{border-top:1px solid var(--line2);padding-top:16px}.trust h4{font-family:var(--serif);font-size:1.15rem;font-weight:500;margin-bottom:4px}.trust p{color:var(--mute);font-size:14.5px}
 ol.steps{list-style:none;margin:26px 0 0;display:grid;gap:12px;counter-reset:s;text-align:left}
-ol.steps li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 20px 16px 64px;position:relative}
+ol.steps li{min-width:0;counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 20px 16px 64px;position:relative}
 ol.steps li::before{content:counter(s);position:absolute;left:18px;top:16px;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-family:var(--mono);font-size:13px}
 ol.steps li p{margin:2px 0 0;color:var(--mute)}ol.steps li h3{font-size:1.1rem;font-family:var(--sans);font-weight:600;letter-spacing:0}
 .note{background:var(--yellowbg);border:1px solid transparent;border-radius:14px;padding:14px 18px;color:var(--yellowtx);font-size:15px;text-align:left}
 .ok{background:var(--greenbg);border:1px solid transparent;border-radius:14px;padding:14px 18px;font-size:15.5px;text-align:left;color:var(--greentx)}.ok b{color:inherit}
 table{border-collapse:collapse;width:100%;font-size:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;text-align:left}
-th,td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--surface2);width:120px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:500}tr:last-child th,tr:last-child td{border-bottom:0}
+th,td{padding:12px 16px;overflow-wrap:anywhere;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--surface2);width:120px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:500}tr:last-child th,tr:last-child td{border-bottom:0}
 details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:10px 0;text-align:left}summary{cursor:pointer;font-weight:600;font-size:16.5px}
-details p{margin:10px 0 0;color:var(--mute)}code,kbd{white-space:nowrap;background:var(--subtle);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font:13px var(--mono);word-break:break-all}
+details p{margin:10px 0 0;color:var(--mute)}kbd{white-space:nowrap}code{overflow-wrap:anywhere}code,kbd{background:var(--subtle);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font:13px var(--mono);word-break:break-all}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}.card{text-align:left;padding:24px}.card h3{font-size:1.2rem}
 #privacy .wrap,#limits .wrap,#setup .wrap{max-width:960px}#privacy,#limits{padding:40px 0}#limits ul{list-style:none;display:grid;gap:10px}
 #limits li{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 18px 13px 46px;position:relative;color:var(--mute);font-size:15.5px}
@@ -132,6 +132,8 @@ footer{border-top:1px solid var(--line);padding:52px 0 28px;color:var(--mute);fo
 #notmac{display:none;margin-top:16px}
 main>section:first-child,main>.wrap:first-child{}
 @media(max-width:860px){.split,.steps3,.trust,.grid{grid-template-columns:1fr}.bento{grid-template-columns:1fr}.tile,.tile.w{grid-column:auto}.fgrid{grid-template-columns:1fr 1fr}nav.links a.hide-s{display:none}section{padding:56px 0}.hero{padding-top:120px}}
+.show-xs{display:none}
+@media(max-width:480px){.nav{padding:0 16px}nav.links{gap:12px}.brand{font-size:1.15rem}.hide-xs{display:none}.show-xs{display:inline}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 """
 
@@ -154,7 +156,7 @@ def page(path, title, desc, body, schema=None, noindex=False, canonical=None):
 <meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#F7F6F3"><meta name="google-site-verification" content="Z0gdQHwUIRf05KhmeTaF1pIuTKwzJaGXkySy6l3MHhY"><meta name="msvalidate.01" content="7214F04580277B31B88F4F83CF229AA0">
 <script>(function(){{try{{var t=localStorage.getItem("hhtheme")||"light";document.documentElement.setAttribute("data-theme",t)}}catch(e){{}}}})()</script><style>{CSS}</style>{ld}</head><body><a class="skip" href="#main">Skip to content</a>
 <header class="top" id="top"><div class="nav"><a class="brand" href="/"><img src="/favicon.png" alt="" width="28" height="28">HeyHumanly</a>
-<nav class="links" aria-label="Main"><a class="hide-s" href="/#how">How it works</a><a class="hide-s" href="/#features">Features</a><a class="hide-s" href="/extension/">Chrome</a><a class="hide-s" href="/install/">Install</a><a class="hide-s" href="/#faq">FAQ</a><a class="hide-s" href="{SRC}">GitHub</a><button class="tg" id="tg" type="button" aria-label="Switch between light and dark theme">◐</button><a class="btn sm dl" href="{DMG}" data-dl>Download for Mac</a></nav></div></header>
+<nav class="links" aria-label="Main"><a class="hide-s" href="/#how">How it works</a><a class="hide-s" href="/#features">Features</a><a class="hide-s" href="/extension/">Chrome</a><a class="hide-s" href="/install/">Install</a><a class="hide-s" href="/#faq">FAQ</a><a class="hide-s" href="{SRC}">GitHub</a><button class="tg" id="tg" type="button" aria-label="Switch between light and dark theme">◐</button><a class="btn sm dl" href="{DMG}" data-dl><span class="hide-xs">Download for Mac</span><span class="show-xs">Download</span></a></nav></div></header>
 <main id="main">{body}</main>
 <footer><div class="wrap"><div class="fgrid"><div><a class="brand" href="/"><img src="/favicon.png" alt="" width="28" height="28">HeyHumanly</a><p style="margin:12px 0 0;max-width:22em">A free writing coach for Mac and Chrome. It keeps your tone and teaches you why each change helps, with an AI model on your own computer.</p></div>
 <div><h4>Product</h4><a href="/#how">How it works</a><a href="/#features">Features</a><a href="/extension/">Chrome extension</a><a href="/#privacy">Privacy</a><a href="/#faq">FAQ</a><a href="/writing-habits/">Writing habits guide</a><a href="/local-ai-writing-coach-mac/">Local AI setup</a><a href="/grammarly-alternative/">Grammarly alternative</a><a href="/private-writing-assistant/">Private writing assistant</a></div>
