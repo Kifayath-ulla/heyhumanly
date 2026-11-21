@@ -772,10 +772,13 @@ final class CoachModel: ObservableObject {
         Task {
             defer { ProcessInfo.processInfo.endActivity(activity) }
             do {
+                // Publish streamed text at most ~10 times a second: one redraw per token pegs the CPU on long text.
+                let stream = StreamBuffer()
                 var rewrite = try await CoachService.streamRewrite(text: original, style: style, appName: app, preserve: words,
                                                                    endpoint: endpoint, model: modelName) { [weak self] token in
-                    self?.streamingText += token
+                    if let chunk = stream.add(token) { self?.streamingText += chunk }
                 }
+                streamingText += stream.flush()
                 // Light styles must not change meaning, slang or harmless wording.
                 if style == .fixOnly || style == .polish { rewrite = RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: words) }
                 else { rewrite = TextSafety.apply(original: original, rewrite: rewrite, preserve: words) }
@@ -844,4 +847,20 @@ final class CoachPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
     override func cancelOperation(_ sender: Any?) { orderOut(nil) }
+}
+
+/// Collects streamed tokens and releases them in batches.
+@MainActor final class StreamBuffer {
+    private var pending = ""
+    private var last = Date.distantPast
+    func add(_ token: String) -> String? {
+        pending += token
+        guard Date().timeIntervalSince(last) >= 0.1 else { return nil }
+        return flush()
+    }
+    func flush() -> String {
+        last = Date()
+        defer { pending = "" }
+        return pending
+    }
 }
