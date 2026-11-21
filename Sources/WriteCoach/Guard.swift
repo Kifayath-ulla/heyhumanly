@@ -33,13 +33,21 @@ enum RewriteGuard {
     static func sanitize(original: String, rewrite: String, preserve: [String]) -> String {
         let set = ChangeSet(original: original, rewrite: rewrite)
         guard !set.changes.isEmpty else { return rewrite }
-        let gone = dismissed
         let keep = Set(preserve.map { $0.lowercased() })
+        // First allow numbers the rewrite moved; if that loses one (its new spot was reverted), keep every number in place.
+        let lenient = apply(set, original: original, rewrite: rewrite, keep: keep, allowMoves: true)
+        if covers(lenient, original) { return lenient }
+        return apply(set, original: original, rewrite: rewrite, keep: keep, allowMoves: false)
+    }
+
+    private static func apply(_ set: ChangeSet, original: String, rewrite: String, keep: Set<String>, allowMoves: Bool) -> String {
+        let gone = dismissed
         var accepted = Set<UUID>()
         var overrides: [UUID: String] = [:]
         for c in set.changes {
             if gone.contains(key(from: c.from, to: c.to)) { continue }
-            switch verdict(from: c.from, to: c.to, keep: keep) {
+            let moved = allowMoves && numbersSurvive(c.from, original: original, rewrite: rewrite)
+            switch verdict(from: c.from, to: c.to, keep: keep, numbersMoved: moved) {
             case .keep: accepted.insert(c.id)
             case .drop: break
             case .replace(let word): accepted.insert(c.id); overrides[c.id] = word
@@ -51,12 +59,15 @@ enum RewriteGuard {
 
     enum Verdict: Equatable { case keep, drop, replace(String) }
 
-    static func verdict(from: String, to: String, keep: Set<String> = []) -> Verdict {
+    static func verdict(from: String, to: String, keep: Set<String> = [], numbersMoved: Bool = false) -> Verdict {
         let fromWords = words(from), toWords = Set(words(to))
         // Slang, shorthand and the user's own dictionary words stay as written.
         for w in fromWords where !toWords.contains(w) {
             if slang.contains(w) || keep.contains(w) { return .drop }
         }
+        // Numbers are facts: a changed or dropped number ("4,200" → "4,000") is never accepted.
+        let fromDigits = from.filter(\.isNumber)
+        if !numbersMoved, !fromDigits.isEmpty, fromDigits != to.filter(\.isNumber) { return .drop }
         if from.isEmpty || to.isEmpty { return .keep }
         // "5pm" → "5 p.m.", "10k" → "10K": formatting taste, not a mistake.
         let a = alnum(from), b = alnum(to)
@@ -82,6 +93,23 @@ enum RewriteGuard {
     }
 
     // MARK: Helpers
+
+    /// Whole numbers as written: "12.50", "4,200", "10:30" and "12/3" are one token each.
+    private static func numbers(_ s: String) -> [String] {
+        let re = try! NSRegularExpression(pattern: "\\d+(?:[.,:/]\\d+)*")
+        return re.matches(in: s, range: NSRange(s.startIndex..., in: s)).compactMap { Range($0.range, in: s).map { String(s[$0]) } }
+    }
+    private static func count(_ n: String, in list: [String]) -> Int { list.filter { $0 == n }.count }
+    private static func numbersSurvive(_ cut: String, original: String, rewrite: String) -> Bool {
+        let runs = numbers(cut)
+        guard !runs.isEmpty else { return false }
+        let before = numbers(original), after = numbers(rewrite)
+        return runs.allSatisfy { count($0, in: after) >= count($0, in: before) }
+    }
+    private static func covers(_ text: String, _ original: String) -> Bool {
+        let before = numbers(original), after = numbers(text)
+        return before.allSatisfy { count($0, in: after) >= count($0, in: before) }
+    }
 
     private static func words(_ s: String) -> [String] {
         s.lowercased().replacingOccurrences(of: "’", with: "'")

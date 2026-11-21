@@ -1,0 +1,28 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+permissions: { contents: read }
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Syntax check
+        run: for f in extension/*.js worker/index.js eval/*.mjs; do if [ -f "$f" ]; then node --check "$f"; fi; done
+      - name: Unit tests (extension, worker, repo rules)
+        run: node --test tests/*.test.mjs
+      - name: Generated site is up to date
+        run: |
+          python3 scripts/build-site.py
+          git diff --exit-code -- site || { echo "::error::site/ is stale. Run python3 scripts/build-site.py and commit."; exit 1; }
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build app
+        run: ./scripts/build-app.sh
+      - name: Meaning-guard smoke tests
+        run: ./scripts/smoke-mac.sh HeyHumanly.app/Contents/MacOS/HeyHumanly
