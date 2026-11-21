@@ -65,7 +65,8 @@ extension CoachModel {
     var writingModels: [String] { installedModels.filter { !$0.localizedCaseInsensitiveContains("embed") && !Self.isCloudModel($0) } }
     /// Ollama "cloud" models (e.g. gpt-oss:120b-cloud) forward text to ollama.com, so they never count as on this Mac.
     static func isCloudModel(_ name: String) -> Bool {
-        guard let tag = name.lowercased().split(separator: ":").last, name.contains(":") else { return false }
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard name.contains(":"), let tag = name.split(separator: ":").last else { return false }
         return tag == "cloud" || tag.hasSuffix("-cloud")
     }
     var ollamaDetected: Bool { ollamaRunning && !writingModels.isEmpty }
