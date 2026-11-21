@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - name: Syntax check
-        run: for f in extension/*.js worker/index.js eval/run.mjs; do [ -f "$f" ] && node --check "$f"; done
+        run: for f in extension/*.js worker/index.js eval/*.mjs; do if [ -f "$f" ]; then node --check "$f"; fi; done
       - name: Unit tests (extension, worker, repo rules)
         run: node --test tests/*.test.mjs
       - name: Generated site is up to date
