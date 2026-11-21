@@ -18,9 +18,9 @@ The Mac app's screens have not yet been audited visually in this round (light an
 
 | Surface | P0 | P1 | P2 |
 |---|---|---|---|
-| Chrome extension | 2 | 9 | 9 |
+| Chrome extension | 2 | 9 | 10 |
 | Rewrite quality and detectors (shared) | 0 | 4 | 5 |
-| Website | 0 | 4 | 6 |
+| Website | 0 | 4 | 7 |
 | Mac app | 0 | 4 | 4 |
 | Repo, docs, CI, distribution | 1 | 5 | 3 |
 
