@@ -13,7 +13,7 @@
   const list = (items) => uniq(items.map((s) => s.replace(/^[ ,.]+|[ ,.]+$/g, ''))).slice(0, 4).map((s) => '“' + s + '”').join(', ');
 
   // ---------- register ----------
-  const SLANG = /(?<![\w.])(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)(?![\w.])/gi;
+  const SLANG = /(?<![\w.])(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)(?!\w|\.\w)/gi;
   // One signal (a "hey", an emoji, a lowercase start) is enough for a short message; longer text needs two.
   function isCasual(text) {
     const startsLower = /^\p{Ll}/u.test(text.trim());

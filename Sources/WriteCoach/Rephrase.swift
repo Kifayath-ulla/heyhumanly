@@ -65,7 +65,7 @@ enum RephraseGoal: String, CaseIterable, Identifiable {
 enum Register {
     static func isCasual(_ text: String) -> Bool {
         let t = text.lowercased()
-        let slang = #"(?<![\w.])(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)(?![\w.])"#
+        let slang = #"(?<![\w.])(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)(?!\w|\.\w)"#
         let hits = (try? NSRegularExpression(pattern: slang))?.numberOfMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length)) ?? 0
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let startsLower = trimmed.first.map { $0.isLowercase } ?? false
