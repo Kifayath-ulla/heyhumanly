@@ -31,6 +31,10 @@ enum RewriteGuard {
 
     /// The rewrite with unsafe or unwanted changes reverted.
     static func sanitize(original: String, rewrite: String, preserve: [String]) -> String {
+        TextSafety.apply(original: original, rewrite: guarded(original: original, rewrite: rewrite, preserve: preserve))
+    }
+
+    private static func guarded(original: String, rewrite: String, preserve: [String]) -> String {
         let set = ChangeSet(original: original, rewrite: rewrite)
         guard !set.changes.isEmpty else { return rewrite }
         let keep = Set(preserve.map { $0.lowercased() })

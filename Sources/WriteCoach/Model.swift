@@ -778,6 +778,7 @@ final class CoachModel: ObservableObject {
                 }
                 // Light styles must not change meaning, slang or harmless wording.
                 if style == .fixOnly || style == .polish { rewrite = RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: words) }
+                else { rewrite = TextSafety.apply(original: original, rewrite: rewrite) }
                 let response = CoachResult(rewrite: rewrite, explanation: "", exercise: "")
                 let set = ChangeSet(original: original, rewrite: response.rewrite)
                 changeSet = set

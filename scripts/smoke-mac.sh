@@ -26,4 +26,9 @@ check "On 12 March, send the invoice." "Send the invoice on 12 March." "Send the
 check "Pay 12.50 today." "Pay 50.12 today." "Pay 12.50 today."
 has "On 12 March, send it asap." "Send it as soon as possible on 12 March." "12 March"
 check "Call me at 5pm." "Call me at 5 p.m." "Call me at 5pm."
+check "send teh file" "send tbh file" "send the file"
+check "fix \`x.lenght\` now" "Fix (x.length now." "fix \`x.lenght\` now"
+check "use \`i => i*2\` here" "Use \`i => i * 2\` here." "Use \`i => i*2\` here."
+check "i shoud of went their" "i should have gone there" "I should have gone there"
+check "i.e. this, i think" "i.e. this, i think" "i.e. this, I think"
 exit $fail

@@ -187,7 +187,7 @@ struct CoachService {
         let prompt = """
         You are HeyHumanly, a writing coach.
         \(style.instruction)
-        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links, line breaks and technical terms exactly. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.
+        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links, line breaks and technical terms exactly, and leave anything between backticks (`like this`) exactly as written. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.
         If the writer repeats a phrase back to back ("I don't know, I don't know"), keep it once. Never introduce a repeated phrase.\(preserveRule)\(context)
         Reply with ONLY the corrected text. No quotes, no labels, no notes.
         Text:
@@ -302,7 +302,7 @@ struct CoachService {
         let prompt = """
         You are HeyHumanly, a writing coach.
         \(style.instruction)
-        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links and technical terms exactly. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.\(preserveRule)\(context)
+        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links and technical terms exactly, and leave anything between backticks (`like this`) exactly as written. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.\(preserveRule)\(context)
         Return ONLY JSON with string fields rewrite, explanation, exercise. rewrite = the full corrected text. \(modeRules)
         Text:
         \(text)

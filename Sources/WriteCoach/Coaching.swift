@@ -242,7 +242,13 @@ struct ChangeSet {
     }
     private static let grammarPairs: Set<String> = ["is>are", "was>were", "has>have", "do>does", "a>an", "me>i", "him>he", "her>she", "them>they", "us>we",
                                                     "of>have", "to>too", "in>on", "in>at", "on>at", "this>these", "that>those", "much>many", "less>fewer",
-                                                    "say>tell", "said>told", "good>well", "who>whom", "lie>lay", "can>could", "will>would", "am>is", "am>are"]
+                                                    "say>tell", "said>told", "good>well", "who>whom", "lie>lay", "can>could", "will>would", "am>is", "am>are",
+                                                    "should>shoud", "your>you're", "there>their", "then>than", "affect>effect", "loose>lose",
+                                                    // Irregular past tense / participle ("should of went" → "should have gone").
+                                                    "went>gone", "saw>seen", "did>done", "came>come", "ran>run", "ate>eaten", "wrote>written",
+                                                    "took>taken", "gave>given", "began>begun", "drank>drunk", "swam>swum", "threw>thrown",
+                                                    "knew>known", "broke>broken", "spoke>spoken", "chose>chosen", "flew>flown", "grew>grown",
+                                                    "got>gotten", "forgot>forgotten", "drove>driven", "rode>ridden", "sang>sung", "rang>rung"]
 
     /// The text with only the accepted changes applied.
     func text(accepted: Set<UUID>, overrides: [UUID: String] = [:]) -> String {
@@ -268,6 +274,8 @@ struct ChangeSet {
             return word.isEmpty ? .punctuation : nil
         }
         if from.lowercased() == to.lowercased() { return .capitalization }
+        if let right = TextSafety.commonTypos[from.trimmingCharacters(in: .punctuationCharacters).lowercased()],
+           right == to.trimmingCharacters(in: .punctuationCharacters).lowercased() { return .spelling }   // "teh" → "the"
         // Contractions: "dont" → "don't", "its" → "it's".
         if from.replacingOccurrences(of: "'", with: "").lowercased() == to.replacingOccurrences(of: "'", with: "").replacingOccurrences(of: "’", with: "").lowercased(),
            from.contains("'") != (to.contains("'") || to.contains("’")) { return .spelling }

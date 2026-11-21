@@ -104,7 +104,7 @@ enum RephraseService {
         let prompt = """
         You are HeyHumanly, a writing coach that edits lightly. The text may be typed or transcribed speech.
         Step 1: notice the writer's register (slang, casual, blunt, warm, formal, emoji, lowercase). Keep it. Same energy, same slang, same contractions, same punctuation style. Never make the text more formal, polite or corporate than the writer made it\(casual ? ". This one is casual: keep it casual" : "").
-        Keep the writer's capitalization and punctuation habits as they are (a message written in lowercase stays lowercase; a message with normal capitals keeps normal capitals; "!!" and "..." stay). Step 2: make small cuts only. If a sentence runs past about 25 words, split it into shorter sentences using the writer's own words. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.
+        Keep the writer's capitalization and punctuation habits as they are (a message written in lowercase stays lowercase; a message with normal capitals keeps normal capitals; "!!" and "..." stay). Leave anything between backticks (`like this`) exactly as written. Step 2: make small cuts only. If a sentence runs past about 25 words, split it into shorter sentences using the writer's own words. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.
         Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure (\"I'm not sure\", \"maybe\"), keep that doubt; never drop it and never turn it into a decision. \(goal.instruction)
         Reply with ONLY the edited text.
         Text:
@@ -120,8 +120,10 @@ enum RephraseService {
         struct Outer: Decodable { let response: String?; let error: String? }
         let outer = try JSONDecoder().decode(Outer.self, from: data)
         if let e = outer.error { if e.localizedCaseInsensitiveContains("not found") { throw CoachError.modelMissing(model) }; throw CoachError.server(500, e) }
-        let rewrite = CoachService.cleanRewrite(outer.response ?? "")
-        guard !rewrite.isEmpty else { throw CoachError.invalidResponse }
+        let raw = CoachService.cleanRewrite(outer.response ?? "")
+        guard !raw.isEmpty else { throw CoachError.invalidResponse }
+        // Code stays as written and known typos get the intended word. Casing is the writer's, so "i" is left alone here.
+        let rewrite = TextSafety.restoreCode(original: text, rewrite: TextSafety.fixTypos(original: text, rewrite: raw))
         let moves = HabitDetector.moves(original: text, rewrite: rewrite, casual: casual)
         let next = moves.first?.habitValue.map { "Next time, work on one thing: \($0.rawValue.lowercased()). \($0.tip)" } ?? "This was already clear. Keep doing what you're doing."
         return RephraseResult(rewrite: rewrite, moves: moves, next: next, casual: casual, goal: goal)
@@ -422,7 +424,10 @@ struct RephrasePane: View {
                 Text("WHAT CHANGED, AND WHY").font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(.tertiary)
                 ForEach(r.moves) { m in move(m) }
             } else {
-                Text("This was already clear. Nothing to change.").font(.system(size: 13.5)).foregroundStyle(.secondary)
+                let fixes = TextSafety.wordFixes(original: model.rephraseOriginal, rewrite: r.rewrite)
+                Text(fixes.isEmpty ? "This was already clear. Nothing to change."
+                     : "Fixed " + fixes.prefix(4).map { "“\($0.from)” → “\($0.to)”" }.joined(separator: ", ") + ". The rest was already clear.")
+                    .font(.system(size: 13.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             if !r.next.isEmpty {
                 HStack(alignment: .top, spacing: 10) {
