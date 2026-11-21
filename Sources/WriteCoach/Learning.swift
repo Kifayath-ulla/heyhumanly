@@ -43,11 +43,11 @@ extension CoachModel {
         let range = NSRange(location: finding.sentenceLocation, length: finding.sentenceLength)
         guard NSMaxRange(range) <= ns.length else { return }
         let sentence = ns.substring(with: range).trimmingCharacters(in: .whitespacesAndNewlines)
-        styleBusy = finding.id
         guard !isOnline else {
             errorMessage = "Sentence rewrites only run on this Mac. Edit it yourself, or enable offline coaching in Settings."
             return
         }
+        styleBusy = finding.id
         let endpoint = activeEndpoint, modelName = activeModel
         let activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .latencyCritical], reason: "Rewriting sentence")
         Task {
