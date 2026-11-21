@@ -366,13 +366,21 @@ priv = f"""
 <li><b>Stored:</b> a session is saved only when you accept a fix, start a lesson or use the coach window. It is kept in the app's preferences on your Mac. The log records timings, not your text.</li>
 <li><b>Network:</b> HeyHumanly makes no calls other than to that Ollama address. It has no analytics, accounts, tracking or automatic update check.</li>
 <li><b>Remove:</b> Settings → Privacy &amp; data → Clear history.</li></ul>
+<h2 id="extension">In the Chrome extension</h2><ul>
+<li><b>Read:</b> only when you press <code>Alt+Shift+H</code>, click the HeyHumanly button or choose <b>Tighten with HeyHumanly</b> from the right-click menu. Then it reads the text you selected, or the text box you are in, on that one tab. No script runs on pages before that.</li>
+<li><b>Sent:</b> only to Ollama on this computer, <code>http://localhost:11434</code> or <code>http://127.0.0.1:11434</code>. The extension's permissions do not allow any other address.</li>
+<li><b>Stored:</b> your settings (the Ollama address and model) in Chrome's local extension storage. Your writing is not stored.</li>
+<li><b>Clipboard:</b> written only when you press <b>Copy</b>, or when <b>Apply</b> cannot replace the text in place.</li>
+<li><b>Network:</b> no analytics, accounts, tracking, remote code or HeyHumanly server. The setup page's model download is done by Ollama.</li>
+<li><b>Remove:</b> remove the extension from <code>chrome://extensions</code>; that deletes its settings.</li></ul>
 <h2>Outside the app</h2><ul>
 <li><b>Ollama and the model:</b> downloaded by Ollama from its model library. Ollama's own privacy terms apply to that download.</li>
 <li><b>This website:</b> is hosted on Cloudflare, which keeps standard server logs. The site sets no cookies and loads no analytics or third-party scripts.</li>
-<li><b>The DMG:</b> is hosted on GitHub Releases, which GitHub operates.</li></ul>
+<li><b>The DMG:</b> is hosted on GitHub Releases, which GitHub operates.</li>
+<li><b>The Chrome extension:</b> is installed through the Chrome Web Store, which Google operates.</li></ul>
 <h2>Report a security problem</h2><p>Open a private advisory on <a href="{SRC}/security/advisories/new">GitHub</a>. Please do not post private text in public issues.</p></div></section>"""
 page('/privacy/', 'HeyHumanly privacy: what it reads, stores and sends',
-     'What HeyHumanly reads, stores and sends, based on the source code: local model by default, no account, no analytics, no tracking.', priv)
+     'What the HeyHumanly Mac app and Chrome extension read, store and send, based on the source code: local model by default, no account, no analytics, no tracking.', priv)
 
 
 habit_items = [
