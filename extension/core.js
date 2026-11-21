@@ -174,33 +174,93 @@
     if (/^["“].*["”]$/s.test(s)) s = s.slice(1, -1).trim();
     return s;
   }
+  // ---------- talking to Ollama ----------
+  const MAX_CHARS = 6000, GENERATE_MS = 180000;
+  const base = (endpoint) => String(endpoint || DEFAULTS.endpoint).trim().replace(/\/+$/, '');
+  const isLocalEndpoint = (endpoint) => /^http:\/\/(localhost|127\.0\.0\.1):11434$/.test(base(endpoint));
+  const isWritingModel = (name) => !/embed|bge|minilm|rerank|clip/i.test(name);
+  const fail = (code, message) => { const e = new Error(message); e.code = code; return e; };
+  async function fetchT(url, opts, ms) {
+    const c = new AbortController(), t = setTimeout(() => c.abort(), ms);
+    try { return await fetch(url, Object.assign({}, opts, { signal: c.signal })); }
+    catch (e) { throw c.signal.aborted ? fail('timeout', 'timeout') : e; }
+    finally { clearTimeout(t); }
+  }
+  function platform() {
+    const n = typeof navigator !== 'undefined' ? navigator : {};
+    const p = ((n.userAgentData && n.userAgentData.platform) || n.platform || n.userAgent || '').toLowerCase();
+    return /mac/.test(p) ? 'mac' : /win/.test(p) ? 'windows' : 'linux';
+  }
+  /** This extension's own origin, e.g. chrome-extension://abc…; only this ID gets allowed, not every extension. */
+  function extensionOrigin() {
+    try { if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) return chrome.runtime.getURL('').replace(/\/$/, ''); } catch (e) { /* not in an extension */ }
+    return 'chrome-extension://*';
+  }
+  function originFix(os, origin) {
+    const o = origin || extensionOrigin();
+    if (os === 'mac') return { steps: 'Easiest: in the HeyHumanly Mac app open Settings → Chrome extension and press Allow. Or paste this in Terminal, then quit Ollama from the menu bar and open it again (lasts until you restart your Mac):', command: 'launchctl setenv OLLAMA_ORIGINS "' + o + '"' };
+    if (os === 'windows') return { steps: 'Paste this in PowerShell or Command Prompt, then right-click the Ollama icon in the system tray, choose Quit, and open Ollama again:', command: 'setx OLLAMA_ORIGINS "' + o + '"' };
+    return { steps: 'If Ollama runs as a system service (the default Linux install), paste this in a terminal. It saves the setting and restarts Ollama. If you start it yourself, run OLLAMA_ORIGINS="' + o + '" ollama serve instead.', command: 'sudo mkdir -p /etc/systemd/system/ollama.service.d && printf \'[Service]\\nEnvironment="OLLAMA_ORIGINS=' + o + '"\\n\' | sudo tee /etc/systemd/system/ollama.service.d/heyhumanly.conf >/dev/null && sudo systemctl daemon-reload && sudo systemctl restart ollama' };
+  }
+  const OFFLINE = (endpoint) => 'Can’t reach Ollama at ' + base(endpoint) + '. Open the Ollama app (or run: ollama serve) and try again. Not installed yet? Open setup.';
+  const BLOCKED = 'Ollama is running, but it blocks this extension until you allow it. Open setup for the one command that fixes it.';
+  const NOMODEL = 'Ollama has no writing model yet. Run: ollama pull qwen2.5:3b (about 2 GB), or open setup to download it.';
+  function httpError(status) {
+    return status === 403 ? fail('blocked', BLOCKED) : fail('http', 'Ollama returned an error (' + status + '). Quit and reopen Ollama, then try again.');
+  }
   async function listModels(endpoint) {
-    const r = await fetch(endpoint.replace(/\/$/, '') + '/api/tags'); if (!r.ok) throw httpError(r.status);
+    const r = await fetchT(base(endpoint) + '/api/tags', {}, 5000); if (!r.ok) throw httpError(r.status);
     return ((await r.json()).models || []).map((m) => m.name);
   }
-  function httpError(status) {
-    const e = new Error(status === 403 ? 'Ollama blocked the extension. In the HeyHumanly Mac app press Settings, Chrome extension, Allow. Or run: launchctl setenv OLLAMA_ORIGINS "chrome-extension://*", then quit and reopen Ollama.' : 'Ollama returned an error (' + status + ').');
-    e.code = status === 403 ? 'blocked' : 'http'; return e;
+  /** Live setup checks. Chrome sends no Origin header on GET, so a POST is the only way to see whether Ollama blocks us. */
+  async function diagnose(endpoint) {
+    const d = { endpoint: base(endpoint), local: isLocalEndpoint(endpoint), running: false, allowed: null, models: [], writing: [] };
+    let r; try { r = await fetchT(d.endpoint + '/api/tags', {}, 4000); } catch (e) { return d; }
+    d.running = true;
+    if (r.ok) { try { d.models = ((await r.json()).models || []).map((m) => m.name); } catch (e) { /* not Ollama */ } }
+    d.writing = d.models.filter(isWritingModel);
+    try {
+      const s = await fetchT(d.endpoint + '/api/show', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: d.models[0] || 'heyhumanly-setup-check' }) }, 5000);
+      d.allowed = s.status !== 403;
+    } catch (e) { /* leave unknown */ }
+    return d;
+  }
+  /** Streams `ollama pull`; onProgress gets { status, completed, total }. */
+  async function pullModel(endpoint, name, onProgress) {
+    const r = await fetch(base(endpoint) + '/api/pull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: name, stream: true }) });
+    if (!r.ok) throw httpError(r.status);
+    const reader = r.body.getReader(), dec = new TextDecoder(); let buf = '';
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true }); const lines = buf.split('\n'); buf = lines.pop();
+      for (const line of lines) { if (!line.trim()) continue; const j = JSON.parse(line); if (j.error) throw fail('pull', j.error); onProgress && onProgress(j); }
+    }
   }
   async function pickModel(endpoint, wanted) {
     const models = await listModels(endpoint);
     if (wanted && models.includes(wanted)) return wanted;
     for (const pref of ['qwen2.5:7b', 'qwen2.5:3b', 'gemma4:12b', 'llama3.2', 'mistral']) if (models.includes(pref)) return pref;
-    if (!models.length) { const e = new Error('No models are installed in Ollama yet. Run: ollama pull qwen2.5:3b'); e.code = 'nomodel'; throw e; }
-    return models[0];
+    const writing = models.filter(isWritingModel);
+    if (!writing.length) throw fail('nomodel', NOMODEL);
+    return writing[0];
   }
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
-    text = text.trim(); if (!text) throw new Error('Select some text first.');
+    text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
+    if (text.length > MAX_CHARS) throw fail('long', 'That’s ' + text.length.toLocaleString('en-US') + ' characters. HeyHumanly works on up to ' + MAX_CHARS.toLocaleString('en-US') + ' at a time (a long email). Select one part and try again.');
     const casual = isCasual(text);
-    let model; try { model = await pickModel(o.endpoint, o.model); } catch (e) { if (e.code) throw e; const err = new Error('Can’t reach Ollama at ' + o.endpoint + '. Is it running?'); err.code = 'offline'; throw err; }
+    let model; try { model = await pickModel(o.endpoint, o.model); } catch (e) { if (e.code && e.code !== 'timeout') throw e; throw fail('offline', OFFLINE(o.endpoint)); }
     let res; try {
-      res = await fetch(o.endpoint.replace(/\/$/, '') + '/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, prompt: buildPrompt(text, o.goal, casual), stream: false, think: false, keep_alive: '30m', options: { temperature: 0.2, num_predict: Math.min(700, Math.max(120, Math.floor(text.length / 2) + 80)) } }) });
-    } catch (e) { const err = new Error('Can’t reach Ollama at ' + o.endpoint + '. Is it running?'); err.code = 'offline'; throw err; }
-    if (!res.ok) throw httpError(res.status);
-    const j = await res.json(); if (j.error) { const err = new Error(/not found/i.test(j.error) ? 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model : j.error); err.code = 'model'; throw err; }
-    const rewrite = cleanRewrite(j.response); if (!rewrite) throw new Error('The model returned nothing. Try again.');
+      res = await fetchT(base(o.endpoint) + '/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, prompt: buildPrompt(text, o.goal, casual), stream: false, think: false, keep_alive: '30m', options: { temperature: 0.2, num_predict: Math.min(2048, Math.max(120, Math.ceil(text.length / 3) + 80)) } }) }, GENERATE_MS);
+    } catch (e) {
+      if (e.code === 'timeout') throw fail('timeout', model + ' took more than 3 minutes, so HeyHumanly stopped waiting. Try a shorter piece of text, or a smaller model such as qwen2.5:3b (Settings).');
+      throw fail('offline', OFFLINE(o.endpoint));
+    }
+    if (!res.ok) { if (res.status === 404) throw fail('model', 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.'); throw httpError(res.status); }
+    const j = await res.json(); if (j.error) throw fail('model', /not found/i.test(j.error) ? 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.' : 'Ollama said: ' + j.error);
+    if (j.done_reason === 'length') throw fail('cutoff', 'The rewrite stopped before the end of your text, so it isn’t shown. Select a shorter part and try again.');
+    const rewrite = cleanRewrite(j.response); if (!rewrite) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
@@ -218,6 +278,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, isCasual, detect, tighten, analyse, quickCheck, listModels, readability, buildPrompt, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, isCasual, detect, tighten, analyse, quickCheck, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);
