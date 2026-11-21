@@ -24,4 +24,4 @@ createServer(async (req, res) => {
   const headers = { ...req.headers, 'cf-connecting-ip': req.socket.remoteAddress };
   const r = await handleCoach(new Request('http://localhost:' + port + req.url, { method: req.method, headers, body }), env);
   res.writeHead(r.status, Object.fromEntries(r.headers)); res.end(Buffer.from(await r.arrayBuffer()));
-}).listen(port, () => console.log('coach-dev on http://localhost:' + port + ' (model ' + model + (failAll ? ', failing' : '') + ')'));
+}).listen(port, '127.0.0.1', () => console.log('coach-dev on http://localhost:' + port + ' (model ' + model + (failAll ? ', failing' : '') + ')'));
