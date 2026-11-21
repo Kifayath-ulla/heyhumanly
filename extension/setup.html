@@ -1,0 +1,21 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Set up HeyHumanly</title><link rel="stylesheet" href="setup.css"></head><body><main>
+<h1>Set up HeyHumanly</h1>
+<p class="lede">HeyHumanly rewrites your text with <b>Ollama</b>, a free app that runs AI models on your own computer, so your writing never leaves it. There are three checks. This page re-checks by itself as you go.</p>
+<p id="summary" class="summary" role="status" aria-live="polite">Checking…</p>
+<ol class="checks">
+<li id="c-run" data-state="wait"><div class="h"><span class="dot" aria-hidden="true"></span><h2>1. Ollama is running</h2><span class="state"></span></div>
+<div class="body" hidden><p>Install Ollama from <a href="https://ollama.com/download" target="_blank" rel="noopener noreferrer">ollama.com/download</a> (Mac, Windows or Linux) and open it. Already installed? Open the Ollama app, or run <code>ollama serve</code> in a terminal.</p></div></li>
+<li id="c-allow" data-state="wait"><div class="h"><span class="dot" aria-hidden="true"></span><h2>2. Ollama allows this extension</h2><span class="state"></span></div>
+<div class="body" hidden><p>Ollama blocks browser extensions until you allow them. This allows only HeyHumanly (<code id="origin"></code>), not other extensions or websites.</p>
+<div class="tabs" role="group" aria-label="Your computer"><button data-os="mac">Mac</button><button data-os="windows">Windows</button><button data-os="linux">Linux</button></div>
+<p id="os-steps"></p><div class="cmd"><code id="os-cmd"></code><button class="copy" data-copy="os-cmd">Copy</button></div></div></li>
+<li id="c-model" data-state="wait"><div class="h"><span class="dot" aria-hidden="true"></span><h2>3. A writing model is installed</h2><span class="state"></span></div>
+<div class="body" hidden><p id="models-note"></p>
+<p>Pick one. <b>qwen2.5:3b</b> is about 1.9 GB and works with 8 GB of memory. <b>qwen2.5:7b</b> is about 4.7 GB and gives better edits, but needs 16 GB or more.</p>
+<div class="row"><button class="p" data-pull="qwen2.5:3b">Download qwen2.5:3b</button><button data-pull="qwen2.5:7b">Download qwen2.5:7b</button></div>
+<progress id="bar" max="1" value="0" hidden></progress><p id="pull" aria-live="polite"></p>
+<p class="fine">Or in a terminal: <code id="pullcmd">ollama pull qwen2.5:3b</code> <button class="copy" data-copy="pullcmd">Copy</button></p></div></li>
+</ol>
+<section id="done" class="done" hidden><h2>You’re ready</h2><p>Select text in any text box and press <kbd id="key">Alt+Shift+H</kbd>, or right-click it and choose <b>Tighten with HeyHumanly</b>. You can also paste text into the HeyHumanly button in the toolbar.</p></section>
+<p class="fine">Checking Ollama at <code id="ep"></code>. You can change the address in the toolbar popup under Settings. <a href="https://heyhumanly.com/extension/" target="_blank" rel="noopener noreferrer">More help</a></p>
+</main><script src="core.js"></script><script src="setup.js"></script></body></html>
