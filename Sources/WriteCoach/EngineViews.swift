@@ -202,13 +202,12 @@ struct EngineSettingsCard: View {
                     TextField(AppSettings.defaultOnlineEndpoint, text: $onlineEndpoint)
                         .textFieldStyle(.roundedBorder).font(.system(size: 12, design: .monospaced))
                         .onSubmit(saveEndpoint).accessibilityLabel("Online endpoint")
-                    Text("Ollama endpoint and model are in Local AI below. Install ID: \(OnlineCoach.installID.prefix(8))… (random, sent only with online requests).")
+                    Text("Press Return to save. Leave empty for the default. Ollama endpoint and model are in Local AI below. Install ID: \(OnlineCoach.installID.prefix(8))… (random, sent only with online requests).")
                         .font(.system(size: 11)).foregroundStyle(.tertiary)
                 }
                 .padding(.top, 6)
             }
             .font(.system(size: 12))
-            .onChange(of: onlineEndpoint) { _, _ in saveEndpoint() }
         }
         .onAppear { onlineEndpoint = model.settings.onlineEndpoint }
         .card()
@@ -221,8 +220,12 @@ struct EngineSettingsCard: View {
         var v = onlineEndpoint.trimmingCharacters(in: .whitespaces)
         if v.isEmpty { v = AppSettings.defaultOnlineEndpoint }
         // Plain http only for a stand-in on this Mac; anything remote must be https.
-        guard v != model.settings.onlineEndpoint, let url = URL(string: v),
-              url.scheme == "https" || (url.scheme == "http" && CompanionService.isLocal(v)) else { return }
+        guard let url = URL(string: v), url.host != nil,
+              url.scheme == "https" || (url.scheme == "http" && CompanionService.isLocal(v)) else {
+            onlineEndpoint = model.settings.onlineEndpoint; return
+        }
+        onlineEndpoint = v
+        guard v != model.settings.onlineEndpoint else { return }
         model.settings.onlineEndpoint = v; model.settings.save(); model.allowance = nil; model.refreshAllowance()
     }
 
