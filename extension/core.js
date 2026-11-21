@@ -13,11 +13,13 @@
   const list = (items) => uniq(items.map((s) => s.replace(/^[ ,.]+|[ ,.]+$/g, ''))).slice(0, 4).map((s) => '“' + s + '”').join(', ');
 
   // ---------- register ----------
-  const SLANG = /\b(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)\b/gi;
+  const SLANG = /(?<![\w.])(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)(?!\w|\.\w)/gi;
+  // One signal (a "hey", an emoji, a lowercase start) is enough for a short message; longer text needs two.
   function isCasual(text) {
     const startsLower = /^\p{Ll}/u.test(text.trim());
     const emoji = /\p{Extended_Pictographic}/u.test(text);
-    return (text.match(SLANG) || []).length >= 1 || startsLower || emoji;
+    const signals = (text.match(SLANG) || []).length + (startsLower ? 1 : 0) + (emoji ? 1 : 0);
+    return signals >= (words(text).length <= 15 ? 1 : 2);
   }
 
   // ---------- research notes (only for tips with a real, checkable source) ----------
@@ -39,7 +41,21 @@
     'Passive voice': 'Put who does the action first: “Priya reviewed it”, not “it was reviewed”.',
     'Repeated openers': 'Start the next sentence with a different word or fold two sentences together.',
   };
-  const CUTS = new Set(['Filler', 'Hedging', 'Vague wording', 'Repetition', 'Wordy phrases']);
+  const CUTS = new Set(['Filler', 'Vague wording', 'Repetition', 'Wordy phrases']);
+  const occurs = (phrase, text) => phrase ? find(new RegExp('(?<![\\p{L}\\p{N}])' + esc(phrase).replace(/ +/g, '[^\\p{L}\\p{N}]+') + '(?![\\p{L}\\p{N}])', 'iu'), text).length : 0;
+  // A "cut" card is only true if the rewrite has fewer copies of the phrase than the original.
+  function confirmed(m, original, rewrite) {
+    if (!CUTS.has(m.habit) || rewrite === original) return m;
+    const gone = (p) => occurs(p, rewrite) < occurs(p, original);
+    const left = [m.before].concat(m.also).filter(gone);
+    if (!left.length) return null;
+    if (left[0] !== m.before) {
+      const w = WORDY.find(([p]) => p === left[0].toLowerCase());
+      m.after = m.habit === 'Wordy phrases' && w ? w[1][0] : '';
+    }
+    m.before = left[0]; m.also = left.slice(1);
+    return m;
+  }
 
   // ---------- prose quality (adapted from Lexicon) ----------
   const WORDY = [
@@ -150,7 +166,7 @@
       if (op) mv('Repeated openers', op, '', 'Three sentences in a row start with “' + op + '”. Vary the start of one, or join two.');
     }
     const order = ['Buried the point', 'Too much in one sentence', 'Hedging', 'Filler', 'Wordy phrases', 'Vague wording', 'Repetition', 'Passive voice', 'Repeated openers'];
-    return out.map((m) => { const e = EVIDENCE[m.habit]; return Object.assign(m, e ? { evidence: e.note, sourceName: e.name, sourceURL: e.url } : {}, { cuts: CUTS.has(m.habit), tip: TIPS[m.habit] || '' }); })
+    return out.map((m) => confirmed(m, original, rewrite)).filter(Boolean).map((m) => { const e = EVIDENCE[m.habit]; return Object.assign(m, e ? { evidence: e.note, sourceName: e.name, sourceURL: e.url } : {}, { cuts: CUTS.has(m.habit), tip: TIPS[m.habit] || '' }); })
       .sort((a, b) => order.indexOf(a.habit) - order.indexOf(b.habit)).slice(0, 5);
   }
 

@@ -65,11 +65,15 @@ enum RephraseGoal: String, CaseIterable, Identifiable {
 enum Register {
     static func isCasual(_ text: String) -> Bool {
         let t = text.lowercased()
-        let slang = #"\b(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)\b"#
+        let slang = #"(?<![\w.])(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)(?!\w|\.\w)"#
         let hits = (try? NSRegularExpression(pattern: slang))?.numberOfMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length)) ?? 0
-        let startsLower = text.first.map { $0.isLowercase } ?? false
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let startsLower = trimmed.first.map { $0.isLowercase } ?? false
         let emoji = text.unicodeScalars.contains { $0.properties.isEmojiPresentation }
-        return hits >= 1 || startsLower || emoji
+        // One signal (a "hey", an emoji, a lowercase start) is enough for a short message; longer text needs two.
+        let signals = hits + (startsLower ? 1 : 0) + (emoji ? 1 : 0)
+        let wordCount = text.split { !$0.isLetter && !$0.isNumber && $0 != "'" }.count
+        return signals >= (wordCount <= 15 ? 1 : 2)
     }
 }
 
@@ -178,6 +182,25 @@ enum HabitDetector {
         return u.prefix(4).map { "“\($0)”" }.joined(separator: ", ")
     }
 
+    private static let cutHabits: Set<Habit> = [.filler, .vague, .repetition, .wordy]
+    private static func count(_ phrase: String, in text: String) -> Int {
+        guard !phrase.isEmpty else { return 0 }
+        return occurrences("(?<![\\p{L}\\p{N}])" + NSRegularExpression.escapedPattern(for: phrase).replacingOccurrences(of: " ", with: "[^\\p{L}\\p{N}]+") + "(?![\\p{L}\\p{N}])", in: text).count
+    }
+    /// A "cut" card is only true if the rewrite has fewer copies of the phrase than the original.
+    static func confirmed(_ move: Move, original: String, rewrite: String) -> Move? {
+        guard let h = move.habitValue, cutHabits.contains(h), rewrite != original else { return move }
+        let left = ([move.before] + move.also).filter { count($0, in: rewrite) < count($0, in: original) }
+        guard let first = left.first else { return nil }
+        var m = move
+        if first != m.before {
+            m.after = h == .wordy ? (ProseQuality.wordy.first { $0.pattern == first.lowercased() }?.replacements.first ?? "") : ""
+        }
+        m.before = first
+        m.also = Array(left.dropFirst())
+        return m
+    }
+
     static func moves(original: String, rewrite: String, casual: Bool = false) -> [Move] {
         var out: [Move] = []
         let wc = max(1, words(original).count)
@@ -233,7 +256,7 @@ enum HabitDetector {
 
         // Vague words.
         let vague = occurrences(#"\b(the |a |some )?(things?|stuff)\b( about| with| on)?( the)?( \w+)?"#, in: original)
-        if let v = vague.first {
+        if let v = vague.first, !casual {
             let phrase = v.trimmingCharacters(in: .whitespaces)
             out.append(Move(habit: Habit.vague.rawValue, before: phrase, after: "", why: "“\(phrase)” makes the reader guess what you mean. Name the actual thing (the plan, the design, the deadline) so nobody has to ask."))
         }
@@ -270,6 +293,7 @@ enum HabitDetector {
                                 why: "Three sentences in a row start with “\(opener)”. Vary the start of one, or join two."))
             }
         }
+        out = out.compactMap { confirmed($0, original: original, rewrite: rewrite) }
         out = out.map { var m = $0; if let h = m.habitValue { let e = h.evidence; m.evidence = e?.note; m.sourceName = e?.name; m.sourceURL = e?.url }; return m }
         return out.sorted { (order.firstIndex(of: $0.habitValue ?? .tone) ?? 9) < (order.firstIndex(of: $1.habitValue ?? .tone) ?? 9) }.prefix(5).map { $0 }
     }
@@ -445,7 +469,7 @@ struct RephrasePane: View {
             VStack(alignment: .leading, spacing: 5) {
                 Text(m.habit).font(.system(size: 12, weight: .bold)).foregroundStyle(Color.teach)
                 (Text("“\(m.before)”").foregroundColor(cutsWords(m) ? Color.removed : Color.ink.opacity(0.75)).strikethrough(cutsWords(m), color: Color.removed)
-                 + Text(m.after.isEmpty ? (m.habitValue == .filler || m.habitValue == .hedging ? "  cut" : "") : "  →  “\(m.after)”").foregroundColor(m.after.isEmpty ? .secondary : Color.added))
+                 + Text(m.after.isEmpty ? (m.habitValue == .filler ? "  cut" : "") : "  →  “\(m.after)”").foregroundColor(m.after.isEmpty ? .secondary : Color.added))
                     .font(.system(size: 13.5, weight: .medium)).fixedSize(horizontal: false, vertical: true)
                 Text(m.why).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 if let e = m.evidence {
@@ -465,7 +489,7 @@ struct RephrasePane: View {
     }
 
     /// Only habits that remove words show the words struck through.
-    private func cutsWords(_ m: Move) -> Bool { [Habit.filler, .hedging, .vague, .repetition, .wordy].contains(m.habitValue) }
+    private func cutsWords(_ m: Move) -> Bool { [Habit.filler, .vague, .repetition, .wordy].contains(m.habitValue) }
 
     private func countLine(_ r: RephraseResult) -> String {
         func n(_ t: String) -> Int { t.split { $0.isWhitespace }.count }
