@@ -64,7 +64,10 @@ extension CoachModel {
     /// Ollama models that can write (embedding models can't).
     var writingModels: [String] { installedModels.filter { !$0.localizedCaseInsensitiveContains("embed") && !Self.isCloudModel($0) } }
     /// Ollama "cloud" models (e.g. gpt-oss:120b-cloud) forward text to ollama.com, so they never count as on this Mac.
-    static func isCloudModel(_ name: String) -> Bool { name.lowercased().contains("cloud") }
+    static func isCloudModel(_ name: String) -> Bool {
+        guard let tag = name.lowercased().split(separator: ":").last, name.contains(":") else { return false }
+        return tag == "cloud" || tag.hasSuffix("-cloud")
+    }
     var ollamaDetected: Bool { ollamaRunning && !writingModels.isEmpty }
 
     /// First launch: Apple's model if it's ready, else the user's Ollama with a writing model, else nothing
