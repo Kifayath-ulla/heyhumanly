@@ -96,7 +96,7 @@ function base(env, remaining, now) {
 
 export async function handleCoach(request, env, now = Date.now()) {
   const url = new URL(request.url);
-  const enabled = env.COACH_ENABLED === 'true' && env.AI && env.ALLOWANCE;
+  const enabled = env.COACH_ENABLED === 'true' && env.AI && env.ALLOWANCE && env.IP_SALT;
   const day = today(now);
   if (request.method === 'GET' && url.pathname === '/api/v1/allowance') {
     const install = url.searchParams.get('install') || '';
