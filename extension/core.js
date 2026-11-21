@@ -182,7 +182,13 @@
   function restoreCode(original, rewrite) {
     const spans = original.match(CODE) || []; if (!spans.length) return rewrite;
     const target = rewrite.match(CODE) || []; if (target.length !== spans.length) return original;
-    let i = 0; return rewrite.replace(CODE, () => spans[i++]);
+    // Each rewrite span gets the closest original span, so reordered code keeps its own text.
+    const unused = spans.slice();
+    return rewrite.replace(CODE, (s) => {
+      let best = 0;
+      unused.forEach((o, k) => { if (editDistance(o, s) < editDistance(unused[best], s)) best = k; });
+      return unused.splice(best, 1)[0];
+    });
   }
   function matchCase(word, like) { return like[0] && like[0] !== like[0].toLowerCase() ? (like.length > 1 && like === like.toUpperCase() ? word.toUpperCase() : word[0].toUpperCase() + word.slice(1)) : word; }
   function editDistance(a, b) {
@@ -198,8 +204,14 @@
       if (!hits) continue;
       if (re.test(out)) { out = out.replace(re, (m) => matchCase(right, m)); continue; }
       // The model swapped the typo for a different near word ("teh" → "tbh"): use the intended one.
+      // Only a new word with the same first letter, once per typo, so unrelated new words are left alone.
       if (!new RegExp('\\b' + right + '\\b', 'i').test(out)) {
-        out = out.replace(/[A-Za-z']+/g, (w) => (!had.has(w.toLowerCase()) && editDistance(w.toLowerCase(), typo) <= 2 ? matchCase(right, w) : w));
+        let left = hits.length;
+        out = out.replace(/[A-Za-z']+/g, (w) => {
+          const l = w.toLowerCase();
+          if (left > 0 && !had.has(l) && l[0] === typo[0] && editDistance(l, typo) <= 2) { left--; return matchCase(right, w); }
+          return w;
+        });
       }
     }
     return out;

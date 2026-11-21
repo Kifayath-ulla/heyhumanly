@@ -12,8 +12,11 @@ enum TextSafety {
     ]
 
     /// All clean-ups for a coaching rewrite (Quick Fix, Teach Me, inline).
-    static func apply(original: String, rewrite: String) -> String {
-        restoreCode(original: original, rewrite: capitalizeI(fixTypos(original: original, rewrite: rewrite)))
+    /// Words in `preserve` (the user's dictionary) are never corrected.
+    static func apply(original: String, rewrite: String, preserve: [String] = []) -> String {
+        let keep = Set(preserve.map { $0.lowercased() })
+        let fixed = fixTypos(original: original, rewrite: rewrite, preserve: keep)
+        return restoreCode(original: original, rewrite: keep.contains("i") ? fixed : capitalizeI(fixed))
     }
 
     /// Inline code spans: text between single backticks on one line.
@@ -23,8 +26,8 @@ enum TextSafety {
     }
     private static let codeRegex = try! NSRegularExpression(pattern: "`[^`\\n]+`")
 
-    /// Puts every backtick span of the original back into the rewrite unchanged. If the rewrite lost or added
-    /// a span, the spans can't be matched up, so the original is returned as is.
+    /// Puts every backtick span of the original back into the rewrite unchanged, each in place of the rewrite span
+    /// closest to it (so reordered spans keep their own code). If the rewrite lost or added a span, the original is returned.
     static func restoreCode(original: String, rewrite: String) -> String {
         let o = original as NSString
         let spans = codeRanges(o)
@@ -32,21 +35,30 @@ enum TextSafety {
         let r = rewrite as NSString
         let target = codeRanges(r)
         guard target.count == spans.count else { return original }
+        let originals = spans.map { o.substring(with: $0) }
+        var unused = Array(originals.indices)
+        var picks: [Int] = []
+        for t in target {
+            let s = r.substring(with: t)
+            let best = unused.min { distance(originals[$0], s) < distance(originals[$1], s) }!
+            picks.append(best); unused.removeAll { $0 == best }
+        }
         var out = rewrite as NSString
-        for (from, to) in zip(spans, target).reversed() { out = out.replacingCharacters(in: to, with: o.substring(with: from)) as NSString }
+        for (t, pick) in zip(target, picks).reversed() { out = out.replacingCharacters(in: t, with: originals[pick]) as NSString }
         return out as String
     }
 
     /// Where the original had a known typo, the rewrite must use the intended word (not "tbh" for "teh"),
     /// and typos the model left in are corrected.
-    static func fixTypos(original: String, rewrite: String) -> String {
+    static func fixTypos(original: String, rewrite: String, preserve: Set<String> = []) -> String {
         let lowerOriginal = original.lowercased()
-        guard commonTypos.keys.contains(where: { lowerOriginal.contains($0) }) else { return rewrite }
+        let typos = commonTypos.filter { !preserve.contains($0.key) && lowerOriginal.contains($0.key) }
+        guard !typos.isEmpty else { return rewrite }
         let set = ChangeSet(original: original, rewrite: rewrite)
         var overrides: [UUID: String] = [:]
         for c in set.changes {
             let from = c.from.trimmingCharacters(in: .punctuationCharacters)
-            guard let right = commonTypos[from.lowercased()], !from.contains(" ") else { continue }
+            guard let right = typos[from.lowercased()], !from.contains(" ") else { continue }
             let to = c.to.trimmingCharacters(in: .punctuationCharacters)
             if to.lowercased() != right {
                 let lead = c.to.prefix { $0.isPunctuation }, trail = String(c.to.reversed().prefix { $0.isPunctuation }.reversed())
@@ -54,7 +66,7 @@ enum TextSafety {
             }
         }
         var out = overrides.isEmpty ? rewrite : set.text(accepted: Set(set.changes.map(\.id)), overrides: overrides)
-        for (typo, right) in commonTypos where out.lowercased().contains(typo) {
+        for (typo, right) in typos where out.lowercased().contains(typo) {
             let re = try! NSRegularExpression(pattern: "\\b\(typo)\\b", options: [.caseInsensitive])
             let ns = out as NSString
             for m in re.matches(in: out, range: NSRange(location: 0, length: ns.length)).reversed() {
@@ -83,6 +95,20 @@ enum TextSafety {
         ChangeSet(original: original, rewrite: rewrite).changes
             .filter { !$0.from.isEmpty && !$0.to.isEmpty && !$0.from.contains(" ") && !$0.to.contains(" ") }
             .map { ($0.from, $0.to) }
+    }
+
+    /// Character edit distance, for matching short code spans.
+    private static func distance(_ a: String, _ b: String) -> Int {
+        let a = Array(a), b = Array(b)
+        var prev = Array(0...b.count)
+        for i in 1...max(1, a.count) where i <= a.count {
+            var cur = [i] + Array(repeating: 0, count: b.count)
+            for j in 1...max(1, b.count) where j <= b.count {
+                cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1))
+            }
+            prev = cur
+        }
+        return prev[b.count]
     }
 
     private static func matchCase(_ word: String, like sample: String) -> String {

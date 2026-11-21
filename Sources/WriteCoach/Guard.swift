@@ -31,7 +31,7 @@ enum RewriteGuard {
 
     /// The rewrite with unsafe or unwanted changes reverted.
     static func sanitize(original: String, rewrite: String, preserve: [String]) -> String {
-        TextSafety.apply(original: original, rewrite: guarded(original: original, rewrite: rewrite, preserve: preserve))
+        TextSafety.apply(original: original, rewrite: guarded(original: original, rewrite: rewrite, preserve: preserve), preserve: preserve)
     }
 
     private static func guarded(original: String, rewrite: String, preserve: [String]) -> String {

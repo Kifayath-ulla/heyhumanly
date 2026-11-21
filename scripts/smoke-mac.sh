@@ -31,4 +31,5 @@ check "fix \`x.lenght\` now" "Fix (x.length now." "fix \`x.lenght\` now"
 check "use \`i => i*2\` here" "Use \`i => i * 2\` here." "Use \`i => i*2\` here."
 check "i shoud of went their" "i should have gone there" "I should have gone there"
 check "i.e. this, i think" "i.e. this, i think" "i.e. this, I think"
+check "Use \`foo\` instead of \`bar\`" "\`bar\` should be replaced by \`foo\`." "\`bar\` should be replaced by \`foo\`."
 exit $fail
