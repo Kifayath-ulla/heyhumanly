@@ -163,7 +163,7 @@ struct EmptyState: View {
         VStack(spacing: 12) {
             Mascot(size: 64, mood: .thinking)
             Text(title).font(.serif(22)).foregroundStyle(Color.ink)
-            Text(message).font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.6)).multilineTextAlignment(.center).frame(maxWidth: 420)
+            Text(message).font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.6)).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).frame(maxWidth: 420)
             if let action {
                 Button(action.title, action: action.run).buttonStyle(PrimaryButtonStyle()).padding(.top, 6).accessibilityLabel(action.title)
             }
@@ -313,16 +313,15 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 12) {
                 (Text("Write like ") + Text("yourself").italic() + Text(", just clearer."))
                     .font(.serif(28)).foregroundStyle(Color.ink).fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: 7) {
-                    Text("Select text anywhere, press").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65))
-                    ShortcutKeys(label: model.shortcutLabel, size: 12)
-                    Text("and it is fixed on this Mac.").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65))
+                // One line when it fits, otherwise break after the shortcut instead of truncating.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 7) { bannerPress; bannerRest }
+                    VStack(alignment: .leading, spacing: 6) { HStack(spacing: 7) { bannerPress }; bannerRest }
+                    VStack(alignment: .leading, spacing: 6) { bannerPress; bannerRest }
                 }
-                HStack(spacing: 10) {
-                    Button { model.showCoach() } label: { Label("Open the coach", systemImage: "sparkles") }
-                        .buttonStyle(PrimaryButtonStyle()).accessibilityLabel("Open the coach")
-                    Button { model.section = .insights } label: { Text("See your progress") }
-                        .buttonStyle(SecondaryButtonStyle()).accessibilityLabel("See your progress")
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) { bannerButtons }
+                    VStack(alignment: .leading, spacing: 8) { bannerButtons }
                 }
                 .padding(.top, 2)
             }
@@ -330,6 +329,22 @@ struct HomeView: View {
             Mascot(size: 84, mood: model.history.isEmpty ? .thinking : .happy)
         }
         .card(padding: 26, radius: 22)
+    }
+
+    @ViewBuilder private var bannerPress: some View {
+        Text("Select text anywhere, press").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65)).fixedSize()
+        ShortcutKeys(label: model.shortcutLabel, size: 12)
+    }
+
+    private var bannerRest: some View {
+        Text("and it is fixed on this Mac.").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65)).fixedSize()
+    }
+
+    @ViewBuilder private var bannerButtons: some View {
+        Button { model.showCoach() } label: { Label("Open the coach", systemImage: "sparkles").fixedSize() }
+            .buttonStyle(PrimaryButtonStyle()).accessibilityLabel("Open the coach")
+        Button { model.section = .insights } label: { Text("See your progress").fixedSize() }
+            .buttonStyle(SecondaryButtonStyle()).accessibilityLabel("See your progress")
     }
 
     private var welcome: String {
@@ -392,7 +407,8 @@ struct HomeView: View {
                 Button { model.refreshStatus() } label: { Label("Recheck", systemImage: "arrow.clockwise") }
                     .buttonStyle(SecondaryButtonStyle()).accessibilityLabel("Recheck setup")
             }
-            HStack(spacing: 12) {
+            // Wraps to more rows instead of squeezing five cards until their titles break mid-word.
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12, alignment: .top)], alignment: .leading, spacing: 12) {
                 ForEach(Array(steps.enumerated()), id: \.element.id) { index, step in
                     setupCard(index: index + 1, step: step)
                 }
@@ -408,8 +424,9 @@ struct HomeView: View {
                 Image(systemName: step.done ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 15)).foregroundStyle(step.done ? Color.brand : Color.ink.opacity(0.25))
             }
-            Text(step.title).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Color.ink).lineLimit(2).padding(.top, 8)
-            Text(step.detail).font(.system(size: 11.5)).foregroundStyle(Color.ink.opacity(0.55)).lineLimit(2)
+            Text(step.title).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Color.ink)
+                .fixedSize(horizontal: false, vertical: true).padding(.top, 8)
+            Text(step.detail).font(.system(size: 11.5)).foregroundStyle(Color.ink.opacity(0.55)).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             if !step.done, let action = action(for: index) {
                 Button(action.0, action: action.1).buttonStyle(.plain).font(.system(size: 12, weight: .semibold))

@@ -49,6 +49,7 @@ struct CoachPanelView: View {
                 Text(model.sourceAppName.map { "From \($0)" } ?? "Writing coach")
                     .font(.system(size: 11)).foregroundStyle(.secondary)
             }
+            .lineLimit(1)
             Spacer()
             if !model.rephraseOn { styleMenu }
             modePicker
@@ -78,20 +79,37 @@ struct CoachPanelView: View {
         .accessibilityLabel("Style: \(model.selectedStyle.rawValue)")
     }
 
+    /// Full labels when there is room; icon-only tabs (with tooltips) at the narrowest window size.
     private var modePicker: some View {
+        ViewThatFits(in: .horizontal) { modeTabs(compact: false); modeTabs(compact: true) }
+    }
+
+    private func modeTabs(compact: Bool) -> some View {
         HStack(spacing: 2) {
-            rephraseTab
-            modeTab(.quickFix, title: "Quick Fix", icon: "bolt.fill", tint: .brand)
-            modeTab(.teach, title: "Teach Me", icon: "graduationcap.fill", tint: .teach)
+            rephraseTab(compact: compact)
+            modeTab(.quickFix, title: "Quick Fix", icon: "bolt.fill", tint: .brand, compact: compact)
+            modeTab(.teach, title: "Teach Me", icon: "graduationcap.fill", tint: .teach, compact: compact)
         }
         .padding(3)
         .background(Color.primary.opacity(0.06), in: Capsule())
+        .fixedSize()
     }
 
-    private var rephraseTab: some View {
+    private func tabLabel(_ title: String, icon: String, compact: Bool) -> some View {
+        Label(title, systemImage: icon).labelStyle(TabLabelStyle(compact: compact)).lineLimit(1)
+    }
+
+    private struct TabLabelStyle: LabelStyle {
+        let compact: Bool
+        func makeBody(configuration: Configuration) -> some View {
+            if compact { configuration.icon } else { Label(configuration) }
+        }
+    }
+
+    private func rephraseTab(compact: Bool) -> some View {
         let selected = model.rephraseOn
         return Button { model.rephraseOn = true } label: {
-            Label("Rephrase", systemImage: "sparkles")
+            tabLabel("Rephrase", icon: "sparkles", compact: compact)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(selected ? Color.teach : .secondary)
                 .padding(.horizontal, 11).padding(.vertical, 5)
@@ -102,10 +120,10 @@ struct CoachPanelView: View {
         .help("Rewrite for clarity and learn why")
     }
 
-    private func modeTab(_ mode: CoachMode, title: String, icon: String, tint: Color) -> some View {
+    private func modeTab(_ mode: CoachMode, title: String, icon: String, tint: Color, compact: Bool) -> some View {
         let selected = model.selectedMode == mode && !model.rephraseOn
         return Button { model.selectedMode = mode; model.rephraseOn = false } label: {
-            Label(title, systemImage: icon)
+            tabLabel(title, icon: icon, compact: compact)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(selected ? tint : .secondary)
                 .padding(.horizontal, 11).padding(.vertical, 5)
@@ -377,11 +395,20 @@ struct CoachPanelView: View {
                 Label(status, systemImage: "checkmark.circle.fill")
                     .font(.system(size: 12, weight: .medium)).foregroundStyle(Color.added)
             } else {
-                HStack(spacing: 5) {
-                    KeyCap(key: "⌘", size: 10); KeyCap(key: "↩", size: 10)
-                    Text("run").font(.system(size: 11)).foregroundStyle(.secondary)
-                    KeyCap(key: "esc", size: 10).padding(.leading, 6)
-                    Text("close").font(.system(size: 11)).foregroundStyle(.secondary)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 5) {
+                        KeyCap(key: "⌘", size: 10); KeyCap(key: "↩", size: 10)
+                        Text("run").font(.system(size: 11)).foregroundStyle(.secondary)
+                        KeyCap(key: "esc", size: 10).padding(.leading, 6)
+                        Text("close").font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
+                    .fixedSize()
+                    HStack(spacing: 5) {
+                        KeyCap(key: "⌘", size: 10); KeyCap(key: "↩", size: 10)
+                        Text("run").font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
+                    .fixedSize()
+                    Color.clear.frame(width: 0, height: 0)
                 }
             }
             Spacer()

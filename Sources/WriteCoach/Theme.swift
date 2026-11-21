@@ -172,6 +172,7 @@ struct KeyCap: View {
     var body: some View {
         Text(key)
             .font(.system(size: size, weight: .medium, design: .rounded))
+            .lineLimit(1).fixedSize()
             .foregroundStyle(glass ? Color.white : Color.ink)
             .padding(.horizontal, key.count > 1 ? size * 0.6 : 0)
             .frame(minWidth: size * 2, minHeight: size * 2)
@@ -190,6 +191,7 @@ struct ShortcutKeys: View {
     var glass = false
     var body: some View {
         HStack(spacing: size * 0.35) { ForEach(Array(Self.keys(label).enumerated()), id: \.offset) { KeyCap(key: $0.element, size: size, glass: glass) } }
+            .fixedSize()
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Shortcut \(label)")
     }
