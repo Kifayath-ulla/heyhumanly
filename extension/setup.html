@@ -1,6 +1,9 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Set up HeyHumanly</title><link rel="stylesheet" href="setup.css"></head><body><main>
-<h1>Set up HeyHumanly</h1>
-<p class="lede">HeyHumanly rewrites your text with <b>Ollama</b>, a free app that runs AI models on your own computer, so your writing never leaves it. There are three checks. This page re-checks by itself as you go.</p>
+<h1>Set up HeyHumanly <span class="preview">Developer preview</span></h1>
+<p class="lede">HeyHumanly rewrites your text on your own computer, so your writing never leaves it. It uses Chrome’s built-in model when this computer supports it, or <b>Ollama</b>, a free app that runs AI models locally. It works on its own; you don’t need the Mac app.</p>
+<section id="builtin" class="builtin" hidden><h2>Chrome’s built-in model</h2><p id="b-note"></p>
+<button class="p" id="b-get" hidden>Download Chrome’s model</button><progress id="b-bar" max="1" value="0" hidden></progress></section>
+<p class="lede" id="ollama-lede">To use Ollama instead, there are three checks. This page re-checks by itself as you go.</p>
 <p id="summary" class="summary" role="status" aria-live="polite">Checking…</p>
 <ol class="checks">
 <li id="c-run" data-state="wait"><div class="h"><span class="dot" aria-hidden="true"></span><h2>1. Ollama is running</h2><span class="state"></span></div>

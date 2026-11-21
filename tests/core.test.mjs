@@ -120,3 +120,30 @@ test('fixTypos: "teh" becomes "the", never a different near word like "tbh"', ()
   assert.equal(HH.fixTypos('tbh it is fine', 'tbh it is fine'), 'tbh it is fine');
   assert.equal(HH.fixTypos('send teh file', 'send tbh new file'), 'send the new file');
 });
+
+function fakeLM(status, reply, log = []) {
+  return { availability: async () => status, create: async (o) => { log.push(o); return { prompt: async (p) => { log.push(p); return reply; }, destroy: () => log.push('destroyed') }; } };
+}
+test('auto engine uses Chrome’s built-in model when it is available, with no Ollama call', async () => {
+  const log = [], realFetch = globalThis.fetch;
+  globalThis.LanguageModel = fakeLM('available', 'can you send the report?', log);
+  globalThis.fetch = async () => { throw new Error('no network expected'); };
+  try {
+    const r = await HH.tighten('so basically can you send teh report?', {});
+    assert.equal(r.rewrite, 'can you send the report?');
+    assert.equal(r.model, 'Chrome built-in model');
+    assert.match(log[1], /Text:\nso basically can you send teh report\?$/);
+    assert.equal(log.at(-1), 'destroyed');
+  } finally { delete globalThis.LanguageModel; globalThis.fetch = realFetch; }
+});
+test('auto engine falls back to Ollama when Chrome’s model is missing or not downloaded', async () => {
+  const realFetch = globalThis.fetch;
+  for (const lm of [undefined, fakeLM('downloadable', 'x')]) {
+    if (lm) globalThis.LanguageModel = lm; else delete globalThis.LanguageModel;
+    const urls = [];
+    globalThis.fetch = async (u) => { urls.push(String(u)); return new Response(JSON.stringify(String(u).endsWith('/api/tags') ? { models: [{ name: 'qwen2.5:3b' }] } : { response: 'ok then', done_reason: 'stop' })); };
+    try { const r = await HH.tighten('ok so then', {}); assert.equal(r.model, 'qwen2.5:3b'); assert.ok(urls.some((u) => u.endsWith('/api/generate'))); }
+    finally { delete globalThis.LanguageModel; globalThis.fetch = realFetch; }
+  }
+  assert.equal(await HH.builtinStatus(), 'unsupported');
+});

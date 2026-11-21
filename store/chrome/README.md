@@ -7,7 +7,7 @@ Copy for the Chrome Web Store developer dashboard. Nothing here is submitted aut
 **Name:** HeyHumanly
 
 **Summary** (132 characters max; the manifest `description` is used):
-> Tighten what you write on any website in your own voice, and learn why each change helps. Runs on your local Ollama model.
+> Tighten your writing on any website in your own voice, and learn why each change helps. Runs locally with Chrome's AI or Ollama.
 
 **Category:** Productivity → Tools (or "Workflow & Planning")
 
