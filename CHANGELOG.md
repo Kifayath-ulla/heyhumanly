@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.5 (2026-11-19)
+
+- Settings › Chrome extension › **Allow**: one button lets the Chrome extension use your local Ollama, without Terminal. The setting is kept after a restart, and Ollama restarts once.
+- Not notarized by Apple.
+
+## 0.1.4 (2026-11-18)
+
+- New Chrome extension (`HeyHumanly-Chrome-0.1.4.zip`, see heyhumanly.com/extension).
+- New checks: wordy phrases, passive voice and repeated sentence openers, plus readability grade and reading time. Adapted from [Lexicon](https://github.com/AashishH15/Lexicon) (MIT); see `THIRD_PARTY_NOTICES.md`.
+- Light by default, redesigned in a Lexicon-inspired paper style (serif headlines, mono labels). Richer research notes.
+- Not notarized by Apple.
+
+## 0.1.3 (2026-11-17)
+
+- Keeps your tone: casual stays casual; only filler, repeats and extra words are trimmed.
+- Research notes with sources on tips. Fixed contrast bugs and the timeout with thinking models (gemma4); works with any Ollama model.
+- New dark design and icon. Not notarized by Apple.
+
+## 0.1.2 (2026-11-17)
+
+- Graphite and silver design, new icon, light and dark website. Not notarized by Apple.
+
 ## 0.1.1 (2026-11-17)
 
 - App recoloured from blue to the logo's forest green, sage and cream (light and dark).

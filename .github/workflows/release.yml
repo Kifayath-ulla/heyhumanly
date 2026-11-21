@@ -9,6 +9,9 @@ jobs:
     permissions: { contents: write }
     steps:
       - uses: actions/checkout@v4
+      - name: Check versions match the tag
+        env: { TAG: '${{ inputs.tag }}' }
+        run: python3 scripts/check-versions.py "$TAG"
       - name: Build universal DMG (ad-hoc signed unless secrets are added later)
         run: ./scripts/release.sh
       - name: Publish release
