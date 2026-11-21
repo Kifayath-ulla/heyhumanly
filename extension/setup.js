@@ -16,6 +16,7 @@ async function check() {
   else {
     set('c-run', 'ok', 'Running'); left--;
     if (d.allowed === false) { set('c-allow', 'bad', 'Blocked'); set('c-model', 'wait', 'Waiting for step 2'); }
+    else if (d.allowed === null) { set('c-allow', 'wait', 'Checking again…'); set('c-model', 'wait', 'Waiting for step 2'); }
     else {
       set('c-allow', 'ok', 'Allowed'); left--;
       if (d.writing.length) { set('c-model', 'ok', d.writing.slice(0, 3).join(', ')); left--; }

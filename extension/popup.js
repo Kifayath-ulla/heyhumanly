@@ -19,6 +19,7 @@ function showStatus(d) {
   let problem = '';
   if (!d || !d.ok || !d.running) problem = 'Ollama isn’t running, or isn’t installed yet.';
   else if (d.allowed === false) problem = 'Ollama is blocking this extension. One command fixes it.';
+  else if (d.allowed !== true) problem = 'Couldn’t confirm that Ollama allows this extension. Open setup to check.';
   else if (!d.writing.length) problem = 'Ollama has no writing model yet.';
   $('status').textContent = problem ? 'Not ready' : 'Ready · ' + (d.model && d.models.includes(d.model) ? d.model : 'auto model');
   $('setup').hidden = !problem; $('setup-msg').textContent = problem;
