@@ -1,12 +1,13 @@
 # Launch checklist
 
-Status as of 2026-11-21. Merge order matters: #2 → #3 → #6 (retarget to `main`) → #4, #5, #7 in any order.
+Status as of 2026-11-21. Merge order matters: #2 → #3 → #6 and #8 (retarget both to `main`) → #4, #5, #7 in any order.
 
 ## Merge (owner)
 - [ ] [#1](https://github.com/Kifayath-ulla/heyhumanly/pull/1) Audit, eval set and this checklist
 - [ ] [#2](https://github.com/Kifayath-ulla/heyhumanly/pull/2) Extension setup page, real readiness check, actionable errors (P0-1, P1-E1–E5, E8, E9)
 - [ ] [#3](https://github.com/Kifayath-ulla/heyhumanly/pull/3) Unit tests, Mac meaning-guard smoke test, CI (P0-3; also fixes changed numbers getting through the guard)
 - [ ] [#6](https://github.com/Kifayath-ulla/heyhumanly/pull/6) Explanation cards match the rewrite, hedging as advice, casual detection (P1-Q1, Q2, E7). Retarget to `main` after #2; Mac CI then compiles the Swift side
+- [ ] [#8](https://github.com/Kifayath-ulla/heyhumanly/pull/8) Mac visual-audit fixes: long-text freeze, status dot, tour, layout at min sizes, dark toggles, code spans, typo cards (V-P0-1, V-P1-1, 3–13). Retarget to `main` after #3
 - [ ] [#4](https://github.com/Kifayath-ulla/heyhumanly/pull/4) Chrome Web Store materials and extension privacy section (P0-2, P1-W3)
 - [ ] [#5](https://github.com/Kifayath-ulla/heyhumanly/pull/5) Website: nothing cut off on phones (P1-W1)
 - [ ] [#7](https://github.com/Kifayath-ulla/heyhumanly/pull/7) Changelog, CONTRIBUTING, templates, SECURITY, README, version check (P1-R1, R2, R4, R5)
@@ -28,7 +29,7 @@ Status as of 2026-11-21. Merge order matters: #2 → #3 → #6 (retarget to `mai
 - [ ] P1-E6 editors inside iframes (TinyMCE, CKEditor, some webmail)
 - [ ] P1-W4 real screenshots/GIF on the website (the store screenshots in #4 can be reused)
 - [ ] P1-R3 Homebrew cask
-- [ ] Mac visual audit: V-P0-1 (coach freezes on long text) and V-P1-1…13 in AUDIT.md (V-P1-2 is on hold with the shortcut)
+- [ ] Mac: "should of went" still not corrected by qwen2.5:3b (V-P1-10); V-P1-2 shortcut warning on hold; P2 polish list in AUDIT.md
 - [ ] Mac/Windows `OLLAMA_ORIGINS` commands from #2 tried on real machines
 
 ## Release steps (owner only — not done by Devin)
