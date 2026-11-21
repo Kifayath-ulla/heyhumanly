@@ -39,6 +39,8 @@ enum RewriteGuard {
         var overrides: [UUID: String] = [:]
         for c in set.changes {
             if gone.contains(key(from: c.from, to: c.to)) { continue }
+            // A number cut here but kept elsewhere in the rewrite was moved, not lost.
+            if c.to.isEmpty, numbersSurvive(c.from, original: original, rewrite: rewrite) { accepted.insert(c.id); continue }
             switch verdict(from: c.from, to: c.to, keep: keep) {
             case .keep: accepted.insert(c.id)
             case .drop: break
@@ -85,6 +87,14 @@ enum RewriteGuard {
     }
 
     // MARK: Helpers
+
+    private static func numbers(_ s: String) -> [String] { s.split(whereSeparator: { !$0.isNumber }).map(String.init) }
+    private static func numbersSurvive(_ cut: String, original: String, rewrite: String) -> Bool {
+        let runs = numbers(cut)
+        guard !runs.isEmpty else { return false }
+        let before = numbers(original), after = numbers(rewrite)
+        return runs.allSatisfy { n in after.filter { $0 == n }.count >= before.filter { $0 == n }.count }
+    }
 
     private static func words(_ s: String) -> [String] {
         s.lowercased().replacingOccurrences(of: "’", with: "'")

@@ -18,5 +18,6 @@ check "send the thung to priya" "send the thing to priya" "send the thing to pri
 lacks "send the thung to priya" "send the file to priya" "file"
 check "The invoice is 4,200 dollars, due on 12 March." "The invoice is 4,000 dollars, due on 12 March." "The invoice is 4,200 dollars, due on 12 March."
 check "Meet at 3pm on Friday." "Meet at 4pm on Friday." "Meet at 3pm on Friday."
+check "On 12 March, send the invoice." "Send the invoice on 12 March." "Send the invoice on 12 March."
 check "Call me at 5pm." "Call me at 5 p.m." "Call me at 5pm."
 exit $fail
