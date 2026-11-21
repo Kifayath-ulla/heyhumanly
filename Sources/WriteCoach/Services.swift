@@ -42,6 +42,10 @@ struct AppSettings: Codable {
     var appearanceRaw: String?
     // Companion (added 2026-11-10); optional so older settings decode.
     var autoCheckRaw: Bool?
+    var engineRaw: String?
+    var onlineEndpointRaw: String?
+    var onlineConsentRaw: Bool?
+    var managedModelRaw: String?
     var explainLanguageRaw: String?
     var pausedAppsRaw: [String]?
     var learnLevelsRaw: [String]?
@@ -128,7 +132,7 @@ struct HistoryItem: Codable, Identifiable {
 
 
 enum CoachError: LocalizedError {
-    case noEndpoint, ollamaNotRunning, modelMissing(String), server(Int, String), invalidResponse
+    case noEndpoint, ollamaNotRunning, modelMissing(String), server(Int, String), invalidResponse, appleUnavailable(String), tooLongForApple
 
     var errorDescription: String? {
         switch self {
@@ -137,6 +141,8 @@ enum CoachError: LocalizedError {
         case .modelMissing(let model): return "The model \(model) isn't installed. Run `ollama pull \(model)` in Terminal, or pick an installed model in Settings."
         case .server(let code, let body): return "Ollama returned an error (\(code)): \(body.prefix(200))"
         case .invalidResponse: return "The model returned a response HeyHumanly couldn't read. Try again, or try a different model."
+        case .appleUnavailable(let why): return "Apple's on-device model isn't available. \(why)"
+        case .tooLongForApple: return "That's too long for Apple's on-device model. Select a shorter part, or switch to offline coaching in Settings."
         }
     }
 }
@@ -163,7 +169,7 @@ struct CoachService {
         request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "format": schema, "keep_alive": "30m", "options": ["temperature": 0.1, "num_predict": 60 + 40 * changes.count]])
         struct Outer: Decodable { let response: String }
         struct Items: Decodable { struct I: Decodable { let from: String?; let category: String; let reason: String }; let items: [I] }
-        guard let (data, _) = try? await URLSession.shared.data(for: request),
+        guard let (data, _) = try? await LLM.data(for: request),
               let outer = try? JSONDecoder().decode(Outer.self, from: data),
               let parsed = try? JSONDecoder().decode(Items.self, from: Data(outer.response.utf8)) else { return nil }
         let norm = { (s: String) in s.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)) }
@@ -194,6 +200,14 @@ struct CoachService {
         \(text)
         """
         let limit = min(2048, max(200, text.count / 2 + 120))
+        if LLM.isApple(endpoint) {
+            guard text.count <= AppleModel.maxInputChars else { throw CoachError.tooLongForApple }
+            let answer = try await AppleModel.respond(prompt: prompt, maxTokens: limit, temperature: 0.1)
+            await onToken(answer)
+            let cleaned = cleanRewrite(answer)
+            guard !cleaned.isEmpty else { throw CoachError.invalidResponse }
+            return cleaned
+        }
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 90
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": true, "think": false, "keep_alive": "30m",
@@ -259,7 +273,7 @@ struct CoachService {
                                                                         "keep_alive": "30m", "options": ["temperature": 0.2, "num_predict": 350]])
         struct Outer: Decodable { let response: String }
         struct L: Decodable { let explanation: String; let exercise: String }
-        guard let (data, _) = try? await URLSession.shared.data(for: request),
+        guard let (data, _) = try? await LLM.data(for: request),
               let outer = try? JSONDecoder().decode(Outer.self, from: data),
               let l = try? JSONDecoder().decode(L.self, from: Data(outer.response.utf8)) else { return nil }
         return (l.explanation, l.exercise)
@@ -291,7 +305,7 @@ struct CoachService {
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "keep_alive": "30m", "stream": false, "think": false])
-        _ = try? await URLSession.shared.data(for: request)
+        _ = try? await LLM.data(for: request)
     }
 
     func analyze(text: String, mode: CoachMode, style: WritingStyle = .fixOnly, appName: String? = nil, endpoint: String, model: String = "qwen2.5:3b", preserve: [String] = []) async throws -> CoachResult {
@@ -318,7 +332,7 @@ struct CoachService {
 
         let data: Data, response: URLResponse
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await LLM.data(for: request)
         } catch let error as URLError where [.cannotConnectToHost, .cannotFindHost, .networkConnectionLost, .notConnectedToInternet].contains(error.code) {
             throw CoachError.ollamaNotRunning
         }

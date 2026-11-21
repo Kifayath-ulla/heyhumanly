@@ -2,5 +2,10 @@
   "name": "heyhumanly",
   "main": "worker/index.js",
   "compatibility_date": "2026-11-01",
-  "assets": { "directory": "./site", "binding": "ASSETS", "run_worker_first": true, "not_found_handling": "404-page" }
+  "assets": { "directory": "./site", "binding": "ASSETS", "run_worker_first": true, "not_found_handling": "404-page" },
+  "ai": { "binding": "AI" },
+  "durable_objects": { "bindings": [{ "name": "ALLOWANCE", "class_name": "Allowance" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Allowance"] }],
+  "vars": { "COACH_ENABLED": "true" },
+  "observability": { "enabled": false }
 }

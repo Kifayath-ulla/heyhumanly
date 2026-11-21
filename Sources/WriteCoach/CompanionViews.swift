@@ -107,7 +107,9 @@ struct CompanionView: View {
     static func expandedHeight(_ s: InlineSession) -> CGFloat {
         let text = s.showRemoved ? s.checkedText + " " + s.proposal : (s.proposal.isEmpty ? s.checkedText : s.proposal)
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).reduce(0) { $0 + max(1, Int(ceil(Double($1.count) / 52))) }
-        return min(460, CGFloat(214 + (s.showLanguages ? 32 : 0) + max(3, lines) * 21 + 30))
+        let languages: Int = s.showLanguages ? 32 : 0
+        let height: Int = 214 + languages + max(3, lines) * 21 + 30
+        return min(460, CGFloat(height))
     }
 
     var body: some View {

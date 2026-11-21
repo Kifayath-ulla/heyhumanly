@@ -87,13 +87,13 @@ struct Sidebar: View {
 
             Button { model.section = .settings } label: {
                 HStack(spacing: 8) {
-                    StatusDot(color: model.ollama.color(model: model.settings.model))
-                    Text(model.ollama.summary(model: model.settings.model)).font(.system(size: 12)).lineLimit(1)
+                    StatusDot(color: model.engineColor)
+                    Text(model.engineSummary).font(.system(size: 12)).lineLimit(1)
                 }
                 .foregroundStyle(Color.ink.opacity(0.6)).padding(.horizontal, 10).padding(.vertical, 6)
             }
-            .buttonStyle(.plain).help(model.ollama.summary(model: model.settings.model) + (model.privacyIsLocal ? " · runs on this Mac" : ""))
-            .accessibilityLabel("AI status: \(model.ollama.summary(model: model.settings.model))")
+            .buttonStyle(.plain).help(model.engineSummary + (model.privacyIsLocal ? " · never leaves your Mac" : ""))
+            .accessibilityLabel("AI status: \(model.engineSummary)")
 
             Button { model.cycleAppearance() } label: {
                 HStack(spacing: 11) {
@@ -267,7 +267,7 @@ struct HomeView: View {
                     if !model.dueReviews.isEmpty { reviewCard }
 
                     let steps = model.setupSteps
-                    if !(model.ollamaRunning && model.modelInstalled), model.ollama != .checking { ModelSetupCard(model: model) }
+                    if !model.engineReady { EngineArea(model: model) }
                     if steps.contains(where: { !$0.done }) { setupRow(steps) }
 
                     recent
@@ -337,7 +337,7 @@ struct HomeView: View {
     }
 
     private var bannerRest: some View {
-        Text("and it is fixed on this Mac.").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65)).fixedSize()
+        Text(model.privacyIsLocal ? "and it is fixed on this Mac." : "and it is fixed.").font(.system(size: 13.5)).foregroundStyle(Color.ink.opacity(0.65)).fixedSize()
     }
 
     @ViewBuilder private var bannerButtons: some View {
@@ -440,13 +440,10 @@ struct HomeView: View {
 
     private func action(for index: Int) -> (String, () -> Void)? {
         switch index {
-        case 1: return ("Open Ollama →", { NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/Ollama.app")); model.refreshStatus() })
-        case 2: return ("Copy command →", {
-            NSPasteboard.general.clearContents(); NSPasteboard.general.setString("ollama pull \(model.settings.model)", forType: .string)
-        })
-        case 3: return ("Open Settings →", { AccessibilityBridge.requestTrust(); AccessibilityBridge.openSystemSettings() })
-        case 4: return ("Try it →", { model.clearDraft(); model.selectedMode = .quickFix; model.draft = "Please send me that thung when you have time."; model.showCoach() })
-        case 5: return ("Try it →", { model.clearDraft(); model.selectedMode = .teach; model.draft = "i dont think we shoud of went their yesterday"; model.showCoach() })
+        case 1: return ("Choose →", { model.openDashboard(section: .settings) })
+        case 2: return ("Try it →", { model.clearDraft(); model.rephraseOn = false; model.selectedMode = .quickFix; model.draft = "Please send me that thung when you have time."; model.showCoach() })
+        case 3: return ("Try it →", { model.clearDraft(); model.rephraseOn = false; model.selectedMode = .teach; model.draft = "i dont think we shoud of went their yesterday"; model.showCoach() })
+        case 4: return ("Turn on →", { AccessibilityBridge.requestTrust(); AccessibilityBridge.openSystemSettings() })
         default: return nil
         }
     }
@@ -539,6 +536,7 @@ struct SettingsView: View {
             companionCard
             styleCard
             learningCard
+            EngineSettingsCard(model: model)
             aiCard
             browserCard
             shortcutCard
@@ -560,7 +558,7 @@ struct SettingsView: View {
     private var aiCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                cardTitle("Local AI", icon: "cpu")
+                cardTitle("Local AI (Ollama, Advanced)", icon: "cpu")
                 Spacer()
                 StatusDot(color: model.ollama.color(model: model.settings.model))
                 Text(model.ollama.summary(model: model.settings.model)).font(.system(size: 12)).foregroundStyle(.secondary)

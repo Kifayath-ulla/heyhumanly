@@ -61,7 +61,7 @@ enum TextSafety {
             guard let right = typos[from.lowercased()], !from.contains(" ") else { continue }
             let to = c.to.trimmingCharacters(in: .punctuationCharacters)
             if to.lowercased() != right {
-                let lead = c.to.prefix { $0.isPunctuation }, trail = String(c.to.reversed().prefix { $0.isPunctuation }.reversed())
+                let lead = String(c.to.prefix { $0.isPunctuation }), trail = String(c.to.reversed().prefix { $0.isPunctuation }.reversed())
                 overrides[c.id] = lead + matchCase(right, like: from) + (c.to == lead ? "" : trail)
             }
         }

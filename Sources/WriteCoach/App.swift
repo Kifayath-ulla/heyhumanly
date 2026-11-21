@@ -72,7 +72,7 @@ struct HeyHumanlyApp: App {
                 Button("Turn on checking as I type") { model.setCoaching(true) }
             }
             Divider()
-            Text(model.ollama.summary(model: model.settings.model))
+            Text(model.engineSummary)
             Button("Settings…") { model.openDashboard(section: .settings) }
             Divider()
             Button("Quit HeyHumanly") { NSApp.terminate(nil) }.keyboardShortcut("q")
