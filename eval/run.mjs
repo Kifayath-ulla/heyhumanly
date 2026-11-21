@@ -66,7 +66,7 @@ const all = [];
 for (const model of models) {
   for (const c of cases) { const r = await run(model, c); all.push(r); console.error(`${model} ${c.id} ${r.passed}/${r.total} ${r.ms}ms ${r.error || ''}`); }
 }
-const stamp = models.join('+').replace(/[:/]/g, '_');
+const stamp = (models.join('+') + (only ? '--' + only : '')).replace(/[:/]/g, '_');
 writeFileSync(join(out, stamp + '.json'), JSON.stringify(all, null, 2));
 let md = '| model | score | cases fully passed | median latency | failed checks |\n|---|---|---|---|---|\n';
 for (const model of models) {
