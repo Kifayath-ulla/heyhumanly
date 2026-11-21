@@ -252,7 +252,7 @@ extension OfflineRuntime: URLSessionDownloadDelegate {
         let status = (downloadTask.response as? HTTPURLResponse)?.statusCode ?? 0
         MainActor.assumeIsolated {
             guard downloadTask == self.downloadTask else { return }
-            guard moved, status == 200 else { fail("The download failed (HTTP \(status)). Retry."); return }
+            guard moved, status == 200 || status == 206 else { fail("The download failed (HTTP \(status)). Retry."); return }
             downloaded(to: keep)
         }
     }
