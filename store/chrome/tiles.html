@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>HeyHumanly store tiles</title>
+<!-- scripts/store-images.sh renders #small (440x280), #marquee (1400x560) and #popup (1280x800). Open with ?small, ?marquee or ?popup to preview. -->
+<style>
+@font-face{font-family:Newsreader;src:url(../../site/fonts/newsreader.woff2) format("woff2");font-weight:200 800}
+@font-face{font-family:Newsreader;src:url(../../site/fonts/newsreader-italic.woff2) format("woff2");font-weight:200 800;font-style:italic}
+@font-face{font-family:Geist;src:url(../../site/fonts/geist.woff2) format("woff2");font-weight:100 900}
+@font-face{font-family:"JetBrains Mono";src:url(../../site/fonts/jetbrains-mono.woff2) format("woff2");font-weight:100 800}
+*{box-sizing:border-box;margin:0}
+body{background:#F7F6F3}
+body>.tile:not(.on){display:none!important}
+.tile{background:#F7F6F3;color:#111;font-family:Geist,sans-serif;overflow:hidden;position:relative}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{border-radius:22%}
+.brand b{font:500 30px/1 Newsreader,serif;letter-spacing:-.01em}
+h1{font:400 34px/1.08 Newsreader,serif;letter-spacing:-.015em}
+h1 i{color:#346538}
+.fine{font:500 12px/1.4 "JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:#636360}
+#small{width:440px;height:280px;padding:34px 36px;display:flex;flex-direction:column;justify-content:space-between}
+#small .brand img{width:44px;height:44px}
+#marquee{width:1400px;height:560px;padding:72px 80px;display:grid;grid-template-columns:1fr 600px;gap:64px;align-items:center}
+#marquee .brand img{width:60px;height:60px}
+#marquee .brand b{font-size:40px}
+#marquee h1{font-size:62px;margin:34px 0 22px}
+#marquee p{font-size:21px;line-height:1.5;color:#3d3d3b;max-width:560px}
+.card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;box-shadow:0 20px 40px -15px rgba(0,0,0,.14);padding:28px 30px}
+.card .fine{margin-bottom:10px}
+.before{font-size:19px;line-height:1.55;color:#636360;margin-bottom:22px}
+.before s{background:#FDEBEC;color:#9F2F2D;text-decoration-thickness:1.5px;border-radius:4px;padding:0 3px}
+.after{font-size:21px;line-height:1.5;background:#EDF3EC;color:#1d3b20;border-radius:12px;padding:16px 18px}
+.why{margin-top:16px;font-size:15px;color:#636360}
+#popup{display:grid;width:1280px;height:800px;padding:0 90px;grid-template-columns:1fr 440px;gap:80px;align-items:center}
+#popup h1{font-size:52px;margin:30px 0 20px}
+#popup p{font-size:20px;line-height:1.5;color:#3d3d3b}
+#popup .shot{height:800px;overflow:hidden;padding-top:40px}
+#popup .shot img{width:420px;display:block;border-radius:16px 16px 0 0;box-shadow:0 20px 40px -15px rgba(0,0,0,.2);border:1px solid rgba(0,0,0,.08)}
+.why b{color:#9F2F2D;font:600 11px "JetBrains Mono",monospace;letter-spacing:.08em;background:#FDEBEC;padding:3px 7px;border-radius:5px;margin-right:6px}
+</style></head><body>
+<div class="tile" id="small">
+  <div class="brand"><img src="../../extension/icons/icon128.png" alt=""><b>HeyHumanly</b></div>
+  <h1>Tighten your writing.<br><i>Keep your voice.</i></h1>
+  <div class="fine">Runs on your computer · No account</div>
+</div>
+<div class="tile" id="marquee">
+  <div>
+    <div class="brand"><img src="../../extension/icons/icon128.png" alt=""><b>HeyHumanly</b></div>
+    <h1>Tighten your writing.<br><i>Keep your voice.</i></h1>
+    <p>Select text on any website and press Alt+Shift+H. See a tighter version and why each change helps. Your text goes only to Ollama on your own computer.</p>
+  </div>
+  <div class="card">
+    <div class="fine">You wrote</div>
+    <div class="before">hey team, <s>so basically</s> we need a couple more days <s>in order</s> to finish testing. lmk if that's a problem</div>
+    <div class="fine">Same tone, 4 words shorter</div>
+    <div class="after">hey team, we need a couple more days to finish testing. lmk if that's a problem</div>
+    <div class="why"><b>FILLER</b>“so basically” and “in order” add nothing.</div>
+  </div>
+</div>
+<div class="tile" id="popup">
+  <div>
+    <div class="brand"><img src="../../extension/icons/icon128.png" alt="" style="width:52px;height:52px"><b>HeyHumanly</b></div>
+    <h1>Paste anything into<br>the toolbar button.</h1>
+    <p>Works on pages Chrome protects too. Pick “More formal” or “Shorter”, and see the research behind each change. Names, numbers and dates are kept.</p>
+  </div>
+  <div class="shot"><img src="popup-raw.png" alt=""></div>
+</div>
+<script>document.getElementById(location.search.slice(1) || "small").classList.add("on")</script>
+</body></html>

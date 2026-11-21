@@ -1,10 +1,10 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HeyHumanly privacy: what it reads, stores and sends</title><meta name="description" content="What HeyHumanly reads, stores and sends, based on the source code: local model by default, no account, no analytics, no tracking.">
+<title>HeyHumanly privacy: what it reads, stores and sends</title><meta name="description" content="What the HeyHumanly Mac app and Chrome extension read, store and send, based on the source code: local model by default, no account, no analytics, no tracking.">
 <link rel="canonical" href="https://heyhumanly.com/privacy/"><link rel="icon" href="/favicon.png" type="image/png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt">
 <link rel="preload" href="/fonts/newsreader.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
 <meta property="og:type" content="website"><meta property="og:site_name" content="HeyHumanly"><meta property="og:title" content="HeyHumanly privacy: what it reads, stores and sends">
-<meta property="og:description" content="What HeyHumanly reads, stores and sends, based on the source code: local model by default, no account, no analytics, no tracking."><meta property="og:url" content="https://heyhumanly.com/privacy/"><meta property="og:image" content="https://heyhumanly.com/og.png">
+<meta property="og:description" content="What the HeyHumanly Mac app and Chrome extension read, store and send, based on the source code: local model by default, no account, no analytics, no tracking."><meta property="og:url" content="https://heyhumanly.com/privacy/"><meta property="og:image" content="https://heyhumanly.com/og.png">
 <meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#F7F6F3"><meta name="google-site-verification" content="Z0gdQHwUIRf05KhmeTaF1pIuTKwzJaGXkySy6l3MHhY"><meta name="msvalidate.01" content="7214F04580277B31B88F4F83CF229AA0">
 <script>(function(){try{var t=localStorage.getItem("hhtheme")||"light";document.documentElement.setAttribute("data-theme",t)}catch(e){}})()</script><style>
 @font-face{font-family:Newsreader;src:url(/fonts/newsreader.woff2) format("woff2");font-weight:200 800;font-style:normal;font-display:swap}
@@ -132,10 +132,18 @@ main>section:first-child,main>.wrap:first-child{}
 <li><b>Stored:</b> a session is saved only when you accept a fix, start a lesson or use the coach window. It is kept in the app's preferences on your Mac. The log records timings, not your text.</li>
 <li><b>Network:</b> HeyHumanly makes no calls other than to that Ollama address. It has no analytics, accounts, tracking or automatic update check.</li>
 <li><b>Remove:</b> Settings → Privacy &amp; data → Clear history.</li></ul>
+<h2 id="extension">In the Chrome extension</h2><ul>
+<li><b>Read:</b> only when you press <code>Alt+Shift+H</code>, click the HeyHumanly button or choose <b>Tighten with HeyHumanly</b> from the right-click menu. Then it reads the text you selected, or the text box you are in, on that one tab. No script runs on pages before that.</li>
+<li><b>Sent:</b> only to Ollama on this computer, <code>http://localhost:11434</code> or <code>http://127.0.0.1:11434</code>. The extension's permissions do not allow any other address.</li>
+<li><b>Stored:</b> your settings (the Ollama address and model) in Chrome's local extension storage. Your writing is not stored.</li>
+<li><b>Clipboard:</b> written only when you press <b>Copy</b>, or when <b>Apply</b> cannot replace the text in place.</li>
+<li><b>Network:</b> no analytics, accounts, tracking, remote code or HeyHumanly server. The setup page's model download is done by Ollama.</li>
+<li><b>Remove:</b> remove the extension from <code>chrome://extensions</code>; that deletes its settings.</li></ul>
 <h2>Outside the app</h2><ul>
 <li><b>Ollama and the model:</b> downloaded by Ollama from its model library. Ollama's own privacy terms apply to that download.</li>
 <li><b>This website:</b> is hosted on Cloudflare, which keeps standard server logs. The site sets no cookies and loads no analytics or third-party scripts.</li>
-<li><b>The DMG:</b> is hosted on GitHub Releases, which GitHub operates.</li></ul>
+<li><b>The DMG:</b> is hosted on GitHub Releases, which GitHub operates.</li>
+<li><b>The Chrome extension:</b> is installed through the Chrome Web Store, which Google operates.</li></ul>
 <h2>Report a security problem</h2><p>Open a private advisory on <a href="https://github.com/Kifayath-ulla/heyhumanly/security/advisories/new">GitHub</a>. Please do not post private text in public issues.</p></div></section></main>
 <footer><div class="wrap"><div class="fgrid"><div><a class="brand" href="/"><img src="/favicon.png" alt="" width="28" height="28">HeyHumanly</a><p style="margin:12px 0 0;max-width:22em">A free writing coach for Mac and Chrome. It keeps your tone and teaches you why each change helps, with an AI model on your own computer.</p></div>
 <div><h4>Product</h4><a href="/#how">How it works</a><a href="/#features">Features</a><a href="/extension/">Chrome extension</a><a href="/#privacy">Privacy</a><a href="/#faq">FAQ</a><a href="/writing-habits/">Writing habits guide</a><a href="/local-ai-writing-coach-mac/">Local AI setup</a><a href="/grammarly-alternative/">Grammarly alternative</a><a href="/private-writing-assistant/">Private writing assistant</a></div>
