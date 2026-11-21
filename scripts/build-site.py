@@ -317,10 +317,15 @@ ext_page = f"""
 <p class="fine" style="text-align:left">Version {V} · free · MIT · Chrome and other Chromium browsers</p>
 <h2 id="setup" style="margin-top:44px;font-size:32px">Set it up in two minutes</h2>
 <ol class="steps">
-<li><h3>Install Ollama and a model</h3><p>The Mac app can do this for you. Or install <a href="https://ollama.com/download">Ollama</a> and run <code>ollama pull qwen2.5:3b</code>.</p></li>
-<li><h3>Let Chrome talk to Ollama</h3><p>Easiest: open the HeyHumanly Mac app, go to <b>Settings → Chrome extension</b> and press <b>Allow</b>. It restarts Ollama once and keeps the setting after a restart. No Mac app? In Terminal run <code>launchctl setenv OLLAMA_ORIGINS "chrome-extension://*"</code>, then quit and reopen Ollama.</p></li>
+<li><h3>Install Ollama</h3><p>Get <a href="https://ollama.com/download">Ollama</a> for Mac, Windows or Linux and open it. On a Mac, the HeyHumanly app can install it for you.</p></li>
 <li><h3>Load the extension</h3><p>Unzip the download. Open <code>chrome://extensions</code>, switch on <b>Developer mode</b>, choose <b>Load unpacked</b> and pick the unzipped folder. A Chrome Web Store listing will come later.</p></li>
-<li><h3>Try it</h3><p>Click into any text box, select your text and press <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>, or click the HeyHumanly button that appears.</p></li></ol>
+<li><h3>Follow the setup page</h3><p>A setup page opens by itself. It checks that Ollama is running, that Ollama allows the extension, and that a writing model is installed. When something is missing it gives you the exact fix for your system, with a Copy button, and can download the model for you. You can open it again from the toolbar popup under <b>Setup checks</b>.</p>
+<details><summary>Do it by hand instead</summary><p>Ollama blocks browser extensions until you allow them. Replace <code>chrome-extension://*</code> below with your extension's address from the setup page if you want to allow only HeyHumanly.</p>
+<p><b>Mac:</b> in the HeyHumanly app open <b>Settings → Chrome extension</b> and press <b>Allow</b>. Or run <code>launchctl setenv OLLAMA_ORIGINS "chrome-extension://*"</code> in Terminal, then quit and reopen Ollama.</p>
+<p><b>Windows:</b> run <code>setx OLLAMA_ORIGINS "chrome-extension://*"</code>, then quit Ollama from the system tray and open it again.</p>
+<p><b>Linux:</b> run <code>sudo systemctl edit ollama</code>, add <code>[Service]</code> and <code>Environment="OLLAMA_ORIGINS=chrome-extension://*"</code>, then <code>sudo systemctl restart ollama</code>.</p>
+<p><b>Model:</b> <code>ollama pull qwen2.5:3b</code> (about 1.9 GB), or <code>qwen2.5:7b</code> if you have 16 GB of memory or more.</p></details></li>
+<li><h3>Try it</h3><p>Click into any text box, select your text and press <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>, or right-click and choose <b>Tighten with HeyHumanly</b>.</p></li></ol>
 <div class="ok" style="margin-top:22px"><b>Private by design.</b> The extension has no server, no account and no analytics. It sends your selected text only to the Ollama address on your own computer. It reads a text box only when you ask it to.</div>
 <h2 style="margin-top:40px;font-size:30px">What it does</h2>
 <div class="grid" style="grid-template-columns:1fr 1fr"><div class="card"><h3>Keeps your tone</h3><p>Casual stays casual. Only filler, repeats and extra words are trimmed.</p></div><div class="card"><h3>Shows why</h3><p>Each change names the habit and links the study behind the tip.</p></div><div class="card"><h3>Checks offline</h3><p>Wordy phrases, passive voice and repeated openers are found instantly, even without the model.</p></div><div class="card"><h3>You decide</h3><p>Apply, copy or dismiss. Nothing changes unless you click.</p></div></div>
@@ -361,13 +366,21 @@ priv = f"""
 <li><b>Stored:</b> a session is saved only when you accept a fix, start a lesson or use the coach window. It is kept in the app's preferences on your Mac. The log records timings, not your text.</li>
 <li><b>Network:</b> HeyHumanly makes no calls other than to that Ollama address. It has no analytics, accounts, tracking or automatic update check.</li>
 <li><b>Remove:</b> Settings → Privacy &amp; data → Clear history.</li></ul>
+<h2 id="extension">In the Chrome extension</h2><ul>
+<li><b>Read:</b> only when you press <code>Alt+Shift+H</code>, click the HeyHumanly button or choose <b>Tighten with HeyHumanly</b> from the right-click menu. Then it reads the text you selected, or the text box you are in, on that one tab. No script runs on pages before that.</li>
+<li><b>Sent:</b> only to Ollama on this computer, <code>http://localhost:11434</code> or <code>http://127.0.0.1:11434</code>. The extension's permissions do not allow any other address.</li>
+<li><b>Stored:</b> your settings (the Ollama address and model) in Chrome's local extension storage. Your writing is not stored.</li>
+<li><b>Clipboard:</b> written only when you press <b>Copy</b>, or when <b>Apply</b> cannot replace the text in place.</li>
+<li><b>Network:</b> no analytics, accounts, tracking, remote code or HeyHumanly server. The setup page's model download is done by Ollama.</li>
+<li><b>Remove:</b> remove the extension from <code>chrome://extensions</code>; that deletes its settings.</li></ul>
 <h2>Outside the app</h2><ul>
 <li><b>Ollama and the model:</b> downloaded by Ollama from its model library. Ollama's own privacy terms apply to that download.</li>
 <li><b>This website:</b> is hosted on Cloudflare, which keeps standard server logs. The site sets no cookies and loads no analytics or third-party scripts.</li>
-<li><b>The DMG:</b> is hosted on GitHub Releases, which GitHub operates.</li></ul>
+<li><b>The DMG:</b> is hosted on GitHub Releases, which GitHub operates.</li>
+<li><b>The Chrome extension:</b> is installed through the Chrome Web Store, which Google operates.</li></ul>
 <h2>Report a security problem</h2><p>Open a private advisory on <a href="{SRC}/security/advisories/new">GitHub</a>. Please do not post private text in public issues.</p></div></section>"""
 page('/privacy/', 'HeyHumanly privacy: what it reads, stores and sends',
-     'What HeyHumanly reads, stores and sends, based on the source code: local model by default, no account, no analytics, no tracking.', priv)
+     'What the HeyHumanly Mac app and Chrome extension read, store and send, based on the source code: local model by default, no account, no analytics, no tracking.', priv)
 
 
 habit_items = [

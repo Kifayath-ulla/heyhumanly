@@ -15,13 +15,18 @@
     if (sel && sel.rangeCount && String(sel).trim()) {
       const range = sel.getRangeAt(0).cloneRange();
       const editable = el && (el.isContentEditable || (range.commonAncestorContainer.parentElement && range.commonAncestorContainer.parentElement.isContentEditable));
-      return { kind: editable ? 'rich' : 'page', range, text: String(sel) };
+      return { kind: editable ? 'rich' : 'page', range, text: String(sel), snap: String(range) };
     }
-    if (el && el.isContentEditable && el.innerText.trim()) { const range = document.createRange(); range.selectNodeContents(el); return { kind: 'rich', range, text: el.innerText }; }
+    if (el && el.isContentEditable && el.innerText.trim()) { const range = document.createRange(); range.selectNodeContents(el); return { kind: 'rich', range, text: el.innerText, snap: String(range) }; }
     return null;
   }
+  function changed() {
+    if (target.kind === 'field') return !target.el.isConnected || target.el.value.slice(target.a, target.b) !== target.text;
+    if (target.kind === 'rich') return String(target.range) !== target.snap;
+    return false;
+  }
   function apply(text) {
-    if (!target) return false;
+    if (!target || changed()) return false;
     if (target.kind === 'field') {
       const el = target.el; el.focus(); el.setSelectionRange(target.a, target.b);
       if (!document.execCommand('insertText', false, text)) { el.setRangeText(text, target.a, target.b, 'end'); }
@@ -50,11 +55,11 @@
     $('bd').innerHTML = '<span class="sp"></span>Tightening on your computer…'; footer([['Close', '', close]]);
     chrome.runtime.sendMessage({ type: 'hh:tighten', text: target.text, goal }, (res) => {
       if (chrome.runtime.lastError || !res) { $('bd').innerHTML = '<div class="err">The extension could not run. Reload the page and try again.</div>'; footer([['Close', '', close]]); return; }
-      if (!res.ok) { $('bd').innerHTML = '<div class="err">' + HHUI.E(res.error) + '</div>' + HHUI.quick(res.quick); footer([['Try again', 'p', () => run(goal)], ['Close', '', close]]); return; }
+      if (!res.ok) { $('bd').innerHTML = '<div class="err">' + HHUI.E(res.error) + '</div>' + HHUI.quick(res.quick); footer((res.setup ? [['Open setup', 'p', () => chrome.runtime.sendMessage({ type: 'hh:setup' })]] : []).concat([['Try again', res.setup ? '' : 'p', () => run(goal)], ['Close', '', close]])); return; }
       state = res.result; $('st').textContent = state.model; $('bd').innerHTML = HHUI.render(state);
       const canApply = target.kind !== 'page' && !state.unchanged;
       footer([
-        ['Apply', 'p', () => { const ok = apply(state.rewrite); if (ok) close(); else { navigator.clipboard.writeText(state.rewrite); $('st').textContent = 'copied instead'; } }, !canApply],
+        ['Apply', 'p', () => { const ok = apply(state.rewrite); if (ok) close(); else { navigator.clipboard.writeText(state.rewrite); $('st').textContent = changed() ? 'text changed, copied instead' : 'copied instead'; } }, !canApply],
         ['Copy', '', () => { navigator.clipboard.writeText(state.rewrite); $('st').textContent = 'copied'; }, state.unchanged],
         ['Shorter', '', () => run('shorter')], ['More formal', '', () => run('formal')], ['Close', '', close]]);
     });

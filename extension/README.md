@@ -4,9 +4,9 @@ Tighten what you write on any website, in your own voice, and learn why each cha
 Runs on your local Ollama model. No server, no account, no analytics.
 
 ## Install (until the Chrome Web Store listing)
-1. Install Ollama and a model, for example `ollama pull qwen2.5:3b`.
-2. Let Chrome reach Ollama: in the HeyHumanly Mac app press Settings, Chrome extension, Allow. Or run `launchctl setenv OLLAMA_ORIGINS "chrome-extension://*"`, then quit and reopen Ollama.
-3. Open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick this folder.
+1. Install [Ollama](https://ollama.com/download) (Mac, Windows or Linux) and open it.
+2. Open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick this folder.
+3. A setup page opens. It checks that Ollama is running, that Ollama allows this extension (`OLLAMA_ORIGINS`), and that a writing model is installed. For each missing step it shows the exact command for your system and can download the model. You can reopen it from the popup under "Setup checks".
 4. Select text in any text box and press Alt+Shift+H (or right-click, Tighten with HeyHumanly).
 
 ## Privacy
