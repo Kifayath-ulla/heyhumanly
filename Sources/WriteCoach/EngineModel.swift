@@ -88,7 +88,7 @@ extension CoachModel {
 
     func setEngine(_ e: CoachEngine) {
         settings.engine = e; settings.save()
-        showConsent = false; onlineLimitHit = false; onlineFailed = false
+        showConsent = false; onlineLimitHit = false; onlineFailed = false; errorMessage = nil
         if e != .offlineManaged { runtime.stopServer() }
         switch e {
         case .offlineManaged: Task { await runtime.startServer() }
