@@ -86,7 +86,7 @@ struct Sidebar: View {
 
             Button { model.section = .settings } label: {
                 HStack(spacing: 8) {
-                    StatusDot(color: model.ollama.color)
+                    StatusDot(color: model.ollama.color(model: model.settings.model))
                     Text(model.ollama.summary(model: model.settings.model)).font(.system(size: 12)).lineLimit(1)
                 }
                 .foregroundStyle(Color.ink.opacity(0.6)).padding(.horizontal, 10).padding(.vertical, 6)
@@ -118,6 +118,11 @@ struct Sidebar: View {
 extension OllamaStatus {
     var color: Color {
         switch self { case .running: return .added; case .checking: return .orange; default: return .removed }
+    }
+    /// Green only when the selected model can actually run; orange while checking or when it still needs downloading.
+    func color(model: String) -> Color {
+        if case .running(let models) = self, !models.contains(model) { return .orange }
+        return color
     }
     func summary(model: String) -> String {
         switch self {
@@ -539,7 +544,7 @@ struct SettingsView: View {
             HStack {
                 cardTitle("Local AI", icon: "cpu")
                 Spacer()
-                StatusDot(color: model.ollama.color)
+                StatusDot(color: model.ollama.color(model: model.settings.model))
                 Text(model.ollama.summary(model: model.settings.model)).font(.system(size: 12)).foregroundStyle(.secondary)
                 Button { model.saveConnection() } label: { Image(systemName: "arrow.clockwise") }
                     .buttonStyle(.plain).foregroundStyle(.secondary).help("Check again").accessibilityLabel("Check Ollama again")
@@ -605,7 +610,7 @@ struct SettingsView: View {
                 cardTitle("Companion", icon: "text.cursor")
                 Spacer()
                 Toggle("Check as I type", isOn: Binding(get: { model.settings.autoCheck }, set: { v in setting { $0.autoCheck = v } }))
-                    .toggleStyle(.switch).controlSize(.small).tint(.brand)
+                    .toggleStyle(.switch).controlSize(.small).tint(.switchOn)
             }
             Text(model.privacyIsLocal
                  ? "When you pause typing in a text field, HeyHumanly reads that one field and checks it on this Mac. Password fields and paused apps are never read. Nothing is saved unless you accept a suggestion or start a lesson."
@@ -706,7 +711,7 @@ struct SettingsView: View {
                         Text(category.title).font(.system(size: 13, weight: .medium)).foregroundStyle(on ? Color.ink : Color.ink.opacity(0.45))
                         Spacer()
                         Toggle("", isOn: Binding(get: { on }, set: { model.setMuted(category, !$0) }))
-                            .labelsHidden().toggleStyle(.switch).controlSize(.small).tint(.brand)
+                            .labelsHidden().toggleStyle(.switch).controlSize(.small).tint(.switchOn)
                     }
                     .padding(.horizontal, 12).padding(.vertical, 9)
                     .background(Color.surfaceSunken, in: RoundedRectangle(cornerRadius: 10, style: .continuous))

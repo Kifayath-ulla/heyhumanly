@@ -33,6 +33,9 @@ extension Color {
     static let paleYellowText = adaptive(light: rgb(0.584, 0.392, 0), dark: rgb(0.95, 0.80, 0.45))
     static let paleBlueBG = adaptive(light: rgb(0.882, 0.953, 0.996), dark: rgb(0.08, 0.17, 0.25))
     static let paleBlueText = adaptive(light: rgb(0.122, 0.424, 0.624), dark: rgb(0.55, 0.78, 0.98))
+    /// "On" track for switches: the graphite accent in light mode, green in dark mode where the silver accent
+    /// would sit next to the white knob and look the same as "off".
+    static let switchOn = adaptive(light: rgb(0.075, 0.075, 0.086), dark: rgb(0.20, 0.62, 0.36))
     /// Text on accent-filled buttons.
     static let onAccent = adaptive(light: .white, dark: rgb(0.075, 0.075, 0.086))
     /// Neutral grey, used for Teach Me and the italic accent words.
