@@ -37,5 +37,5 @@ Status as of 2026-11-21. Merge order matters: #2 → #3 → #6 and #8 (retarget 
 - [ ] Run the release workflow / create the GitHub release
 - [ ] `./scripts/package-extension.sh`, then upload the zip and `store/chrome/` assets in the Chrome Web Store dashboard and submit
 - [ ] After the store ID exists: pin `OLLAMA_ORIGINS` to it, update the site's extension page
-- [ ] `python3 scripts/build-site.py` and `wrangler deploy -c wrangler.prod.jsonc`
+- [ ] `./scripts/deploy.sh` (only after the GitHub release is published; it refuses to deploy links that would 404)
 - [ ] Spot-check heyhumanly.com on a phone and in dark mode after deploy

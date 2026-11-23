@@ -14,9 +14,15 @@ jobs:
         run: python3 scripts/check-versions.py "$TAG"
       - name: Build universal DMG (ad-hoc signed unless secrets are added later)
         run: ./scripts/release.sh
+      - name: Build the Chrome extension zip the website links to
+        env: { TAG: '${{ inputs.tag }}' }
+        run: |
+          V="${TAG#v}"
+          ./scripts/package-extension.sh
+          cp "dist/heyhumanly-extension-$V.zip" "dist/$V/HeyHumanly-Chrome-$V.zip"
       - name: Publish release
         env: { GH_TOKEN: '${{ github.token }}', TAG: '${{ inputs.tag }}' }
         run: |
           V="${TAG#v}"
-          gh release create "$TAG" dist/$V/HeyHumanly-$V.dmg dist/$V/HeyHumanly-$V.dmg.sha256 \
+          gh release create "$TAG" dist/$V/HeyHumanly-$V.dmg dist/$V/HeyHumanly-$V.dmg.sha256 dist/$V/HeyHumanly-Chrome-$V.zip \
             --title "HeyHumanly $V" --notes-file CHANGELOG.md --prerelease
