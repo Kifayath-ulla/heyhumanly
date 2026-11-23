@@ -3,7 +3,7 @@
  * Lexicon by Aashish Harishchandre (https://github.com/AashishH15/Lexicon, MIT License). */
 (function (root) {
   'use strict';
-  const DEFAULTS = { endpoint: 'http://localhost:11434', model: '', goal: 'sameTone' };
+  const DEFAULTS = { endpoint: 'http://localhost:11434', model: '', goal: 'sameTone', engine: 'auto' };
 
   // ---------- helpers ----------
   const words = (s) => s.split(/[^\p{L}\p{N}']+/u).filter(Boolean).map((w) => w.toLowerCase());
@@ -302,11 +302,38 @@
     if (!writing.length) throw fail('nomodel', NOMODEL);
     return writing[0];
   }
+  // Chrome's built-in model (Prompt API, Gemini Nano). Runs on this computer once Chrome has downloaded it.
+  const LM = () => (typeof LanguageModel !== 'undefined' ? LanguageModel : null);
+  const BUILTIN_OPTS = { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] };
+  /** 'available' | 'downloadable' | 'downloading' | 'unavailable' | 'unsupported' (no Prompt API in this Chrome or context). */
+  async function builtinStatus() {
+    const lm = LM(); if (!lm) return 'unsupported';
+    try { return await lm.availability(BUILTIN_OPTS); } catch (e) { return 'unavailable'; }
+  }
+  /** Creates a session, downloading Chrome's model first if needed. Downloads must start from a click. */
+  async function builtinSession(onProgress) {
+    const lm = LM(); if (!lm) throw fail('unsupported', 'This Chrome has no built-in model.');
+    return lm.create(Object.assign({}, BUILTIN_OPTS, { temperature: 0.2, topK: 3,
+      monitor(m) { if (onProgress) m.addEventListener('downloadprogress', (e) => onProgress(e.loaded)); } }));
+  }
+  async function builtinTighten(text, goal, casual) {
+    const session = await builtinSession();
+    let t; try {
+      const raw = await Promise.race([session.prompt(buildPrompt(text, goal, casual)),
+        new Promise((_, rej) => { t = setTimeout(() => rej(fail('timeout', 'Chrome’s built-in model took more than 3 minutes. Try a shorter piece of text.')), GENERATE_MS); })]);
+      return raw;
+    } finally { clearTimeout(t); try { session.destroy(); } catch (e) { /* already gone */ } }
+  }
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
     if (text.length > MAX_CHARS) throw fail('long', 'That’s ' + text.length.toLocaleString('en-US') + ' characters. HeyHumanly works on up to ' + MAX_CHARS.toLocaleString('en-US') + ' at a time (a long email). Select one part and try again.');
     const casual = isCasual(text);
+    if (o.engine === 'builtin' || (o.engine === 'auto' && await builtinStatus() === 'available')) {
+      const cleaned = cleanRewrite(await builtinTighten(text, o.goal, casual));
+      if (!cleaned) throw fail('empty', 'Chrome’s built-in model returned nothing. Try again.');
+      return analyse(text, restoreCode(text, fixTypos(text, cleaned)), casual, 'Chrome built-in model', o.goal);
+    }
     let model; try { model = await pickModel(o.endpoint, o.model); } catch (e) { if (e.code && e.code !== 'timeout') throw e; throw fail('offline', OFFLINE(o.endpoint)); }
     let res; try {
       res = await fetchT(base(o.endpoint) + '/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -337,6 +364,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-let endpoint = HH.DEFAULTS.endpoint, pulling = false, timer = null;
+let endpoint = HH.DEFAULTS.endpoint, pulling = false, timer = null, builtinReady = false;
 
 function set(id, state, label) {
   const li = $(id); li.dataset.state = state; li.querySelector('.state').textContent = label;
@@ -26,8 +26,8 @@ async function check() {
       }
     }
   }
-  $('done').hidden = left > 0;
-  $('summary').textContent = left ? left + (left === 1 ? ' step' : ' steps') + ' left.' : 'Everything works.';
+  $('done').hidden = left > 0 && !builtinReady;
+  $('summary').textContent = !left ? 'Everything works.' : builtinReady ? 'Everything works with Chrome’s built-in model. Ollama is optional.' : left + (left === 1 ? ' step' : ' steps') + ' left.';
   clearTimeout(timer); if (left) timer = setTimeout(check, 3000);
 }
 async function pull(name) {
@@ -55,3 +55,22 @@ $('origin').textContent = HH.extensionOrigin();
 showOS(HH.platform());
 chrome.commands.getAll((cmds) => { const c = cmds.find((x) => x.name === 'tighten'); $('key').textContent = (c && c.shortcut) || 'your shortcut (none is set: choose one at chrome://extensions/shortcuts)'; });
 chrome.storage.local.get({ endpoint: HH.DEFAULTS.endpoint }, (s) => { endpoint = s.endpoint; $('ep').textContent = s.endpoint; check(); });
+
+// Chrome's built-in model: no Ollama needed when Chrome can run it. Its one-time download must start from a click.
+async function builtin(error) {
+  const st = await HH.builtinStatus(), box = $('builtin');
+  builtinReady = st === 'available';
+  if (builtinReady) { $('b-note').textContent = 'Ready. HeyHumanly uses it automatically, so you can skip the Ollama steps below.'; $('b-get').hidden = true; box.hidden = false; check(); return; }
+  if (!error && (st === 'unsupported' || st === 'unavailable')) { box.hidden = true; return; }
+  box.hidden = false;
+  $('b-note').textContent = error ? 'Chrome couldn’t download its model (' + error + '). Try again, or use Ollama below.' : st === 'downloading' ? 'Chrome is downloading its model…' : 'This computer can run Chrome’s own model, so you can skip Ollama. Chrome downloads it once (a few GB, needs 22 GB free disk space).';
+  $('b-get').hidden = st === 'downloading';
+}
+$('b-get').addEventListener('click', async () => {
+  $('b-get').disabled = true; $('b-bar').hidden = false;
+  let error = null;
+  try { const s = await HH.builtinSession((f) => { $('b-bar').value = f; }); s.destroy(); }
+  catch (e) { error = e.message || String(e); }
+  $('b-get').disabled = false; $('b-bar').hidden = true; builtin(error);
+});
+builtin();
