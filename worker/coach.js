@@ -154,7 +154,7 @@ export async function handleCoach(request, env, now = Date.now()) {
   } catch (e) {
     const timeout = String(e?.message) === 'timeout', billed = !timeout && out !== undefined;
     const u = out?.usage || {};
-    const actual = billed ? neurons(model, u.prompt_tokens || Math.ceil(prompt.length / 3), u.completion_tokens || maxOut) : 0;
+    const actual = billed ? neurons(model, u.prompt_tokens ?? Math.ceil(prompt.length / 3), u.completion_tokens ?? maxOut) : 0;
     // A timed-out call may still finish and be billed, so keep its estimated cost in the global budget.
     await ledger.settle(install, key, timeout ? 0 : est, actual, false, day, billed);
     return json({ ...base(env, r.remaining + 1, now), error: timeout ? 'timeout' : 'provider_error' }, timeout ? 504 : 502);

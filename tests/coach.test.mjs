@@ -96,6 +96,10 @@ test('unusable model output keeps its cost and per-IP count, so it cannot be rep
   assert.equal(statuses.filter((s) => s === 429).length, 5);
   assert.equal(await ledger.store.get('neurons'), LIMITS.perIp * neurons('@cf/google/gemma-4-26b-a4b-it', 1400, 900));
   assert.equal((await (await peek(env)).json()).remaining, LIMITS.perInstall);
+
+  const empty = makeEnv(async () => ({ choices: [{ message: { content: '' } }], usage: { prompt_tokens: 400, completion_tokens: 0 } }));
+  await post(empty.env, { text: TEXT, install: ID });
+  assert.equal(await empty.ledger.store.get('neurons'), neurons('@cf/google/gemma-4-26b-a4b-it', 400, 0));
 });
 
 test('IPv6 addresses in one /64 share a per-IP allowance', async () => {
