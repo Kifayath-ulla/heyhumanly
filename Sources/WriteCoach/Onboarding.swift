@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// First-run tour: five short cards over the dashboard. Skippable at any point, replayable from Settings.
+/// First-run tour: try coaching first, then the optional cross-app steps (Accessibility last). Skippable at any point, replayable from Settings.
 struct OnboardingView: View {
     @ObservedObject var model: CoachModel
     private let last = 4
@@ -33,10 +33,10 @@ struct OnboardingView: View {
                 Group {
                     switch step {
                     case 0: welcome
-                    case 1: howItWorks
-                    case 2: teachOrFix
-                    case 3: permission
-                    default: ready
+                    case 1: tryNow
+                    case 2: howItWorks
+                    case 3: teachOrFix
+                    default: permission
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 300, alignment: .topLeading)
@@ -44,12 +44,11 @@ struct OnboardingView: View {
                 HStack(spacing: 8) {
                     if step > 0 { Button("Back") { model.onboardingStep = step - 1 }.buttonStyle(SecondaryButtonStyle()) }
                     Spacer()
-                    if step == last {
-                        Button("Try an example") {
-                            model.finishOnboarding()
-                            model.clearDraft(); model.draft = "Please send me that thung when you have time."; model.showCoach()
-                        }.buttonStyle(SecondaryButtonStyle())
-                        Button("Start writing") { model.finishOnboarding() }.buttonStyle(PrimaryButtonStyle()).keyboardShortcut(.defaultAction)
+                    if step == 1 {
+                        Button("Next: coach in other apps") { model.onboardingStep = 2 }.buttonStyle(SecondaryButtonStyle())
+                        Button("Try it now") { tryExample() }.buttonStyle(PrimaryButtonStyle()).keyboardShortcut(.defaultAction)
+                    } else if step == last {
+                        Button("Done") { model.finishOnboarding() }.buttonStyle(PrimaryButtonStyle()).keyboardShortcut(.defaultAction)
                     } else {
                         Button("Next") { model.onboardingStep = step + 1 }.buttonStyle(PrimaryButtonStyle()).keyboardShortcut(.defaultAction)
                     }
@@ -70,7 +69,7 @@ struct OnboardingView: View {
                 guard [36, 76].contains(event.keyCode),
                       event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function]).isEmpty,
                       !(event.window is NSPanel), let current = model.onboardingStep else { return event }
-                if current >= last { model.finishOnboarding() } else { model.onboardingStep = current + 1 }
+                if current == 1 { tryExample() } else if current >= last { model.finishOnboarding() } else { model.onboardingStep = current + 1 }
                 return nil
             }
         }
@@ -78,7 +77,7 @@ struct OnboardingView: View {
         .onReceive(poll) { _ in
             // Permission and model status update while the tour is open, so "Allowed" appears without a restart.
             if model.accessibilityTrusted != AccessibilityBridge.isTrusted { model.accessibilityTrusted = AccessibilityBridge.isTrusted }
-            if step == last, model.ollama != .checking, !(model.ollamaRunning && model.modelInstalled) { model.refreshStatus() }
+            if step == 1, !model.engineReady, model.ollama != .checking { model.refreshStatus() }
         }
     }
 
@@ -110,7 +109,7 @@ struct OnboardingView: View {
             Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 64, height: 64).accessibilityHidden(true)
             title("Fix it now, or learn ", "why", ".")
             bodyText("HeyHumanly sits beside whatever you're writing, in Slack, Mail, your browser or Notes. It catches mistakes, and when you have a minute it teaches you the rule so you stop making them.")
-            point("lock.shield.fill", "Everything stays on this Mac", "The AI model runs locally. No account, no cloud, nothing is sent anywhere.", tint: .added)
+            point("lock.shield.fill", "You choose where it runs", "On this Mac with Apple's model or offline coaching, or try online coaching first. No account, no API key. Nothing goes online until you say yes.", tint: .added)
         }
     }
 
@@ -151,8 +150,13 @@ struct OnboardingView: View {
 
     private var permission: some View {
         VStack(alignment: .leading, spacing: 16) {
-            title("One permission: ", "Accessibility", ".")
-            bodyText("macOS only lets an app see the text box you're typing in if you allow it. HeyHumanly uses this to read that one box after you pause, and to paste a fix you accepted. It never reads password fields, password managers, terminals or code editors.")
+            title("Coach in other apps ", "(optional)", ".")
+            HStack(spacing: 10) {
+                ShortcutKeys(label: model.shortcutLabel, size: 12)
+                Text("checks the box you're in right away, or opens the coach with your selected text. Change it in Settings.")
+                    .font(.system(size: 12.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            bodyText("To do this, macOS needs one permission, Accessibility. macOS only lets an app see the text box you're typing in if you allow it. HeyHumanly uses this to read that one box after you pause, and to paste a fix you accepted. It never reads password fields, password managers, terminals or code editors.")
             HStack(spacing: 12) {
                 Image(systemName: "accessibility").font(.system(size: 18)).foregroundStyle(Color.brand)
                     .frame(width: 36, height: 36).background(Color.brandSoft, in: RoundedRectangle(cornerRadius: 9))
@@ -171,28 +175,36 @@ struct OnboardingView: View {
             .padding(12)
             .background(Color.surfaceSunken, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             if !model.accessibilityTrusted {
-                bodyText("You can do this later. Until then, the coach window still works with text you type or paste into it.")
+                bodyText("You can do this later in Settings. The coach window already works with text you type or paste into it.")
             }
         }
     }
 
-    private var ready: some View {
-        let running = model.ollamaRunning
-        return VStack(alignment: .leading, spacing: 16) {
-            title("You're ", "ready", ".")
-            statusRow(ok: running, okText: "Local AI is running", badText: "Ollama isn't running",
-                      detail: running ? "Ollama, on this Mac." : "HeyHumanly notices when it starts.")
-            statusRow(ok: running && model.modelInstalled, okText: "Model \(model.settings.model) is installed", badText: "Model \(model.settings.model) isn't installed",
-                      detail: running && model.modelInstalled ? "Works with Wi-Fi off." : "Download it below, or pick another installed model in Settings.")
-            if !(running && model.modelInstalled) { ModelSetupCard(model: model) }
-            statusRow(ok: model.accessibilityTrusted, okText: "Accessibility is allowed", badText: "Accessibility is off",
-                      detail: model.accessibilityTrusted ? "HeyHumanly can coach you in other apps." : "Go back one step to turn it on, or do it later in Settings.")
-            HStack(spacing: 10) {
-                ShortcutKeys(label: model.shortcutLabel, size: 12)
-                Text("checks the box you're in right away, or opens the coach with your selected text. Change it in Settings.")
-                    .font(.system(size: 12.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+    private func tryExample() {
+        model.finishOnboarding()
+        model.clearDraft(); model.rephraseOn = false; model.selectedMode = .quickFix
+        model.draft = "Please send me that thung when you have time."; model.showCoach()
+    }
+
+    /// Coaching works here without Accessibility, Ollama or an API key.
+    private var tryNow: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            title("Try it ", "now", ".")
+            bodyText("Paste or type anything into the coach window and press Quick Fix. No setup, no account, no API key.")
+            statusRow(ok: model.engineReady, okText: "Coaching: \(model.engineLabel)",
+                      badText: "Choose how to coach",
+                      detail: model.engineReady
+                        ? (model.privacyIsLocal ? "Never leaves your Mac." : "Free online coachings each day.")
+                        : "The coach window asks before anything goes online, or sets up offline coaching on this Mac.")
+            if !model.engineReady, model.ollamaDetected {
+                Button("Use my Ollama (found \(model.writingModels.count) model\(model.writingModels.count == 1 ? "" : "s"))") { model.useMyOllama() }
+                    .buttonStyle(SecondaryButtonStyle())
             }
-            bodyText("Pause coaching any time from the leaf in the menu bar.")
+            if model.engine != .appleOnDevice {
+                Text("Apple's on-device model: \(model.appleAvailability == "available" ? "available" : AppleModel.unavailableReason)")
+                    .font(.system(size: 12)).foregroundStyle(.tertiary)
+            }
+            bodyText("Want it inside Slack, Mail and your browser too? That's the next, optional step.")
         }
     }
 

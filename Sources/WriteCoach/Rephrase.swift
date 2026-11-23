@@ -119,13 +119,18 @@ enum RephraseService {
         request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "keep_alive": "30m",
                                                                        "options": ["temperature": 0.2, "num_predict": min(700, max(120, text.count / 2 + 80))]])
         let data: Data
-        do { (data, _) = try await URLSession.shared.data(for: request) }
+        do { (data, _) = try await LLM.data(for: request) }
         catch let e as URLError where [.cannotConnectToHost, .cannotFindHost, .networkConnectionLost, .notConnectedToInternet].contains(e.code) { throw CoachError.ollamaNotRunning }
         struct Outer: Decodable { let response: String?; let error: String? }
         let outer = try JSONDecoder().decode(Outer.self, from: data)
         if let e = outer.error { if e.localizedCaseInsensitiveContains("not found") { throw CoachError.modelMissing(model) }; throw CoachError.server(500, e) }
         let raw = CoachService.cleanRewrite(outer.response ?? "")
         guard !raw.isEmpty else { throw CoachError.invalidResponse }
+        return finish(text: text, raw: raw, goal: goal, casual: casual)
+    }
+
+    /// Local post-processing shared by every engine: restore code and typos, then find the habits to teach.
+    static func finish(text: String, raw: String, goal: RephraseGoal, casual: Bool) -> RephraseResult {
         // Code stays as written and known typos get the intended word. Casing is the writer's, so "i" is left alone here.
         let rewrite = TextSafety.restoreCode(original: text, rewrite: TextSafety.fixTypos(original: text, rewrite: raw))
         let moves = HabitDetector.moves(original: text, rewrite: rewrite, casual: casual)
@@ -304,12 +309,18 @@ enum HabitDetector {
 extension CoachModel {
     func rephrase() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, !rephraseLoading else { return }
+        guard !text.isEmpty, !rephraseLoading, readyToCoach() else { return }
         rephraseLoading = true; rephraseResult = nil; rephraseOriginal = text; errorMessage = nil; statusMessage = nil
-        let endpoint = settings.endpoint, model = settings.model, goal = rephraseGoal
+        let endpoint = activeEndpoint, model = activeModel, goal = rephraseGoal, online = isOnline
         Task {
             do {
-                let r = try await RephraseService.run(text: text, goal: goal, endpoint: endpoint, model: model)
+                let r: RephraseResult
+                if online {
+                    let o = try await coachOnline(text: text, goal: goal)
+                    r = RephraseService.finish(text: text, raw: o.rewrite, goal: goal, casual: o.casual)
+                } else {
+                    r = try await RephraseService.run(text: text, goal: goal, endpoint: endpoint, model: model)
+                }
                 rephraseResult = r
                 Habit.record(r.moves.compactMap(\.habitValue))
                 habitsVersion += 1
@@ -347,6 +358,7 @@ struct RephrasePane: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
+                EngineArea(model: model)
                 if model.rephraseResult == nil && !model.rephraseLoading { composer } else { compact }
                 if model.rephraseLoading { loading }
                 if let r = model.rephraseResult { result(r) }
@@ -399,7 +411,7 @@ struct RephrasePane: View {
 
     private var loading: some View {
         HStack(spacing: 10) { ProgressView().controlSize(.small); Text("Rephrasing, then working out why…").font(.system(size: 13.5)).foregroundStyle(.secondary); Spacer()
-            Text("on \(model.settings.model) · this Mac").font(.system(size: 11)).foregroundStyle(.tertiary) }
+            Text(model.engineLabel).font(.system(size: 11)).foregroundStyle(.tertiary) }
             .padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.hairline))
     }

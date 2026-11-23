@@ -6,6 +6,13 @@ import os
 @MainActor
 final class CoachModel: ObservableObject {
     @Published var draft = ""
+    @Published var allowance: Allowance?
+    @Published var onlineLimitHit = false
+    @Published var onlineFailed = false
+    @Published var showConsent = false
+    @Published var showOfflineSetup = false
+    @Published var appleAvailability = AppleModel.availabilityDescription
+    let runtime = OfflineRuntime.shared
     @Published var rephraseOn = true
     @Published var rephraseResult: RephraseResult?
     @Published var rephraseLoading = false
@@ -166,7 +173,10 @@ final class CoachModel: ObservableObject {
         dictionary = UserDefaults.standard.stringArray(forKey: "heyhumanly.dictionary") ?? []
         shortcutLabel = settings.shortcutLabel
         if settings.onboarded != true { onboardingStep = 0 }
+        appLog.notice("apple on-device availability: \(AppleModel.availabilityDescription, privacy: .public)")
+        startEngineOnLaunch()
         refreshStatus()
+        Task { await autoPickEngine() }
         inline.model = self
         watcher.model = self; watcher.session = inline; watcher.start()
         let status = registerHotKey(keyCode: settings.shortcutKeyCode, modifiers: settings.shortcutModifiers)
@@ -237,6 +247,9 @@ final class CoachModel: ObservableObject {
     func refreshStatus() {
         accessibilityTrusted = AccessibilityBridge.isTrusted
         dismissedCount = RewriteGuard.dismissed.count
+        appleAvailability = AppleModel.availabilityDescription
+        if settings.engine == .offlineManaged { Task { await runtime.startServer() } }
+        refreshAllowance()
         let endpoint = settings.endpoint
         if ollama == .noEndpoint || ollama == .notRunning { ollama = .checking }
         Task {
@@ -244,7 +257,7 @@ final class CoachModel: ObservableObject {
             ollama = status
             if case .running(let models) = status {
                 installedModels = models
-                if models.contains(settings.model) { await CoachService.prewarm(endpoint: endpoint, model: settings.model) }
+                if settings.engine == .ollama, models.contains(settings.model) { await CoachService.prewarm(endpoint: endpoint, model: settings.model) }
             }
         }
     }
@@ -278,13 +291,11 @@ final class CoachModel: ObservableObject {
     }
 
     var setupSteps: [SetupStep] {
-        let running: Bool = { if case .running = ollama { return true }; return false }()
-        return [
-            SetupStep(title: "Start Ollama", detail: "Local AI that runs on this Mac", done: running),
-            SetupStep(title: "Install \(settings.model)", detail: "ollama pull \(settings.model)", done: running && modelInstalled),
-            SetupStep(title: "Allow Accessibility", detail: "Read and replace selected text", done: accessibilityTrusted),
+        [
+            SetupStep(title: "Choose how to coach", detail: engineReady ? engineLabel : "Online, or offline on this Mac", done: engineReady),
             SetupStep(title: "Try Quick Fix", detail: "Fix a sentence in one step", done: history.contains { $0.mode == .quickFix }),
             SetupStep(title: "Try Teach Me", detail: "Get a lesson and an exercise", done: history.contains { $0.mode == .teach }),
+            SetupStep(title: "Coach in other apps", detail: "Optional: needs Accessibility", done: accessibilityTrusted),
         ]
     }
 
@@ -735,10 +746,7 @@ final class CoachModel: ObservableObject {
 
     var categoryStats: [CategoryStat] { Insights.stats(history: history).filter { !isMuted($0.category) } }
 
-    var privacyIsLocal: Bool {
-        guard let host = URLComponents(string: settings.endpoint)?.host?.lowercased() else { return false }
-        return ["localhost", "127.0.0.1", "::1", "0.0.0.0"].contains(host)
-    }
+    var privacyIsLocal: Bool { engineIsLocal }
 
     func practice(_ item: HistoryItem) {
         clearDraft()
@@ -763,8 +771,10 @@ final class CoachModel: ObservableObject {
             errorMessage = "Type or paste some text first."
             return
         }
+        guard readyToCoach() else { return }
         loadingMode = mode; errorMessage = nil; statusMessage = nil
-        let endpoint = settings.endpoint, modelName = settings.model, words = dictionary
+        let online = isOnline
+        let endpoint = online ? "" : activeEndpoint, modelName = activeModel, words = dictionary
         let style = selectedStyle, app = sourceAppName
         streamingText = ""
         // Keep macOS from App-Napping us mid-request (we're often not the frontmost app).
@@ -772,9 +782,17 @@ final class CoachModel: ObservableObject {
         Task {
             defer { ProcessInfo.processInfo.endActivity(activity) }
             do {
-                var rewrite = try await CoachService.streamRewrite(text: original, style: style, appName: app, preserve: words,
+                var rewrite: String
+                if online {
+                    // Only the text and goal go online; explanations below come from the local rule book.
+                    let goal: RephraseGoal = style == .concise ? .shorter : style == .professional ? .professional : .sameTone
+                    rewrite = try await coachOnline(text: original, goal: goal).rewrite
+                    streamingText = rewrite
+                } else {
+                    rewrite = try await CoachService.streamRewrite(text: original, style: style, appName: app, preserve: words,
                                                                    endpoint: endpoint, model: modelName) { [weak self] token in
-                    self?.streamingText += token
+                        self?.streamingText += token
+                    }
                 }
                 // Light styles must not change meaning, slang or harmless wording.
                 if style == .fixOnly || style == .polish { rewrite = RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: words) }
@@ -792,7 +810,8 @@ final class CoachModel: ObservableObject {
                 history.insert(item, at: 0)
                 history = Array(history.prefix(500)); HistoryItem.saveAll(history)
                 await explainChanges(itemID: item.id, original: original, rewrite: response.rewrite, endpoint: endpoint, model: modelName)
-                if mode == .teach { await loadLesson(itemID: item.id, original: original, rewrite: rewrite, endpoint: endpoint, model: modelName) }
+                if mode == .teach, online { localLesson(itemID: item.id, rewrite: rewrite) }
+                else if mode == .teach { await loadLesson(itemID: item.id, original: original, rewrite: rewrite, endpoint: endpoint, model: modelName) }
             } catch {
                 appLog.error("analyze failed: \(String(describing: error), privacy: .public)")
                 errorMessage = error.localizedDescription
