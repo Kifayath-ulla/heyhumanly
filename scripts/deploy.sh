@@ -5,5 +5,7 @@ cd "$(dirname "$0")/.."
 python3 scripts/check-versions.py
 python3 scripts/check-release-links.py
 python3 scripts/build-site.py
-git diff --quiet -- site || { echo "site/ changed after rebuilding; commit it first."; exit 1; }
+if ! git diff --quiet HEAD -- site || [ -n "$(git ls-files --others --exclude-standard site)" ]; then
+  echo "site/ differs from the committed version after rebuilding; commit it first."; exit 1
+fi
 npx wrangler deploy -c wrangler.prod.jsonc
