@@ -99,5 +99,5 @@ node --test tests/*.test.mjs                               # extension, worker a
 
 1. Bump the version in `Resources/Info.plist` (`CFBundleShortVersionString`), `extension/manifest.json` and `site-src/release.json`, add a `CHANGELOG.md` entry, check with `python3 scripts/check-versions.py`, then run `./scripts/release.sh`.
 2. `gh release create vX.Y.Z dist/X.Y.Z/*.dmg dist/X.Y.Z/*.sha256 --notes-file ...`
-3. Update `site-src/release.json` (version, file, sha256, size), run `python3 scripts/build-site.py`, then `wrangler deploy -c wrangler.prod.jsonc`.
+3. Update `site-src/release.json` (version, file, sha256, size), copying the checksum from the published release, then run `./scripts/deploy.sh`. It refuses to deploy until the release files exist, so the download links can't 404.
 `wrangler.jsonc` deploys the preview at `*.workers.dev` (noindex); `wrangler.prod.jsonc` also attaches heyhumanly.com. Hosting is Cloudflare Workers static assets on the free plan (100,000 requests/day).
