@@ -49,14 +49,15 @@ export class Ledger {
     return { ok: true, remaining: LIMITS.perInstall - used - 1 };
   }
   // Failed, timed-out and provider-error requests are refunded; successful ones are charged their real cost.
-  async settle(install, ipKey, est, actual, success, day) {
+  // A billed failure (the model answered but the output was unusable) keeps its real cost and the per-IP count.
+  async settle(install, ipKey, est, actual, success, day, billed = false) {
     if ((await this.store.get('day')) !== day) return;
     const spent = (await this.store.get('neurons')) || 0;
     if (success) { await this.store.put('neurons', Math.max(0, spent - est + actual)); return; }
-    await this.store.put('neurons', Math.max(0, spent - est));
+    await this.store.put('neurons', Math.max(0, spent - est + (billed ? actual : 0)));
     const used = (await this.store.get('i:' + install)) || 0;
     await this.store.put('i:' + install, Math.max(0, used - 1));
-    if (ipKey) { const p = (await this.store.get('p:' + ipKey)) || 0; await this.store.put('p:' + ipKey, Math.max(0, p - 1)); }
+    if (ipKey && !billed) { const p = (await this.store.get('p:' + ipKey)) || 0; await this.store.put('p:' + ipKey, Math.max(0, p - 1)); }
   }
 }
 
@@ -84,10 +85,21 @@ function ledgerOf(env) {
   return { peek: (...a) => call('peek', ...a), reserve: (...a) => call('reserve', ...a), settle: (...a) => call('settle', ...a) };
 }
 
+// One IPv6 client usually holds a whole /64, so IPv6 addresses share one bucket per /64.
+export function ipBucket(ip) {
+  if (!ip.includes(':')) return ip;
+  const last = ip.slice(ip.lastIndexOf(':') + 1);
+  if (last.includes('.')) return last;
+  const [head, tail] = ip.toLowerCase().split('::');
+  const a = head ? head.split(':') : [], b = tail ? tail.split(':') : [];
+  const full = tail === undefined ? a : [...a, ...Array(Math.max(0, 8 - a.length - b.length)).fill('0'), ...b];
+  return full.slice(0, 4).map((x) => (parseInt(x, 16) || 0).toString(16)).join(':') + '::/64';
+}
+
 async function ipKey(request, env, day) {
   const ip = request.headers.get('CF-Connecting-IP');
   if (!ip || !env.IP_SALT) return null;
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(env.IP_SALT + '|' + day + '|' + ip));
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(env.IP_SALT + '|' + day + '|' + ipBucket(ip)));
   return [...new Uint8Array(buf).slice(0, 12)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -124,9 +136,9 @@ export async function handleCoach(request, env, now = Date.now()) {
   const r = await ledger.reserve(install, key, est, day);
   if (!r.ok) return json({ ...base(env, r.remaining, now), error: r.reason }, r.reason === 'budget_exhausted' ? 503 : 429);
 
-  let timer;
+  let timer, out;
   try {
-    const out = await Promise.race([
+    out = await Promise.race([
       env.AI.run(model, { messages: [{ role: 'user', content: prompt }], max_tokens: maxOut, temperature: 0.2, chat_template_kwargs: { enable_thinking: false } }),
       new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('timeout')), Number(env.COACH_TIMEOUT_MS) || LIMITS.timeoutMs); }),
     ]);
@@ -140,9 +152,11 @@ export async function handleCoach(request, env, now = Date.now()) {
     await ledger.settle(install, key, est, actual, true, day);
     return json({ ...base(env, r.remaining, now), rewrite, casual, model });
   } catch (e) {
-    const timeout = String(e?.message) === 'timeout';
+    const timeout = String(e?.message) === 'timeout', billed = !timeout && out !== undefined;
+    const u = out?.usage || {};
+    const actual = billed ? neurons(model, u.prompt_tokens ?? Math.ceil(prompt.length / 3), u.completion_tokens ?? maxOut) : 0;
     // A timed-out call may still finish and be billed, so keep its estimated cost in the global budget.
-    await ledger.settle(install, key, timeout ? 0 : est, 0, false, day);
+    await ledger.settle(install, key, timeout ? 0 : est, actual, false, day, billed);
     return json({ ...base(env, r.remaining + 1, now), error: timeout ? 'timeout' : 'provider_error' }, timeout ? 504 : 502);
   } finally { clearTimeout(timer); }
 }

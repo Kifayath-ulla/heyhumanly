@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { handleCoach, Allowance, LIMITS, neurons, resetsAt } from '../worker/coach.js';
+import { handleCoach, Allowance, LIMITS, neurons, resetsAt, ipBucket } from '../worker/coach.js';
 
 class Store extends Map { async get(k) { return super.get(k); } async put(k, v) { this.set(k, v); } async deleteAll() { this.clear(); } }
 const ID = '11111111-2222-4333-8444-555555555555', ID2 = '11111111-2222-4333-8444-666666666666';
@@ -76,7 +76,7 @@ test('the global budget stops requests before the free daily allocation', async 
 });
 
 test('provider errors, empty output and timeouts are refunded', async () => {
-  for (const run of [async () => { throw new Error('5xx'); }, async () => ({ choices: [{ message: { content: '  ' } }] })]) {
+  for (const [run, billed] of [[async () => { throw new Error('5xx'); }, false], [async () => ({ choices: [{ message: { content: '  ' } }] }), true]]) {
     const { env, ledger } = makeEnv(run);
     const r = await post(env, { text: TEXT, install: ID });
     assert.equal(r.status, 502);
@@ -84,8 +84,40 @@ test('provider errors, empty output and timeouts are refunded', async () => {
     assert.equal(j.error, 'provider_error');
     assert.equal(j.remaining, LIMITS.perInstall);
     assert.equal(await ledger.store.get('i:' + ID), 0);
-    assert.equal(await ledger.store.get('neurons'), 0);
+    assert.equal((await ledger.store.get('neurons')) > 0, billed);
   }
+});
+
+test('unusable model output keeps its cost and per-IP count, so it cannot be repeated for free', async () => {
+  const { env, ledger, calls } = makeEnv(async () => ({ choices: [{ message: { content: 'cut off mid sen' }, finish_reason: 'length' }], usage: { prompt_tokens: 1400, completion_tokens: 900 } }));
+  const statuses = [];
+  for (let i = 0; i < LIMITS.perIp + 5; i++) statuses.push((await post(env, { text: TEXT, install: ID })).status);
+  assert.equal(calls.length, LIMITS.perIp);
+  assert.equal(statuses.filter((s) => s === 429).length, 5);
+  assert.equal(await ledger.store.get('neurons'), LIMITS.perIp * neurons('@cf/google/gemma-4-26b-a4b-it', 1400, 900));
+  assert.equal((await (await peek(env)).json()).remaining, LIMITS.perInstall);
+
+  const empty = makeEnv(async () => ({ choices: [{ message: { content: '' } }], usage: { prompt_tokens: 400, completion_tokens: 0 } }));
+  await post(empty.env, { text: TEXT, install: ID });
+  assert.equal(await empty.ledger.store.get('neurons'), neurons('@cf/google/gemma-4-26b-a4b-it', 400, 0));
+});
+
+test('IPv6 addresses in one /64 share a per-IP allowance', async () => {
+  const { env, calls } = makeEnv(ok);
+  for (let i = 0; i < LIMITS.perIp + 5; i++) {
+    await post(env, { text: TEXT, install: '11111111-2222-4333-8444-' + String(i).padStart(12, '0') }, '2001:db8:1:2::' + (i + 1).toString(16));
+  }
+  assert.equal(calls.length, LIMITS.perIp);
+  const r = await post(env, { text: TEXT, install: ID }, '2001:db8:1:3::1');
+  assert.equal(r.status, 200);
+});
+
+test('ipBucket keeps IPv4 and groups IPv6 by /64', () => {
+  assert.equal(ipBucket('198.51.100.7'), '198.51.100.7');
+  assert.equal(ipBucket('2001:DB8:1:2::abcd'), '2001:db8:1:2::/64');
+  assert.equal(ipBucket('2001:0db8:0001:0002:aaaa:bbbb:cccc:dddd'), '2001:db8:1:2::/64');
+  assert.equal(ipBucket('2001:db8::1'), '2001:db8:0:0::/64');
+  assert.equal(ipBucket('::ffff:198.51.100.7'), '198.51.100.7');
 });
 
 test('bad input is rejected without spending allowance', async () => {
