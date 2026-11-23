@@ -301,7 +301,7 @@ extension CoachService {
             request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "keep_alive": "30m",
                                                                             "options": ["temperature": 0.2 + 0.4 * Double(attempt), "num_predict": max(60, sentence.count)]])
             struct Outer: Decodable { let response: String }
-            guard let (data, _) = try? await URLSession.shared.data(for: request),
+            guard let (data, _) = try? await LLM.data(for: request),
                   let outer = try? JSONDecoder().decode(Outer.self, from: data) else { return nil }
             let cleaned = cleanRewrite(outer.response)
             if !cleaned.isEmpty, cleaned != sentence, !stillHasProblem(cleaned, issue) { return cleaned }

@@ -12,3 +12,7 @@ main{max-width:720px;margin:0 auto;padding:48px 20px 64px}h1{font:400 40px/1.15 
 button{font:500 14px -apple-system,BlinkMacSystemFont,sans-serif;border-radius:9px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--fg)}button.p{background:var(--fg);color:var(--bg);border-color:var(--fg)}button:disabled{opacity:.5;cursor:default}
 button:focus-visible,a:focus-visible{outline:2px solid #1F6C9F;outline-offset:2px}.tabs{display:flex;gap:6px;margin:10px 0}.tabs [aria-pressed=true]{background:var(--fg);color:var(--bg)}
 .row{display:flex;gap:8px;flex-wrap:wrap}progress{width:100%;margin-top:10px}.fine{font-size:13px;color:var(--muted)}.done{background:var(--okbg);color:var(--ok);border-radius:14px;padding:6px 18px;margin:14px 0}.done h2{font:400 26px Georgia,serif;margin:10px 0 0}
+
+.preview{font-size:.5em;font-weight:600;vertical-align:middle;padding:.2em .6em;border-radius:999px;background:#fff3cd;color:#664d03}
+.builtin{border:1px solid #d0d7de;border-radius:12px;padding:12px 16px;margin:12px 0}
+.builtin h2{margin:0 0 6px;font-size:1.05em}

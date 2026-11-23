@@ -229,6 +229,8 @@ final class InlineSession: ObservableObject {
     /// Checks the field. Returns false when it can't be read or located on screen (caller may fall back to the coach).
     @discardableResult
     func start(element el: AXUIElement, appName: String, bundleID: String, auto: Bool) -> Bool {
+        // Inline checks run without an explicit request, so they only ever use an engine on this Mac.
+        guard model?.engineIsLocal == true else { return false }
         guard let value = AXText.string(el, kAXValueAttribute), !value.isEmpty, !AXText.isSecure(el) else { return false }
         // Fields that can't say where words are (some Electron/web editors) still get the companion,
         // docked to the field, with no underlines rather than misplaced ones.
@@ -285,7 +287,7 @@ final class InlineSession: ObservableObject {
         guard let model else { return }
         task?.cancel(); teachTask?.cancel()
         let text = checkedText, app = appName, words = model.dictionary, chosen = tone
-        let endpoint = model.settings.endpoint, modelName = model.settings.model
+        let endpoint = model.activeEndpoint, modelName = model.activeModel
         let gen = generation
         let started = Date()
         task = Task { [weak self] in
@@ -337,7 +339,7 @@ final class InlineSession: ObservableObject {
         tip = Self.lessonTip(for: changes)
         guard let model, model.settings.explainLanguage != "English" else { return }
         let pending = changes
-        let endpoint = model.settings.endpoint, modelName = model.settings.model, language = model.settings.explainLanguage
+        let endpoint = model.activeEndpoint, modelName = model.activeModel, language = model.settings.explainLanguage
         explaining = true
         teachTask = Task { [weak self] in
             for p in pending {
@@ -943,7 +945,7 @@ final class InlineSession: ObservableObject {
         // Tones start from the clean suggested version: small local models invent less that way.
         let base = (t == .fixOnly || rewriteForChanges.isEmpty) ? checkedText : rewriteForChanges
         let text = base, app = appName, words = model.dictionary
-        let endpoint = model.settings.endpoint, modelName = model.settings.model
+        let endpoint = model.activeEndpoint, modelName = model.activeModel
         // Ollama answers one request at a time: pause the background explanations so the tone you
         // asked for comes first, then pick them up again.
         let resumeExplain = explaining

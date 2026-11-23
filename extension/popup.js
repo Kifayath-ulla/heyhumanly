@@ -15,7 +15,9 @@ function run(goal) {
     $('status').textContent = res.result.model; $('out').innerHTML = HHUI.render(res.result);
   });
 }
-function showStatus(d) {
+async function showStatus(d) {
+  if (d && d.ok) d.writing.forEach((m) => { const o = document.createElement('option'); o.value = m; o.textContent = m; $('model').appendChild(o); });
+  if (await HH.builtinStatus() === 'available') { $('status').textContent = 'Ready · Chrome built-in model'; $('setup').hidden = true; return; }
   let problem = '';
   if (!d || !d.ok || !d.running) problem = 'Ollama isn’t running, or isn’t installed yet.';
   else if (d.allowed === false) problem = 'Ollama is blocking this extension. One command fixes it.';
@@ -23,7 +25,6 @@ function showStatus(d) {
   else if (!d.writing.length) problem = 'Ollama has no writing model yet.';
   $('status').textContent = problem ? 'Not ready' : 'Ready · ' + (d.model && d.models.includes(d.model) ? d.model : 'auto model');
   $('setup').hidden = !problem; $('setup-msg').textContent = problem;
-  if (d && d.ok) d.writing.forEach((m) => { const o = document.createElement('option'); o.value = m; o.textContent = m; $('model').appendChild(o); });
 }
 $('go').onclick = () => run('sameTone'); $('shorter').onclick = () => run('shorter'); $('formal').onclick = () => run('formal');
 $('setup-go').onclick = openSetup;

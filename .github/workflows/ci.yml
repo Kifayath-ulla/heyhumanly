@@ -26,3 +26,13 @@ jobs:
         run: ./scripts/build-app.sh
       - name: Meaning-guard smoke tests
         run: ./scripts/smoke-mac.sh HeyHumanly.app/Contents/MacOS/HeyHumanly
+
+  # Compiles the Apple Foundation Models (macOS 26 SDK) path that the default toolchain skips.
+  mac-foundation-models:
+    runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with Xcode 26.3
+        run: swift build -c release

@@ -14,6 +14,7 @@ struct CoachPanelView: View {
             } else if model.result.rewrite.isEmpty && !model.isLoading {
                 // Composing: the editor fills the panel.
                 VStack(alignment: .leading, spacing: 12) {
+                    EngineArea(model: model)
                     if let prompt = model.practicePrompt { practiceBanner(prompt) }
                     editor.frame(maxHeight: .infinity)
                     if let error = model.errorMessage { banner(error, icon: "exclamationmark.triangle.fill", tint: .removed) }
@@ -22,6 +23,7 @@ struct CoachPanelView: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
+                        EngineArea(model: model)
                         if let prompt = model.practicePrompt { practiceBanner(prompt) }
                         compactOriginal
                         if model.isLoading { loadingCard } else { resultCard }
@@ -199,7 +201,7 @@ struct CoachPanelView: View {
                 Text(model.loadingMode == .teach ? "Correcting, then preparing your lesson…" : "Fixing your text…")
                     .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 Spacer()
-                Text("on \(model.settings.model) · this Mac").font(.system(size: 11)).foregroundStyle(.tertiary)
+                Text(model.engineLabel).font(.system(size: 11)).foregroundStyle(.tertiary)
             }
             if !model.streamingText.isEmpty {
                 (Text(Services_clean(model.streamingText)) + Text(" ▍").foregroundColor(.brand))

@@ -24,3 +24,9 @@ test('workers.dev previews are noindex; production is not', async () => {
   assert.equal(prod.status, 200);
   assert.equal(prod.headers.get('X-Robots-Tag'), null);
 });
+
+test('/api/ goes to the coaching API, which is off unless enabled', async () => {
+  const r = await get('https://heyhumanly.com/api/v1/allowance?install=11111111-2222-4333-8444-555555555555');
+  assert.equal(r.status, 503);
+  assert.equal((await r.json()).error, 'unavailable');
+});

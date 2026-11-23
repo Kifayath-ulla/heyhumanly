@@ -37,7 +37,7 @@ final class TextWatcher {
 
     private func tick() {
         guard let model, let session, model.coachingActive, AXIsProcessTrusted(),
-              CompanionService.isLocal(model.settings.endpoint) else { return }
+              model.engineIsLocal else { return }
         guard let front = NSWorkspace.shared.frontmostApplication,
               front.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
         let bundle = front.bundleIdentifier ?? ""
