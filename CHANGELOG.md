@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.6 — 2026-11-23
 
 - Try coaching right away: the coach window works with no Ollama, no API key and no Accessibility permission.
 - Engines: Apple's on-device model (macOS 26, Apple Intelligence), free online coaching (asks first; 10 a day), in-app offline coaching (downloads a private Ollama and a model; works with Wi-Fi off), or your own Ollama. Settings › Coaching.
