@@ -10,6 +10,6 @@
   "ai": { "binding": "AI" },
   "durable_objects": { "bindings": [{ "name": "ALLOWANCE", "class_name": "Allowance" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Allowance"] }],
-  "vars": { "COACH_ENABLED": "false" },
+  "vars": { "COACH_ENABLED": "true" },
   "observability": { "enabled": false }
 }
