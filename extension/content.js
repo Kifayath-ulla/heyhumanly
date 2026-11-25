@@ -90,9 +90,9 @@
   function run(force) {
     const goal = STYLES[ui.i].goal;
     if (ui.cache[goal] && !force) { ui.error = null; draw(); return; }
-    const id = ++ui.req; ui.busy = true; ui.error = null; ui.notice = ''; draw();
+    const mine = ui, id = ++ui.req; ui.busy = true; ui.error = null; ui.notice = ''; draw();
     chrome.runtime.sendMessage({ type: 'hh:tighten', text: target.text, goal }, (res) => {
-      if (!ui || id !== ui.req) return;
+      if (ui !== mine || id !== mine.req) return;
       ui.busy = false;
       if (chrome.runtime.lastError || !res) ui.error = { message: 'The extension could not reach its background worker. Reload the page and try again.' };
       else if (!res.ok) ui.error = { message: res.error, setup: res.setup };
