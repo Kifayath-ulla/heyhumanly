@@ -225,7 +225,9 @@ final class CoachModel: ObservableObject {
     }
 
     private func applyShortcut(keyCode: UInt32, modifiers: UInt32, label: String) {
-        if HotKey.isUsedByMacOS(keyCode: keyCode, modifiers: modifiers) {
+        let isDefault = keyCode == UInt32(kVK_Space) && modifiers == UInt32(controlKey | optionKey)
+        // The default ⌃⌥Space is always allowed back (as at launch, macOS's input-source shortcut only gets a warning).
+        if !isDefault, HotKey.isUsedByMacOS(keyCode: keyCode, modifiers: modifiers) {
             // RegisterEventHotKey reports success for combos macOS already owns (e.g. ⌘Space for Spotlight),
             // but those never reach the app, so refuse them up front.
             shortcutError = "\(label) is already used by macOS (System Settings > Keyboard > Keyboard Shortcuts). Still using \(shortcutLabel)."
@@ -239,7 +241,8 @@ final class CoachModel: ObservableObject {
             settings.shortcutLabel = label
             settings.save()
             shortcutLabel = label
-            shortcutError = nil
+            shortcutError = isDefault && HotKey.isUsedByMacOS(keyCode: keyCode, modifiers: modifiers)
+                ? "\(label) is also a macOS shortcut, so it may not reach HeyHumanly. Pick a different shortcut if it doesn't work." : nil
         } else {
             // Put the previous shortcut back so the user is never left without one.
             registerHotKey(keyCode: settings.shortcutKeyCode, modifiers: settings.shortcutModifiers)
