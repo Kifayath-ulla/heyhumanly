@@ -162,6 +162,14 @@ test('auto engine falls back to Ollama when Chrome’s model is missing or not d
   assert.equal(await HH.builtinStatus(), 'unsupported');
 });
 
+test('auto engine falls back to Ollama when Chrome’s availability check never answers', async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.LanguageModel = { availability: () => new Promise(() => {}), create: () => { throw new Error('should not create'); } };
+  globalThis.fetch = async (u) => new Response(JSON.stringify(String(u).endsWith('/api/tags') ? { models: [{ name: 'qwen2.5:3b' }] } : { response: 'ok then', done_reason: 'stop' }));
+  try { const r = await HH.tighten('ok so then', {}); assert.equal(r.model, 'qwen2.5:3b'); }
+  finally { delete globalThis.LanguageModel; globalThis.fetch = realFetch; }
+});
+
 test('style prompts match the Mac app’s WritingStyle instructions', async () => {
   const { readFile } = await import('node:fs/promises');
   const swift = await readFile(new URL('../Sources/WriteCoach/Coaching.swift', import.meta.url), 'utf8');
