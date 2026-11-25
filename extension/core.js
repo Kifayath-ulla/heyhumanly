@@ -196,14 +196,14 @@
       'If the writer repeats a phrase back to back ("I don\'t know, I don\'t know"), keep it once. Never introduce a repeated phrase.\n' +
       'Reply with ONLY the corrected text. No quotes, no labels, no notes.\nText:\n' + text;
   }
-  // Pass the original so a preamble or wrapping quotes the writer typed are kept.
-  const PREAMBLE = /^(here(?:'|’)s|here is)[^\n:]*:\s*/i, QUOTED = /^["“].*["”]$/s;
-  function openers(s) { let n = 0; while (PREAMBLE.test(s)) { s = s.replace(PREAMBLE, '').trim(); n++; } return n; }
+  // A label the model put before its answer ("Here is the edited text:"), not an opening like "Here is the plan:".
+  const LABEL = /^(?:(?:here(?:'|’)?s|here is)\s+(?:the|your|a)\s+(?:[\w-]+\s+){0,3}(?:text|version|rewrite|message|draft|edit)|(?:corrected|edited|rewritten|revised)(?:\s+text)?|rewrite)\s*:\s*/i;
+  const QUOTED = /^["“].*["”]$/s;
+  // Pass the original so a label or wrapping quotes the writer typed are kept.
   function cleanRewrite(raw, original = '') {
     const o = (original || '').trim();
     let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    // Strip only the "Here is …:" labels the model added in front of the writer's own openings.
-    for (let n = openers(s) - openers(o); n > 0; n--) s = s.replace(PREAMBLE, '').trim();
+    if (!LABEL.test(o)) s = s.replace(LABEL, '').trim();
     if (QUOTED.test(s) && !QUOTED.test(o)) s = s.slice(1, -1).trim();
     return s;
   }
