@@ -125,7 +125,7 @@ extension CoachModel {
             installedModels = models
             guard let pick = models.first(where: { Self.sameModel($0, settings.model) && Self.isWritingModel($0) }) ?? writingModels.first else {
                 statusMessage = nil
-                errorMessage = "Your Ollama has no writing model yet. Download one in Settings → Local AI, then try again."
+                errorMessage = "Your Ollama has no writing model yet. Download one in Settings › Engine › My Ollama, then try again."
                 return
             }
             settings.model = pick; settingsModel = pick
@@ -227,6 +227,7 @@ extension OllamaStatus {
     func summary(model: String) -> String {
         switch self {
         case .checking: return "Checking Ollama…"
+        case .running(let models) where !models.contains(where: CoachModel.isWritingModel): return "Ollama is running · no writing model yet"
         case .running where !CoachModel.isWritingModel(model): return "\(model) can't write. Pick another model"
         case .running(let models): return models.contains(where: { CoachModel.sameModel($0, model) }) ? "Ollama · \(model)" : "\(model) not installed"
         case .notRunning: return "Ollama isn't running"
