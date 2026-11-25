@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.8 — 2026-11-25
+
+- Chrome extension: no longer hangs on "Tightening…" when Chrome's built-in model never answers; it falls back to Ollama after 2 seconds.
+- Online coaching works the first time after the app has been idle (each coaching uses a fresh connection).
+- Rephrase fixes clear misspellings ("realy", "alot") while keeping your slang and casing, and names the words it cut instead of saying "Nothing to change".
+- First launch says "Welcome", shows the free daily count, and says where your text goes for each engine.
+- Settings shows "Check as I type" as off while the engine isn't on this Mac.
+- Not notarized by Apple.
+
 ## 0.1.7 — 2026-11-25
 
 - Free online coaching now follows the style you pick: Friendly makes text warmer, and Fix only corrects mistakes without cutting or rephrasing.
