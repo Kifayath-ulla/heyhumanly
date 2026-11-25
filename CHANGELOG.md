@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.10 — 2026-11-26
+
+- Settings → Local AI lists only models that can write. If an embedding model such as `all-minilm` is still saved, the status turns orange and asks you to pick another model, instead of coaching failing.
+- Not notarized by Apple.
+
 ## 0.1.9 — 2026-11-26
 
 - A message typed all in lowercase stays lowercase after Rephrase (Mac and Chrome).

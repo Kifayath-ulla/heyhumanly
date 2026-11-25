@@ -19,7 +19,7 @@ A teaching-first alternative to cloud writing tools. Casual messages stay casual
 
 ## Key details
 
-- Version: 0.1.9
+- Version: 0.1.10
 - License: MIT
 - Platforms: macOS 14+ app, Chrome extension
 - Models: any model installed in Ollama
