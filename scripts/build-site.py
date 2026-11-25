@@ -264,11 +264,11 @@ manifesto = """
 
 privacy = f"""
 <section id="privacy"><div class="wrap"><h2>Where your writing goes</h2>
-<div class="ok"><b>Your text is checked by a model on your computer.</b> HeyHumanly has no account, analytics or tracking, and sends your text only to the Ollama address in its Settings, which is <code>localhost</code> (this computer) by default.</div>
+<div class="ok"><b>In offline modes, your text is checked by a model on your computer.</b> HeyHumanly has no account, analytics or tracking. Offline, it sends your text only to the model on this Mac (or the Ollama address in its Settings, <code>localhost</code> by default). Free online coaching is optional and asks first: only then is the text you choose sent to heyhumanly.com and rewritten by Cloudflare Workers AI.</div>
 <div class="grid">
 <div class="card"><h3>What it reads</h3><p>Only the one text box you are typing in, after you pause. Never password fields, password managers, terminals or code editors.</p></div>
 <div class="card"><h3>What it stores</h3><p>Sessions, review cards, your dictionary and settings stay in this app's preferences on your Mac. You can clear them in Settings.</p></div>
-<div class="card"><h3>What still uses the internet</h3><p>Downloading Ollama and the model (done by Ollama and your browser, not by HeyHumanly), and loading this website. HeyHumanly does not check for updates yet.</p></div>
+<div class="card"><h3>What still uses the internet</h3><p>Optional online coaching, after you agree (one request per coaching and one to check how many are left). Downloading the offline model, and loading this website. HeyHumanly does not check for updates yet.</p></div>
 </div><p class="fine">Read the full <a href="/privacy/">privacy page</a>. If you point HeyHumanly at another computer in Settings, it warns you, because then your text leaves this computer.</p></div></section>"""
 
 limits = f"""
@@ -389,8 +389,8 @@ page('/privacy/', 'HeyHumanly privacy: what it reads, stores and sends',
 habit_items = [
  ("Buried the point","Your main point or request comes late.","Before: “So I was thinking about the launch, and Priya said the design has issues, so can you tell me if we can still ship Monday?” After: “Can we still ship Monday? Priya says the design has issues.”","Finish the sentence “What I need from you is…” and start with that."),
  ("Filler","Words that add nothing: um, you know, basically, kind of.","Before: “So basically, um, the report is kind of late.” After: “The report is late.”","Pause silently. A pause sounds more confident than a filler word."),
- ("Hedging","Several maybes in a row weaken a message you mean.","Before: “I think we should probably maybe push it.” After: “Let's push it, unless the design is fixed by Thursday.”","Say it plainly, or name the condition."),
- ("Vague wording","Words like thing and stuff make the reader guess.","Before: “Can you look at the thing about the launch?” After: “Can you review the launch checklist?”","Replace “thing” with the noun you'd use if someone asked “which one?”."),
+ ("Hedging","Several maybes in a row weaken a message you mean.","Before: “I think we should probably maybe push it.” After: “I think we should push it.”","Say it plainly, or name the condition."),
+ ("Vague wording","Words like thing and stuff make the reader guess.","Before: “Can you look at the thing about the launch?” After: “Can you look at the launch date?” (if the date is what you meant)","Replace “thing” with the noun you'd use if someone asked “which one?”."),
  ("Too much in one sentence","Several ideas joined by and, but and so.","Before: one 70-word sentence. After: three short sentences, one idea each.","Start a new sentence whenever the subject changes."),
  ("Repetition","Saying the same idea twice.","Before: “We need to decide, we need to decide soon.” After: “We need to decide soon.”","Say it once, in the strongest place."),
 ]
@@ -411,10 +411,10 @@ page('/local-ai-writing-coach-mac/', 'Set up a local AI writing coach on Mac wit
      'How to run a local AI writing coach on a Mac: install Ollama, download Qwen 2.5, requirements for 8 GB and 16 GB Macs, and licenses.', ol_page)
 
 ga = f"""<section style="padding-top:140px"><div class="wrap" style="max-width:820px"><span class="eyebrow">Comparison</span><h1 style="margin-left:0;text-align:left;font-size:clamp(32px,5vw,54px)">A Grammarly alternative that keeps your tone and runs on your computer</h1>
-<p class="lede" style="margin-left:0;text-align:left">Grammarly is a polished tool, and for many people it is the right one. HeyHumanly is built for a different job: keeping your voice, teaching you why a change helps, and never sending your writing to a server.</p>
+<p class="lede" style="margin-left:0;text-align:left">Grammarly is a polished tool, and for many people it is the right one. HeyHumanly is built for a different job: keeping your voice, teaching you why a change helps, and checking your writing on your own computer in offline mode.</p>
 <h2 style="font-size:30px;margin-top:34px">The short comparison</h2>
 <table><tr><th></th><td><b>HeyHumanly</b></td><td><b>Cloud grammar tools</b></td></tr>
-<tr><th>Where text goes</th><td>A model on your own computer (Ollama). Nothing is uploaded.</td><td>Sent to the company's servers to be checked.</td></tr>
+<tr><th>Where text goes</th><td>In offline mode, a model on your own computer. Nothing is uploaded. Optional online coaching sends only the text you choose, after you agree.</td><td>Sent to the company's servers to be checked.</td></tr>
 <tr><th>Your tone</th><td>Kept. Casual stays casual; only filler, repeats and extra words are trimmed.</td><td>Varies by tool and setting. Many push towards a polished, formal register.</td></tr>
 <tr><th>Explains why</th><td>Names the habit, quotes your words, links the study behind the tip.</td><td>Usually shows the fix and a short rule.</td></tr>
 <tr><th>Price</th><td>Free and open source (MIT). No account.</td><td>Free tier plus paid plans.</td></tr>
@@ -439,7 +439,7 @@ pw = f"""<section style="padding-top:140px"><div class="wrap" style="max-width:8
 <ul style="color:var(--mute);margin:12px 0 0 20px;display:grid;gap:8px"><li>Does it work with the network turned off?</li><li>Is the source code public so you can see what it sends?</li><li>Does it need an account, and does it send analytics?</li><li>Where do saved sessions live, and can you delete them?</li></ul>
 <p style="margin-top:14px">HeyHumanly's answers: yes it works offline after setup, the code is on <a href="{SRC}">GitHub</a>, there is no account or analytics, and sessions are stored in the app's preferences on your Mac and can be cleared in Settings. Read the full <a href="/privacy/">privacy page</a>.</p>
 <h2 style="font-size:30px;margin-top:34px">Honest limits</h2>
-<p style="color:var(--mute)">Local models are smaller than the biggest cloud models, so they miss some mistakes. The first setup downloads a model of 2 to 5 GB. In return, nothing you write is uploaded.</p>
+<p style="color:var(--mute)">Local models are smaller than the biggest cloud models, so they miss some mistakes. The first setup downloads a model of 2 to 5 GB. In return, nothing you write is uploaded in offline mode.</p>
 <div class="cta" style="justify-content:flex-start;margin-top:26px">{dl}<a class="btn ghost" href="/local-ai-writing-coach-mac/">Local AI setup guide</a></div>
 <p class="fine" style="text-align:left;margin-top:18px">See also: <a href="/grammarly-alternative/">Grammarly alternative</a> · <a href="/extension/">Chrome extension</a> · <a href="/">home</a></p></div></section>"""
 page('/private-writing-assistant/', 'A private writing assistant that runs on your computer | HeyHumanly',
