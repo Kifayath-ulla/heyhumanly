@@ -122,13 +122,13 @@ extension OllamaStatus {
     }
     /// Green only when the selected model can actually run; orange while checking or when it still needs downloading.
     func color(model: String) -> Color {
-        if case .running(let models) = self, !models.contains(model) { return .orange }
+        if case .running(let models) = self, !models.contains(where: { CoachModel.sameModel($0, model) }) { return .orange }
         return color
     }
     func summary(model: String) -> String {
         switch self {
         case .checking: return "Checking Ollama…"
-        case .running(let models): return models.contains(model) ? "Ollama · \(model)" : "\(model) not installed"
+        case .running(let models): return models.contains(where: { CoachModel.sameModel($0, model) }) ? "Ollama · \(model)" : "\(model) not installed"
         case .notRunning: return "Ollama isn't running"
         case .noEndpoint: return "No AI endpoint set"
         }
@@ -583,11 +583,11 @@ struct SettingsView: View {
                             if index > 0 { Divider().overlay(Color.hairline) }
                             Button { model.selectModel(name) } label: {
                                 HStack {
-                                    Image(systemName: model.settings.model == name ? "largecircle.fill.circle" : "circle")
-                                        .foregroundStyle(model.settings.model == name ? Color.brand : .secondary)
+                                    Image(systemName: CoachModel.sameModel(model.settings.model, name) ? "largecircle.fill.circle" : "circle")
+                                        .foregroundStyle(CoachModel.sameModel(model.settings.model, name) ? Color.brand : .secondary)
                                     Text(name).font(.system(size: 13, design: .monospaced))
                                     Spacer()
-                                    if model.settings.model == name {
+                                    if CoachModel.sameModel(model.settings.model, name) {
                                         Text("Active").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Color.brand)
                                             .padding(.horizontal, 7).padding(.vertical, 2).background(Color.brandSoft, in: Capsule())
                                     } else {

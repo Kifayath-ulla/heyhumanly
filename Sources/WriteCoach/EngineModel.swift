@@ -63,9 +63,11 @@ extension CoachModel {
 
     /// Ollama models that can write (embedding models can't).
     var writingModels: [String] { installedModels.filter(Self.isWritingModel) }
-    /// Embedding, reranker and CLIP models can't write; cloud models leave this Mac. Mirrors `isWritingModel` in extension/core.js.
+    /// Embedding, reranker and CLIP models can't write; cloud models leave this Mac. Only the name before the `:tag`
+    /// is checked, so a tag like `qwen2.5:clipboard` still counts. Mirrors `isWritingModel` in extension/core.js.
     static func isWritingModel(_ name: String) -> Bool {
-        name.range(of: "embed|bge|minilm|rerank|clip", options: [.regularExpression, .caseInsensitive]) == nil && !isCloudModel(name)
+        let base = name.split(separator: ":", maxSplits: 1).first.map(String.init) ?? name
+        return base.range(of: "embed|bge|minilm|rerank|clip", options: [.regularExpression, .caseInsensitive]) == nil && !isCloudModel(name)
     }
     /// Ollama reads a name without a tag as `:latest`, so `mistral` and `mistral:latest` are the same model.
     static func sameModel(_ a: String, _ b: String) -> Bool { canonicalModel(a) == canonicalModel(b) }
@@ -90,7 +92,7 @@ extension CoachModel {
         UserDefaults.standard.set(true, forKey: chooserKey)
         if AppleModel.isAvailable { setEngine(.appleOnDevice); return }
         if case .running(let models) = await OllamaStatus.check(endpoint: settings.endpoint),
-           let pick = models.first(where: { Self.sameModel($0, settings.model) }) ?? models.first(where: Self.isWritingModel) {
+           let pick = models.first(where: { Self.sameModel($0, settings.model) && Self.isWritingModel($0) }) ?? models.first(where: Self.isWritingModel) {
             settings.model = pick; settingsModel = pick
             setEngine(.ollama)
         }
