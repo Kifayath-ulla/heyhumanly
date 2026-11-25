@@ -37,6 +37,16 @@ private struct GeneralSettings: View {
                 Picker("Default style", selection: Binding(get: { model.settings.defaultStyle }, set: { model.settings.defaultStyle = $0; model.settings.save() })) {
                     ForEach(WritingStyle.allCases) { Text($0.rawValue).tag($0) }
                 }
+                ForEach(appStyles, id: \.id) { app in
+                    HStack {
+                        Picker("In \(app.title)", selection: Binding(get: { model.settings.appStyles[app.id] ?? model.settings.defaultStyle },
+                                                                     set: { v in model.settings.appStyles[app.id] = v; model.settings.save() })) {
+                            ForEach(WritingStyle.allCases) { Text($0.rawValue).tag($0) }
+                        }
+                        Button { model.settings.appStyles[app.id] = nil; model.settings.save() } label: { Image(systemName: "minus.circle.fill").foregroundStyle(.secondary) }
+                            .buttonStyle(.plain).accessibilityLabel("Use the default style in \(app.title)")
+                    }
+                }
                 Toggle("Open at login", isOn: Binding(get: { model.launchAtLogin }, set: { model.launchAtLogin = $0 }))
             }
             Section {
@@ -82,6 +92,10 @@ private struct GeneralSettings: View {
         .frame(height: 560)
     }
 
+    private var appStyles: [(id: String, title: String)] {
+        model.settings.appStyles.keys.map { ($0, Self.appName($0)) }.sorted { $0.1.localizedCaseInsensitiveCompare($1.1) == .orderedAscending }
+    }
+
     private var pausedApps: [(id: String, title: String)] {
         model.settings.pausedApps.map { ($0, Self.appName($0)) }.sorted { $0.1.localizedCaseInsensitiveCompare($1.1) == .orderedAscending }
     }
@@ -103,7 +117,9 @@ private struct GeneralSettings: View {
     static let pausedAppNames = ["com.1password.1password": "1Password", "com.agilebits.onepassword7": "1Password 7", "com.bitwarden.desktop": "Bitwarden",
                                  "com.apple.keychainaccess": "Keychain Access", "com.apple.Terminal": "Terminal", "com.googlecode.iterm2": "iTerm",
                                  "dev.warp.Warp-Stable": "Warp", "com.mitchellh.ghostty": "Ghostty", "com.apple.dt.Xcode": "Xcode",
-                                 "com.microsoft.VSCode": "Visual Studio Code", "com.todesktop.230313mzl4w4u92": "Cursor"]
+                                 "com.microsoft.VSCode": "Visual Studio Code", "com.todesktop.230313mzl4w4u92": "Cursor",
+                                 "com.tinyspeck.slackmacgap": "Slack", "com.apple.MobileSMS": "Messages", "net.whatsapp.WhatsApp": "WhatsApp",
+                                 "com.hnc.Discord": "Discord", "com.apple.mail": "Mail", "com.microsoft.Outlook": "Outlook"]
 
     static func appName(_ bundleID: String) -> String {
         if let known = pausedAppNames[bundleID] { return known }
