@@ -219,5 +219,5 @@ test('Chrome built-in model: an all-lowercase message stays lowercase too', asyn
 
 test('isWritingModel skips embedding models by name, not by tag', () => {
   for (const m of ['nomic-embed-text', 'all-minilm:latest', 'bge-m3', 'llava-clip:7b', 'localhost:5000/nomic-embed-text:latest', 'localhost:5000/bge-m3']) assert.equal(HH.isWritingModel(m), false, m);
-  for (const m of ['qwen2.5:3b', 'qwen2.5:clipboard', 'mistral', 'llama3.2:embedded-tuned']) assert.equal(HH.isWritingModel(m), true, m);
+  for (const m of ['qwen2.5:3b', 'qwen2.5:clipboard', 'mistral', 'llama3.2:embedded-tuned', 'localhost:5000/clip-lab/qwen2.5:latest']) assert.equal(HH.isWritingModel(m), true, m);
 });

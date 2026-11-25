@@ -63,10 +63,10 @@ extension CoachModel {
 
     /// Ollama models that can write (embedding models can't).
     var writingModels: [String] { installedModels.filter(Self.isWritingModel) }
-    /// Embedding, reranker and CLIP models can't write; cloud models leave this Mac. Only the name before the `:tag`
-    /// is checked, so a tag like `qwen2.5:clipboard` still counts. Mirrors `isWritingModel` in extension/core.js.
+    /// Embedding, reranker and CLIP models can't write; cloud models leave this Mac. Only the model name itself (no
+    /// registry, namespace or `:tag`) is checked, so a tag like `qwen2.5:clipboard` still counts. Mirrors `isWritingModel` in extension/core.js.
     static func isWritingModel(_ name: String) -> Bool {
-        let base = name.replacingOccurrences(of: ":[^/:]*$", with: "", options: .regularExpression)
+        let base = (name.split(separator: "/").last ?? "").split(separator: ":").first.map(String.init) ?? ""
         return base.range(of: "embed|bge|minilm|rerank|clip", options: [.regularExpression, .caseInsensitive]) == nil && !isCloudModel(name)
     }
     /// Ollama reads a name without a tag as `:latest`, so `mistral` and `mistral:latest` are the same model.
