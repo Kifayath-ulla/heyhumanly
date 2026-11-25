@@ -68,6 +68,16 @@ enum OnlineCoach {
     static func goal(_ g: RephraseGoal) -> String {
         switch g { case .sameTone: return "sameTone"; case .shorter: return "shorter"; case .professional: return "formal" }
     }
+    /// Quick Fix styles map to the server's style prompts (STYLES in extension/core.js).
+    static func goal(_ s: WritingStyle) -> String {
+        switch s {
+        case .fixOnly: return "fixOnly"
+        case .polish: return "polish"
+        case .friendly: return "friendly"
+        case .professional: return "formal"
+        case .concise: return "shorter"
+        }
+    }
 
     private static func parseDate(_ s: String?) -> Date? {
         guard let s else { return nil }
@@ -83,11 +93,11 @@ enum OnlineCoach {
         }
     }
 
-    static func coach(text: String, goal g: RephraseGoal, endpoint: String) async throws -> Result {
+    static func coach(text: String, goal: String, endpoint: String) async throws -> Result {
         guard let url = URL(string: endpoint) else { throw OnlineError.badRequest }
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["text": text, "goal": goal(g), "install": installID])
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["text": text, "goal": goal, "install": installID])
         let data: Data, response: URLResponse
         do { (data, response) = try await URLSession.shared.data(for: request) } catch { throw OnlineError.network }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0

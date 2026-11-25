@@ -12,7 +12,7 @@ const PRICES = {
   '@cf/ibm-granite/granite-4.0-h-micro': [0.017, 0.112],
   '@cf/zai-org/glm-4.7-flash': [0.0605, 0.40],
 };
-const GOALS = new Set(['sameTone', 'shorter', 'formal']);
+const GOALS = new Set(['sameTone', 'shorter', 'formal', ...Object.keys(HH.STYLES)]);
 const INSTALL = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function neurons(model, inTokens, outTokens) {
@@ -129,7 +129,7 @@ export async function handleCoach(request, env, now = Date.now()) {
   if (!enabled) return json({ ...base(env, 0, now), error: 'unavailable' }, 503);
 
   const model = env.COACH_MODEL || DEFAULT_MODEL;
-  const casual = HH.isCasual(text), prompt = HH.buildPrompt(text, goal, casual);
+  const casual = HH.isCasual(text), prompt = HH.STYLES[goal] ? HH.buildStylePrompt(text, goal) : HH.buildPrompt(text, goal, casual);
   const maxOut = Math.min(LIMITS.maxOutputTokens, Math.max(120, Math.ceil(text.length / 2) + 80));
   const est = neurons(model, Math.ceil(prompt.length / 3), maxOut);
   const key = await ipKey(request, env, day), ledger = ledgerOf(env);
@@ -144,7 +144,7 @@ export async function handleCoach(request, env, now = Date.now()) {
     ]);
     if (out?.choices?.[0]?.finish_reason === 'length') throw new Error('truncated');
     const raw = out?.choices?.[0]?.message?.content ?? out?.response ?? '';
-    const cleaned = HH.cleanRewrite(raw);
+    const cleaned = HH.cleanRewrite(raw, text);
     const rewrite = cleaned && HH.restoreCode(text, HH.fixTypos(text, cleaned));
     if (!rewrite) throw new Error('empty');
     const u = out?.usage || {};

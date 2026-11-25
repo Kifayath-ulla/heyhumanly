@@ -785,8 +785,7 @@ final class CoachModel: ObservableObject {
                 var rewrite: String
                 if online {
                     // Only the text and goal go online; explanations below come from the local rule book.
-                    let goal: RephraseGoal = style == .concise ? .shorter : style == .professional ? .professional : .sameTone
-                    rewrite = try await coachOnline(text: original, goal: goal).rewrite
+                    rewrite = try await coachOnline(text: original, goal: OnlineCoach.goal(style)).rewrite
                     streamingText = rewrite
                 } else {
                     rewrite = try await CoachService.streamRewrite(text: original, style: style, appName: app, preserve: words,

@@ -15,6 +15,20 @@ test('cleanRewrite strips think blocks, "Here is" preambles and wrapping quotes'
   assert.equal(HH.cleanRewrite('“Ship it.”'), 'Ship it.');
   assert.equal(HH.cleanRewrite(''), '');
   assert.equal(HH.cleanRewrite(undefined), '');
+  assert.equal(HH.cleanRewrite('Here is the diagnosis: it works.', 'Here is teh diagnosis: it works.'), 'Here is the diagnosis: it works.');
+  assert.equal(HH.cleanRewrite('“Ship it.”', '“Ship it”'), '“Ship it.”');
+  assert.equal(HH.cleanRewrite('Here is the corrected text: Here is the plan: ship it.', 'Here is teh plan: ship it.'), 'Here is the plan: ship it.');
+  assert.equal(HH.cleanRewrite('Here is the plan: here’s the gist: ship it.', 'Here is teh plan: here’s the gist: ship it.'), 'Here is the plan: here’s the gist: ship it.');
+  assert.equal(HH.cleanRewrite('Here is the edited text: Here is the plan: here’s the gist: ship.', 'Here is the plan: here’s the gist: ship'), 'Here is the plan: here’s the gist: ship.');
+  assert.equal(HH.cleanRewrite('Here’s the plan: we ship Friday.', 'Heres the plan: we ship Friday.'), 'Here’s the plan: we ship Friday.');
+  assert.equal(HH.cleanRewrite('Corrected text: ship it.'), 'ship it.');
+  assert.equal(HH.cleanRewrite('Here is the corrected sentence: we ship Friday.', 'we ship friday'), 'we ship Friday.');
+  assert.equal(HH.cleanRewrite('Here’s the final email: Hi Sam, we ship Friday.', 'Heres the final email Hi Sam we ship friday'), 'Here’s the final email: Hi Sam, we ship Friday.');
+  assert.equal(HH.cleanRewrite('Here is the edited text: Here is the text: ship it.', 'Here is the text: shp it'), 'Here is the text: ship it.');
+  assert.equal(HH.cleanRewrite('Here is the text: Here is the text: ship it.', 'Here is the text: shp it'), 'Here is the text: ship it.');
+  assert.equal(HH.cleanRewrite('Rewrite: Rewrite the intro.', 'Rewrite: rewite the intro'), 'Rewrite: Rewrite the intro.');
+  assert.equal(HH.cleanRewrite('Here is the email: Here is the email list.', 'Here is the email: Here is teh email list'), 'Here is the email: Here is the email list.');
+  assert.equal(HH.cleanRewrite('Here is the text: Here is the text: ship it.', 'Here is the text: Here is the text: shp it'), 'Here is the text: Here is the text: ship it.');
 });
 
 test('wordyHits and passiveHits find Lexicon-style patterns', () => {
@@ -146,4 +160,14 @@ test('auto engine falls back to Ollama when Chrome’s model is missing or not d
     finally { delete globalThis.LanguageModel; globalThis.fetch = realFetch; }
   }
   assert.equal(await HH.builtinStatus(), 'unsupported');
+});
+
+test('style prompts match the Mac app’s WritingStyle instructions', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const swift = await readFile(new URL('../Sources/WriteCoach/Coaching.swift', import.meta.url), 'utf8');
+  for (const [style, text] of Object.entries(HH.STYLES)) {
+    const m = swift.match(new RegExp('case \\.' + style + ':\\s*return "([^"]+)"', 'g')).map((s) => s.match(/return "([^"]+)"/)[1]);
+    assert.ok(m.includes(text), style);
+  }
+  assert.match(HH.buildStylePrompt('teh plan', 'fixOnly'), /Fix only real mistakes[\s\S]*Text:\nteh plan$/);
 });

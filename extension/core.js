@@ -184,10 +184,30 @@
       'Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure ("I\'m not sure", "maybe"), keep that doubt; never drop it and never turn it into a decision. ' + (GOALS[goal] || GOALS.sameTone) + '\n' +
       'Reply with ONLY the edited text.\nText:\n' + text;
   }
-  function cleanRewrite(raw) {
-    let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    s = s.replace(/^(here(?:'|’)s|here is)[^\n:]*:\s*/i, '').trim();
-    if (/^["“].*["”]$/s.test(s)) s = s.slice(1, -1).trim();
+  // Quick Fix styles from the Mac app's coach window; same text as WritingStyle.instruction and CoachService.streamRewrite.
+  const STYLES = {
+    fixOnly: 'Fix only real mistakes: spelling, grammar, verb forms, articles, punctuation and capitalization. Do not rephrase, reorder or replace words that are already correct, and do not change the tone (keep casual words like \'kinda\', \'hey\', \'asap\'). If nothing is wrong, return the text unchanged.',
+    polish: 'Fix mistakes and make it read clearly and naturally, like a fluent native speaker wrote it. Keep the user\'s meaning, voice and roughly the same length. Do not add new ideas.',
+    friendly: 'Rewrite it in a warm, friendly, casual tone suitable for chat. Keep the meaning and every fact. Do not add emojis or new ideas.',
+  };
+  function buildStylePrompt(text, style) {
+    return 'You are HeyHumanly, a writing coach.\n' + (STYLES[style] || STYLES.fixOnly) + '\n' +
+      'Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links, line breaks and technical terms exactly, and leave anything between backticks (`like this`) exactly as written. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.\n' +
+      'If the writer repeats a phrase back to back ("I don\'t know, I don\'t know"), keep it once. Never introduce a repeated phrase.\n' +
+      'Reply with ONLY the corrected text. No quotes, no labels, no notes.\nText:\n' + text;
+  }
+  // A label the model put before its answer ("Here is the edited text:"), not an opening like "Here is the plan:".
+  const LABEL = /^(?:(?:here(?:'|’)?s|here is)\s+(?:the|your|a)\s+(?:[\w-]+\s+){0,3}(?:text|version|rewrite|message|draft|edit|sentences?|paragraphs?|email|reply|response)|(?:corrected|edited|rewritten|revised)(?:\s+text)?|rewrite)\s*:\s*/i;
+  const QUOTED = /^["“].*["”]$/s;
+  const letters = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  // Pass the original so wrapping quotes, or an opening the writer typed (even with corrected punctuation), are kept.
+  function cleanRewrite(raw, original = '') {
+    const o = letters(original || '');
+    let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim(), m;
+    // Strip a label the writer didn't type, or a copy of their opening the model put in front of it.
+    const extra = (l, rest) => !o.startsWith(l) || (letters((rest.trim().match(LABEL) || [''])[0]) === l && !o.startsWith(l + l));
+    while ((m = s.match(LABEL)) && extra(letters(m[0]), s.slice(m[0].length))) s = s.slice(m[0].length).trim();
+    if (QUOTED.test(s) && !QUOTED.test((original || '').trim())) s = s.slice(1, -1).trim();
     return s;
   }
   // Same clean-ups as TextSafety.swift: code in backticks stays as written, known typos get the intended word.
@@ -330,7 +350,7 @@
     if (text.length > MAX_CHARS) throw fail('long', 'That’s ' + text.length.toLocaleString('en-US') + ' characters. HeyHumanly works on up to ' + MAX_CHARS.toLocaleString('en-US') + ' at a time (a long email). Select one part and try again.');
     const casual = isCasual(text);
     if (o.engine === 'builtin' || (o.engine === 'auto' && await builtinStatus() === 'available')) {
-      const cleaned = cleanRewrite(await builtinTighten(text, o.goal, casual));
+      const cleaned = cleanRewrite(await builtinTighten(text, o.goal, casual), text);
       if (!cleaned) throw fail('empty', 'Chrome’s built-in model returned nothing. Try again.');
       return analyse(text, restoreCode(text, fixTypos(text, cleaned)), casual, 'Chrome built-in model', o.goal);
     }
@@ -345,7 +365,7 @@
     if (!res.ok) { if (res.status === 404) throw fail('model', 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.'); throw httpError(res.status); }
     const j = await res.json(); if (j.error) throw fail('model', /not found/i.test(j.error) ? 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.' : 'Ollama said: ' + j.error);
     if (j.done_reason === 'length') throw fail('cutoff', 'The rewrite stopped before the end of your text, so it isn’t shown. Select a shorter part and try again.');
-    const cleaned = cleanRewrite(j.response); if (!cleaned) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
+    const cleaned = cleanRewrite(j.response, text); if (!cleaned) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
     const rewrite = restoreCode(text, fixTypos(text, cleaned));
     return analyse(text, rewrite, casual, model, o.goal);
   }
@@ -364,6 +384,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, STYLES, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

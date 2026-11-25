@@ -184,3 +184,20 @@ test('review fixes: casing, truncation, timeout cost, late requests, missing sal
   ({ env } = makeEnv(ok, { IP_SALT: '' }));
   assert.equal((await post(env, { text: TEXT, install: ID })).status, 503);
 });
+
+test('Quick Fix styles get their own prompt instead of the tighten prompt', async () => {
+  for (const [goal, re] of [['fixOnly', /Fix only real mistakes/], ['friendly', /warm, friendly, casual tone/], ['polish', /fluent native speaker/]]) {
+    const { env, calls } = makeEnv(ok);
+    assert.equal((await post(env, { text: TEXT, goal, install: ID })).status, 200);
+    const p = calls[0].o.messages[0].content;
+    assert.match(p, re);
+    assert.doesNotMatch(p, /make small cuts only/);
+    assert.match(p, /Reply with ONLY the corrected text\. No quotes, no labels, no notes\.\nText:\nso basically can you send teh report/);
+  }
+});
+
+test('Fix only keeps a preamble or quotes the writer typed', async () => {
+  const text = '"Here is the diagnosis: the server is down."';
+  const { env } = makeEnv(async () => ({ choices: [{ message: { content: text } }], usage: {} }));
+  assert.equal((await (await post(env, { text, goal: 'fixOnly', install: ID })).json()).rewrite, text);
+});

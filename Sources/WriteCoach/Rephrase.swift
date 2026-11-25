@@ -316,7 +316,7 @@ extension CoachModel {
             do {
                 let r: RephraseResult
                 if online {
-                    let o = try await coachOnline(text: text, goal: goal)
+                    let o = try await coachOnline(text: text, goal: OnlineCoach.goal(goal))
                     r = RephraseService.finish(text: text, raw: o.rewrite, goal: goal, casual: o.casual)
                 } else {
                     r = try await RephraseService.run(text: text, goal: goal, endpoint: endpoint, model: model)
