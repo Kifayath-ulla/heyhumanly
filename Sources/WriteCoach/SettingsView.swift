@@ -48,6 +48,7 @@ private struct GeneralSettings: View {
                             .buttonStyle(.plain).accessibilityLabel("Use the default style in \(app.title)")
                     }
                 }
+                Button("Set a Style for an App…") { chooseApps { model.settings.appStyles[$0] = model.settings.appStyles[$0] ?? model.settings.defaultStyle }; model.settings.save() }
                 Toggle("Open at login", isOn: Binding(get: { model.launchAtLogin }, set: { model.launchAtLogin = $0 }))
             }
             Section {
@@ -72,7 +73,7 @@ private struct GeneralSettings: View {
                             .buttonStyle(.plain).accessibilityLabel("Stop pausing \(app.title)")
                     }
                 }
-                Button("Add App…", action: addApp)
+                Button("Add App…") { chooseApps { setPaused($0, true) } }
             }
             Section {
                 Toggle("Labs: check as I type", isOn: Binding(get: { model.settings.autoCheck }, set: { model.setCoaching($0) }))
@@ -112,13 +113,13 @@ private struct GeneralSettings: View {
         model.settings.save()
     }
 
-    private func addApp() {
+    private func chooseApps(_ add: (String) -> Void) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.application]
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         panel.allowsMultipleSelection = true
         guard panel.runModal() == .OK else { return }
-        for url in panel.urls { if let id = Bundle(url: url)?.bundleIdentifier { setPaused(id, true) } }
+        for url in panel.urls { if let id = Bundle(url: url)?.bundleIdentifier { add(id) } }
     }
 
     static let pausedAppNames = ["com.1password.1password": "1Password", "com.agilebits.onepassword7": "1Password 7", "com.bitwarden.desktop": "Bitwarden",
