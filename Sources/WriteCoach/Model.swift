@@ -262,11 +262,17 @@ final class CoachModel: ObservableObject {
         }
     }
 
-    /// A coaching that found Ollama stopped (or its model gone) updates the status dots right away.
-    func refreshStatusIfOllamaDown(_ error: Error) {
-        switch error as? CoachError {
-        case .ollamaNotRunning, .modelMissing: refreshStatus()
-        default: break
+    /// Keeps the status dots in step with what a coaching just found: Ollama stopped (or its model gone),
+    /// or working again after an outage. Only for the user's own Ollama, so other engines never probe it.
+    func syncOllamaStatus(after error: Error?) {
+        guard settings.engine == .ollama else { return }
+        if let error {
+            switch error as? CoachError {
+            case .ollamaNotRunning, .modelMissing: refreshStatus()
+            default: break
+            }
+        } else if !ollamaRunning || !modelInstalled {
+            refreshStatus()
         }
     }
 
@@ -816,6 +822,7 @@ final class CoachModel: ObservableObject {
                 currentItem = item
                 history.insert(item, at: 0)
                 history = Array(history.prefix(500)); HistoryItem.saveAll(history)
+                syncOllamaStatus(after: nil)
                 await explainChanges(itemID: item.id, original: original, rewrite: response.rewrite, endpoint: endpoint, model: modelName)
                 if mode == .teach, online { localLesson(itemID: item.id, rewrite: rewrite) }
                 else if mode == .teach { await loadLesson(itemID: item.id, original: original, rewrite: rewrite, endpoint: endpoint, model: modelName) }
@@ -823,7 +830,7 @@ final class CoachModel: ObservableObject {
                 appLog.error("analyze failed: \(String(describing: error), privacy: .public)")
                 errorMessage = error.localizedDescription
                 loadingMode = nil
-                refreshStatusIfOllamaDown(error)
+                syncOllamaStatus(after: error)
             }
         }
     }

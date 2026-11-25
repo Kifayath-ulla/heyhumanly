@@ -322,11 +322,12 @@ extension CoachModel {
                     r = try await RephraseService.run(text: text, goal: goal, endpoint: endpoint, model: model)
                 }
                 rephraseResult = r
+                syncOllamaStatus(after: nil)
                 Habit.record(r.moves.compactMap(\.habitValue))
                 habitsVersion += 1
             } catch {
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? "Couldn't rephrase that. Try again."
-                refreshStatusIfOllamaDown(error)
+                syncOllamaStatus(after: error)
             }
             rephraseLoading = false
         }
