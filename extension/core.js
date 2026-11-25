@@ -324,11 +324,15 @@
   }
   // Chrome's built-in model (Prompt API, Gemini Nano). Runs on this computer once Chrome has downloaded it.
   const LM = () => (typeof LanguageModel !== 'undefined' ? LanguageModel : null);
+  const BUILTIN_STATUS_MS = 2000;
   const BUILTIN_OPTS = { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] };
   /** 'available' | 'downloadable' | 'downloading' | 'unavailable' | 'unsupported' (no Prompt API in this Chrome or context). */
   async function builtinStatus() {
     const lm = LM(); if (!lm) return 'unsupported';
-    try { return await lm.availability(BUILTIN_OPTS); } catch (e) { return 'unavailable'; }
+    // Some Chrome builds never settle availability(); fall back to Ollama instead of hanging.
+    let t; try {
+      return await Promise.race([lm.availability(BUILTIN_OPTS), new Promise((r) => { t = setTimeout(() => r('unavailable'), BUILTIN_STATUS_MS); })]);
+    } catch (e) { return 'unavailable'; } finally { clearTimeout(t); }
   }
   /** Creates a session, downloading Chrome's model first if needed. Downloads must start from a click. */
   async function builtinSession(onProgress) {
