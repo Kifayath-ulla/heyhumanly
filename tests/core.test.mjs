@@ -194,3 +194,25 @@ test('style prompts match the Mac app’s WritingStyle instructions', async () =
   }
   assert.match(HH.buildStylePrompt('teh plan', 'fixOnly'), /Fix only real mistakes[\s\S]*Text:\nteh plan$/);
 });
+
+test('a message typed all in lowercase stays lowercase; normal capitals are left alone', () => {
+  assert.equal(HH.keepLowercase('thx, it realy saved me alot of time lol', 'Thx, it really saved me a lot of time lol'), 'thx, it really saved me a lot of time lol');
+  assert.equal(HH.keepLowercase('Thanks, Priya', 'Thanks, Priya.'), 'Thanks, Priya.');
+  assert.equal(HH.keepLowercase('ok 123', 'OK 123'), 'ok 123');
+  assert.equal(HH.keepLowercase('123 !!', 'ABC'), 'ABC');
+  assert.equal(HH.keepLowercase('ǅemal says hi', 'ǅemal says hi.'), 'ǅemal says hi.');
+  assert.equal(HH.keepLowercase('see chapter Ⅻ', 'See chapter Ⅻ.'), 'See chapter Ⅻ.');
+});
+
+test('tighten keeps an all-lowercase message lowercase after the model capitalises it', async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u) => new Response(JSON.stringify(String(u).endsWith('/api/tags') ? { models: [{ name: 'qwen2.5:3b' }] } : { response: 'Thx, it really saved me a lot of time lol', done_reason: 'stop' }));
+  try { assert.equal((await HH.tighten('thx, it realy saved me alot of time lol', { engine: 'ollama' })).rewrite, 'thx, it really saved me a lot of time lol'); }
+  finally { globalThis.fetch = realFetch; }
+});
+
+test('Chrome built-in model: an all-lowercase message stays lowercase too', async () => {
+  globalThis.LanguageModel = { availability: async () => 'available', create: async () => ({ prompt: async () => 'Thx, it really saved me a lot of time lol', destroy() {} }) };
+  try { assert.equal((await HH.tighten('thx, it realy saved me alot of time lol', { engine: 'builtin' })).rewrite, 'thx, it really saved me a lot of time lol'); }
+  finally { delete globalThis.LanguageModel; }
+});
