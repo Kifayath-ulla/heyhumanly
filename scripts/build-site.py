@@ -337,7 +337,7 @@ page('/extension/', 'HeyHumanly for Chrome: a tone-keeping writing coach for any
      'Free Chrome extension that tightens what you write on any website, keeps your tone, and explains each change with research. Runs on your local Ollama model.', ext_page)
 
 inst = f"""
-<section style="border:0"><div class="wrap" style="max-width:820px"><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Install HeyHumanly</h1>
+<section style="border:0;padding-top:140px"><div class="wrap" style="max-width:820px"><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Install HeyHumanly</h1>
 <p class="ok" id="started" style="display:none">Your download should have started. Look in your Downloads folder for <code>{R['file']}</code>. We cannot tell if it finished, so use the link below if it did not.</p>
 <p><a class="btn dl" href="{DMG}" data-dl>Download again</a> &nbsp; <span class="fine">{R['file']} · {R['size_mb']} MB · SHA-256 <code>{R['sha256']}</code></span></p>
 <ol class="steps">
@@ -361,7 +361,7 @@ page('/install/', 'Install HeyHumanly on Mac: steps, requirements and help',
      'Step-by-step help to install HeyHumanly on a Mac: open the DMG, drag to Applications, set up the local model, allow Accessibility and try your first sentence.', inst)
 
 priv = f"""
-<section style="border:0"><div class="wrap" style="max-width:820px"><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Privacy</h1>
+<section style="border:0;padding-top:140px"><div class="wrap" style="max-width:820px"><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Privacy</h1>
 <p>This is a plain list of what HeyHumanly does with your writing. It comes from the app's source code, which you can read at <a href="{SRC}">{SRC.replace('https://','')}</a>.</p>
 <h2>In the app</h2><ul>
 <li><b>Read:</b> the single text box you are typing in, after you pause, and text you select when you press the shortcut. Never password fields, and never apps on the "Never read" list (password managers, terminals and code editors by default).</li>
@@ -395,12 +395,12 @@ habit_items = [
  ("Repetition","Saying the same idea twice.","Before: “We need to decide, we need to decide soon.” After: “We need to decide soon.”","Say it once, in the strongest place."),
 ]
 hb = ''.join(f'<details open><summary>{n}</summary><p><b>What it is:</b> {d}</p><p><i>Example.</i> {ex}</p><p><b>Next time:</b> {t}</p></details>' for n,d,ex,t in habit_items)
-habits_page = f"""<section style="border:0"><div class="wrap" style="max-width:820px"><span class="eyebrow">Guide</span><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Writing habits that make messages unclear, and how to fix them</h1>
+habits_page = f"""<section style="border:0;padding-top:140px"><div class="wrap" style="max-width:820px"><span class="eyebrow">Guide</span><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Writing habits that make messages unclear, and how to fix them</h1>
 <p class="lede" style="margin-left:0;text-align:left">Most unclear writing isn't a grammar problem. It comes from a few habits, especially when you write the way you speak. These are the six HeyHumanly looks for in your own text, with an example of each.</p>{hb}
 <p class="ok" style="margin-top:24px">HeyHumanly finds these habits in your own messages, quotes your exact words, and tracks which ones you repeat. <a href="/">See how it works</a> or <a href="{DMG}" data-dl>download it free for Mac</a>.</p></div></section>"""
 page('/writing-habits/', 'Writing habits that make messages unclear (and how to fix them) | HeyHumanly',
      'Six writing habits that make messages unclear: buried point, filler, hedging, vague wording, long sentences and repetition. Examples and a fix for each.', habits_page)
-ol_page = f"""<section style="border:0"><div class="wrap" style="max-width:820px"><span class="eyebrow">Guide</span><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Set up a local AI writing coach on a Mac with Ollama</h1>
+ol_page = f"""<section style="border:0;padding-top:140px"><div class="wrap" style="max-width:820px"><span class="eyebrow">Guide</span><h1 style="font-size:clamp(32px,5vw,52px);margin-left:0;text-align:left">Set up a local AI writing coach on a Mac with Ollama</h1>
 <p class="lede" style="margin-left:0;text-align:left">A local model means your writing is processed on your Mac, not sent to a cloud service. HeyHumanly uses <a href="https://ollama.com">Ollama</a> to run it. This is the whole setup.</p>
 <ol class="steps"><li><h3>Check your Mac</h3><p>macOS 14 or later. 16 GB of memory is comfortable for the 7B model (about 4.7 GB). On 8 GB use the 3B model (about 1.9 GB). Allow about 5 GB of free disk.</p></li>
 <li><h3>Install Ollama</h3><p>Download it from <a href="https://ollama.com/download/mac">ollama.com</a> and open it once.</p></li>
