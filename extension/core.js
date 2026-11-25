@@ -201,7 +201,9 @@
   function cleanRewrite(raw, original = '') {
     const o = (original || '').trim();
     let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    if (!PREAMBLE.test(o)) s = s.replace(PREAMBLE, '').trim();
+    // When the writer's text opens with "Here is …:", strip only a label the model put in front of it.
+    const rest = s.replace(PREAMBLE, '').trim();
+    if (!PREAMBLE.test(o) || PREAMBLE.test(rest)) s = rest;
     if (QUOTED.test(s) && !QUOTED.test(o)) s = s.slice(1, -1).trim();
     return s;
   }

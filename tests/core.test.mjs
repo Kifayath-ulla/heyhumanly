@@ -17,6 +17,7 @@ test('cleanRewrite strips think blocks, "Here is" preambles and wrapping quotes'
   assert.equal(HH.cleanRewrite(undefined), '');
   assert.equal(HH.cleanRewrite('Here is the diagnosis: it works.', 'Here is teh diagnosis: it works.'), 'Here is the diagnosis: it works.');
   assert.equal(HH.cleanRewrite('“Ship it.”', '“Ship it”'), '“Ship it.”');
+  assert.equal(HH.cleanRewrite('Here is the corrected text: Here is the plan: ship it.', 'Here is teh plan: ship it.'), 'Here is the plan: ship it.');
 });
 
 test('wordyHits and passiveHits find Lexicon-style patterns', () => {
