@@ -30,7 +30,7 @@ enum TextSafety {
     /// closest to it (so reordered spans keep their own code). If the rewrite lost or added a span, the original is returned.
     /// A message typed all in lowercase stays lowercase, even if the model capitalised it.
     static func keepLowercase(original: String, rewrite: String) -> String {
-        original.contains(where: \.isUppercase) || !original.contains(where: \.isLowercase) ? rewrite : rewrite.lowercased()
+        original == original.lowercased() && original != original.uppercased() ? rewrite.lowercased() : rewrite
     }
 
     static func restoreCode(original: String, rewrite: String) -> String {

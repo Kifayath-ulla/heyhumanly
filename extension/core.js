@@ -227,7 +227,7 @@
     });
   }
   // A message typed all in lowercase stays lowercase, even if the model capitalised it (same as TextSafety.swift).
-  function keepLowercase(original, rewrite) { return /\p{Lu}/u.test(original) || !/\p{Ll}/u.test(original) ? rewrite : rewrite.toLowerCase(); }
+  function keepLowercase(original, rewrite) { return original === original.toLowerCase() && original !== original.toUpperCase() ? rewrite.toLowerCase() : rewrite; }
   function matchCase(word, like) { return like[0] && like[0] !== like[0].toLowerCase() ? (like.length > 1 && like === like.toUpperCase() ? word.toUpperCase() : word[0].toUpperCase() + word.slice(1)) : word; }
   function editDistance(a, b) {
     let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
