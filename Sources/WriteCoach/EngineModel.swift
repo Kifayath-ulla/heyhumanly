@@ -66,7 +66,7 @@ extension CoachModel {
     /// Embedding, reranker and CLIP models can't write; cloud models leave this Mac. Only the name before the `:tag`
     /// is checked, so a tag like `qwen2.5:clipboard` still counts. Mirrors `isWritingModel` in extension/core.js.
     static func isWritingModel(_ name: String) -> Bool {
-        let base = name.split(separator: ":", maxSplits: 1).first.map(String.init) ?? name
+        let base = name.replacingOccurrences(of: ":[^/:]*$", with: "", options: .regularExpression)
         return base.range(of: "embed|bge|minilm|rerank|clip", options: [.regularExpression, .caseInsensitive]) == nil && !isCloudModel(name)
     }
     /// Ollama reads a name without a tag as `:latest`, so `mistral` and `mistral:latest` are the same model.
