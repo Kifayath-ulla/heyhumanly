@@ -625,8 +625,8 @@ struct SettingsView: View {
             HStack {
                 cardTitle("Companion", icon: "text.cursor")
                 Spacer()
-                Toggle("Check as I type", isOn: Binding(get: { model.settings.autoCheck }, set: { v in setting { $0.autoCheck = v } }))
-                    .toggleStyle(.switch).controlSize(.small).tint(.switchOn)
+                Toggle("Check as I type", isOn: Binding(get: { model.settings.autoCheck && model.privacyIsLocal }, set: { v in setting { $0.autoCheck = v } }))
+                    .toggleStyle(.switch).controlSize(.small).tint(.switchOn).disabled(!model.privacyIsLocal)
             }
             Text(model.privacyIsLocal
                  ? "When you pause typing in a text field, HeyHumanly reads that one field and checks it on this Mac. Password fields and paused apps are never read. Nothing is saved unless you accept a suggestion or start a lesson."
