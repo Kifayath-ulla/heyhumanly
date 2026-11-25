@@ -348,8 +348,9 @@ struct HomeView: View {
     }
 
     private var welcome: String {
-        let first = NSFullUserName().split(separator: " ").first.map(String.init) ?? ""
-        return first.isEmpty ? "Welcome back" : "Welcome back, \(first)"
+        let first = NSFullUserName().split(separator: " ").first.map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? ""
+        let hello = model.history.isEmpty ? "Welcome" : "Welcome back"
+        return first.isEmpty ? hello : "\(hello), \(first)"
     }
 
     private var statsCard: some View {
