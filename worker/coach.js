@@ -144,7 +144,7 @@ export async function handleCoach(request, env, now = Date.now()) {
     ]);
     if (out?.choices?.[0]?.finish_reason === 'length') throw new Error('truncated');
     const raw = out?.choices?.[0]?.message?.content ?? out?.response ?? '';
-    const cleaned = HH.cleanRewrite(raw);
+    const cleaned = HH.cleanRewrite(raw, text);
     const rewrite = cleaned && HH.restoreCode(text, HH.fixTypos(text, cleaned));
     if (!rewrite) throw new Error('empty');
     const u = out?.usage || {};

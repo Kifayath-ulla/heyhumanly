@@ -196,10 +196,13 @@
       'If the writer repeats a phrase back to back ("I don\'t know, I don\'t know"), keep it once. Never introduce a repeated phrase.\n' +
       'Reply with ONLY the corrected text. No quotes, no labels, no notes.\nText:\n' + text;
   }
-  function cleanRewrite(raw) {
+  // Pass the original so a preamble or wrapping quotes the writer typed are kept.
+  const PREAMBLE = /^(here(?:'|’)s|here is)[^\n:]*:\s*/i, QUOTED = /^["“].*["”]$/s;
+  function cleanRewrite(raw, original = '') {
+    const o = (original || '').trim();
     let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    s = s.replace(/^(here(?:'|’)s|here is)[^\n:]*:\s*/i, '').trim();
-    if (/^["“].*["”]$/s.test(s)) s = s.slice(1, -1).trim();
+    if (!PREAMBLE.test(o)) s = s.replace(PREAMBLE, '').trim();
+    if (QUOTED.test(s) && !QUOTED.test(o)) s = s.slice(1, -1).trim();
     return s;
   }
   // Same clean-ups as TextSafety.swift: code in backticks stays as written, known typos get the intended word.
@@ -342,7 +345,7 @@
     if (text.length > MAX_CHARS) throw fail('long', 'That’s ' + text.length.toLocaleString('en-US') + ' characters. HeyHumanly works on up to ' + MAX_CHARS.toLocaleString('en-US') + ' at a time (a long email). Select one part and try again.');
     const casual = isCasual(text);
     if (o.engine === 'builtin' || (o.engine === 'auto' && await builtinStatus() === 'available')) {
-      const cleaned = cleanRewrite(await builtinTighten(text, o.goal, casual));
+      const cleaned = cleanRewrite(await builtinTighten(text, o.goal, casual), text);
       if (!cleaned) throw fail('empty', 'Chrome’s built-in model returned nothing. Try again.');
       return analyse(text, restoreCode(text, fixTypos(text, cleaned)), casual, 'Chrome built-in model', o.goal);
     }
@@ -357,7 +360,7 @@
     if (!res.ok) { if (res.status === 404) throw fail('model', 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.'); throw httpError(res.status); }
     const j = await res.json(); if (j.error) throw fail('model', /not found/i.test(j.error) ? 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.' : 'Ollama said: ' + j.error);
     if (j.done_reason === 'length') throw fail('cutoff', 'The rewrite stopped before the end of your text, so it isn’t shown. Select a shorter part and try again.');
-    const cleaned = cleanRewrite(j.response); if (!cleaned) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
+    const cleaned = cleanRewrite(j.response, text); if (!cleaned) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
     const rewrite = restoreCode(text, fixTypos(text, cleaned));
     return analyse(text, rewrite, casual, model, o.goal);
   }

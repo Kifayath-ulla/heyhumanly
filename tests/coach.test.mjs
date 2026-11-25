@@ -195,3 +195,9 @@ test('Quick Fix styles get their own prompt instead of the tighten prompt', asyn
     assert.match(p, /Reply with ONLY the corrected text\. No quotes, no labels, no notes\.\nText:\nso basically can you send teh report/);
   }
 });
+
+test('Fix only keeps a preamble or quotes the writer typed', async () => {
+  const text = '"Here is the diagnosis: the server is down."';
+  const { env } = makeEnv(async () => ({ choices: [{ message: { content: text } }], usage: {} }));
+  assert.equal((await (await post(env, { text, goal: 'fixOnly', install: ID })).json()).rewrite, text);
+});
