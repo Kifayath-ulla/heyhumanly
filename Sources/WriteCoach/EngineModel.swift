@@ -99,7 +99,7 @@ extension CoachModel {
     }
 
     func useMyOllama() {
-        if !installedModels.contains(settings.model), let first = writingModels.first { settings.model = first; settingsModel = first }
+        if !writingModels.contains(settings.model), let first = writingModels.first { settings.model = first; settingsModel = first }
         setEngine(.ollama)
         statusMessage = "Connected to your Ollama (\(settings.model)). Your writing stays on this Mac."
     }

@@ -233,6 +233,7 @@ struct EngineSettingsCard: View {
         Button {
             if e == .online && !model.settings.onlineConsent { model.showConsent = true; model.showCoach() }
             else if e == .offlineManaged && !offlineReady { model.runtime.prepare() }
+            else if e == .ollama { model.useMyOllama() }
             else { model.setEngine(e) }
         } label: {
             HStack(alignment: .top) {
