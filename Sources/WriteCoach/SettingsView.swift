@@ -134,6 +134,17 @@ private struct EngineSettings: View {
                 StatusDot(color: model.ollama.color(model: model.settings.model))
                 Text(model.ollama.summary(model: model.settings.model)).font(.system(size: 12)).foregroundStyle(.secondary)
             }
+            if model.ollamaRunning && model.writingModels.isEmpty {
+                HStack {
+                    if let p = model.pullProgress {
+                        ProgressView(value: p).frame(width: 160)
+                        Text(model.pullStatus).font(.system(size: 12)).foregroundStyle(.secondary)
+                    } else {
+                        Button("Download \(model.recommendedModel)") { model.download(model: model.recommendedModel) }
+                        if !model.pullStatus.isEmpty { Text(model.pullStatus).font(.system(size: 12)).foregroundStyle(.secondary) }
+                    }
+                }
+            }
             if !model.writingModels.isEmpty {
                 Picker("Model", selection: Binding(get: { model.settings.model }, set: { model.selectModel($0) })) {
                     ForEach(model.writingModels, id: \.self) { Text($0).tag($0) }
