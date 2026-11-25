@@ -30,6 +30,7 @@ final class QuickSession: ObservableObject {
     private var monitor: Any?
     private var undoKeys = SessionKeys(base: 300)
     private var undoExpiry: Task<Void, Never>?
+    private var undoObserver: NSObjectProtocol?
 
     var isOpen: Bool { panel?.isVisible == true }
     var hasText: Bool { !original.isEmpty }
@@ -69,12 +70,22 @@ final class QuickSession: ObservableObject {
                 guard gen == self.generation else { return }
                 if let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { self.original = text }
                 self.show()
-                self.hasText ? self.run() : self.fail("Select some text in \(self.appName), then press \(model.shortcutLabel).")
+                self.hasText ? self.start(bundleID: front.bundleIdentifier) : self.fail("Select some text in \(self.appName), then press \(model.shortcutLabel).")
             }
             return
         }
         show()
-        run()
+        start(bundleID: front.bundleIdentifier)
+    }
+
+    /// Apps on the "Never read text in" list don't get an automatic rewrite: nothing is sent until you ask (⌘R, ⇥, ⌘1–5).
+    private func start(bundleID: String?) {
+        if let bundleID, model?.settings.pausedApps.contains(bundleID) == true {
+            notice = "HeyHumanly doesn't read \(appName) on its own. Press ⌘R to rewrite this selection."
+            layout()
+        } else {
+            run()
+        }
     }
 
     private func show() {
@@ -239,6 +250,7 @@ final class QuickSession: ObservableObject {
 
     func replace() {
         guard let text = rewrite, !busy else { return }
+        guard text != original else { close(); return }
         let old = original, el = element, r = range, app = appName
         _ = model?.recordInline(original: old, rewrite: text, style: style, appName: app, changes: changes)
         close()
@@ -248,6 +260,9 @@ final class QuickSession: ObservableObject {
                 (done, direct) = await Self.write(el, pid: pid, location: r.location, length: r.length, text: text, expecting: old)
             } else {
                 await AccessibilityBridge().replaceSelectedText(with: text)
+                // Without an Accessibility value the paste can't be checked, so the rewrite stays on the clipboard too.
+                let pb = NSPasteboard.general
+                pb.clearContents(); pb.setString(text, forType: .string)
                 done = true
             }
             if !done {
@@ -267,8 +282,12 @@ final class QuickSession: ObservableObject {
         undoKeys.register([(UInt32(kVK_ANSI_Z), UInt32(cmdKey), { [weak self] in
             guard let self else { return }
             self.clearUndo()
+            guard NSWorkspace.shared.frontmostApplication?.processIdentifier == self.pid else { return }
             Task { _ = await Self.write(el, pid: self.pid, location: location, length: (newText as NSString).length, text: oldText, expecting: newText) }
         })])
+        undoObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.clearUndo() }
+        }
         undoExpiry = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 8_000_000_000)
             guard !Task.isCancelled else { return }
@@ -278,6 +297,8 @@ final class QuickSession: ObservableObject {
 
     private func clearUndo() {
         undoExpiry?.cancel(); undoExpiry = nil
+        if let undoObserver { NSWorkspace.shared.notificationCenter.removeObserver(undoObserver) }
+        undoObserver = nil
         undoKeys.unregisterAll()
     }
 
@@ -320,6 +341,20 @@ final class QuickSession: ObservableObject {
         close()
         model.openOfflineSetup()
         model.showCoach()
+    }
+
+    /// Switches to the user's Ollama, then rewrites once it's connected (or shows why it couldn't).
+    func useOllama() {
+        guard let model else { return }
+        model.errorMessage = nil
+        model.useMyOllama()
+        Task {
+            for _ in 0..<50 {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                if model.settings.engine == .ollama, !model.isOnline { model.onlineLimitHit = false; retry(); return }
+                if let message = model.errorMessage { model.errorMessage = nil; fail(message); return }
+            }
+        }
     }
 
     func useOnline() {
@@ -461,7 +496,7 @@ struct QuickPanelView: View {
             if model.onlineLimitHit && model.isOnline {
                 HStack(spacing: 8) {
                     Button("Set up offline coaching") { session.setUpOffline() }
-                    if model.ollamaDetected { Button("Use my Ollama") { model.useMyOllama(); session.retry() } }
+                    if model.ollamaDetected { Button("Use my Ollama") { session.useOllama() } }
                     Spacer()
                     Text("Resets at \(model.allowance?.resetText ?? "midnight UTC")").font(.system(size: 11)).foregroundStyle(.tertiary)
                 }.controlSize(.small)
@@ -472,7 +507,7 @@ struct QuickPanelView: View {
                     HStack(spacing: 8) {
                         Button("Try online coaching") { session.useOnline() }.keyboardShortcut(.defaultAction)
                         Button("Set up offline coaching") { session.setUpOffline() }
-                        if model.ollamaDetected { Button("Use my Ollama") { model.useMyOllama(); session.retry() } }
+                        if model.ollamaDetected { Button("Use my Ollama") { session.useOllama() } }
                     }.controlSize(.small)
                 }
             }
