@@ -11,6 +11,7 @@ struct SettingsView: View {
             PrivacySettings(model: model).tabItem { Label("Privacy", systemImage: "hand.raised") }.tag(SettingsTab.privacy)
         }
         .frame(width: 560)
+        .onChange(of: model.settingsTab) { model.stopRecording() }
         .onAppear { model.accessibilityTrusted = AccessibilityBridge.isTrusted; model.refreshStatus() }
     }
 }
@@ -90,6 +91,7 @@ private struct GeneralSettings: View {
         }
         .formStyle(.grouped)
         .frame(height: 560)
+        .onDisappear { model.stopRecording() }
     }
 
     private var appStyles: [(id: String, title: String)] {
