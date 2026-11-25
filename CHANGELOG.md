@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.7 — 2026-11-25
+
+- Free online coaching now follows the style you pick: Friendly makes text warmer, and Fix only corrects mistakes without cutting or rephrasing.
+- Rewrites keep your own opening words and quotes; only labels the model adds (like "Rewrite:") are removed.
+- Not notarized by Apple.
+
 ## 0.1.6 — 2026-11-23
 
 - Try coaching right away: the coach window works with no Ollama, no API key and no Accessibility permission.

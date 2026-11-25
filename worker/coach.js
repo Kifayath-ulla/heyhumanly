@@ -97,8 +97,9 @@ export function ipBucket(ip) {
 }
 
 async function ipKey(request, env, day) {
-  const ip = request.headers.get('CF-Connecting-IP');
-  if (!ip || !env.IP_SALT) return null;
+  if (!env.IP_SALT) return null;
+  // Requests without Cloudflare's visitor-IP header share one bucket instead of skipping the per-IP limit.
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(env.IP_SALT + '|' + day + '|' + ipBucket(ip)));
   return [...new Uint8Array(buf).slice(0, 12)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
