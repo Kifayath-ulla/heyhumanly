@@ -2,7 +2,7 @@
 
 ## 0.1.8 — 2026-11-25
 
-- Chrome extension: no longer hangs on "Tightening…" when Chrome's built-in model never answers; it falls back to Ollama after 2 seconds.
+- Chrome extension: no longer hangs on "Tightening…" when Chrome never answers whether its built-in model is available; after 2 seconds it uses Ollama instead.
 - Online coaching works the first time after the app has been idle (each coaching uses a fresh connection).
 - Rephrase fixes clear misspellings ("realy", "alot") while keeping your slang and casing, and names the words it cut instead of saying "Nothing to change".
 - First launch says "Welcome", shows the free daily count, and says where your text goes for each engine.
