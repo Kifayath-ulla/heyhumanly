@@ -264,7 +264,7 @@ manifesto = """
 
 privacy = f"""
 <section id="privacy"><div class="wrap"><h2>Where your writing goes</h2>
-<div class="ok"><b>In offline modes, your text is checked by a model on your computer.</b> HeyHumanly has no account, analytics or tracking. Offline, it sends your text only to the model on this Mac (or the Ollama address in its Settings, <code>localhost</code> by default). Free online coaching is optional and asks first: only then is the text you choose sent to heyhumanly.com and rewritten by Cloudflare Workers AI.</div>
+<div class="ok"><b>In offline modes, your text is checked by a model on your computer.</b> HeyHumanly has no account, analytics or tracking. Offline, it sends your text only to the model on this Mac (or the Ollama address in its Settings, <code>localhost</code> by default; Ollama cloud models count as online). Free online coaching is optional and asks first: only then is the text you choose sent to heyhumanly.com and rewritten by Cloudflare Workers AI.</div>
 <div class="grid">
 <div class="card"><h3>What it reads</h3><p>Only the one text box you are typing in, after you pause. Never password fields, password managers, terminals or code editors.</p></div>
 <div class="card"><h3>What it stores</h3><p>Sessions, review cards, your dictionary and settings stay in this app's preferences on your Mac. You can clear them in Settings.</p></div>
@@ -433,7 +433,7 @@ pw = f"""<section style="padding-top:140px"><div class="wrap" style="max-width:8
 <p class="lede" style="margin-left:0;text-align:left">Most writing helpers send what you type to a server. If you write contracts, health notes, job applications, or just things you would rather keep private, there is another way: run the model on your own computer.</p>
 <h2 style="font-size:30px;margin-top:30px">How a local writing assistant works</h2>
 <ol class="steps"><li><h3>A model runs on your computer</h3><p>Tools like <a href="https://ollama.com">Ollama</a> download an open model and run it locally. Your text never leaves the machine, and it works offline once the model is downloaded.</p></li>
-<li><h3>An app asks the model for an edit</h3><p>HeyHumanly sends your text only to the Ollama address on your own computer, by default <code>localhost</code>. It keeps your tone and trims filler, repeats and extra words.</p></li>
+<li><h3>An app asks the model for an edit</h3><p>In offline mode, HeyHumanly sends your text only to the model on your own computer (Ollama at <code>localhost</code> by default). Optional online coaching is separate and asks before sending anything. It keeps your tone and trims filler, repeats and extra words.</p></li>
 <li><h3>Rules explain the change</h3><p>The explanations come from fixed rules and your own words, not from guesses by the model, so each tip names a habit and links its source.</p></li></ol>
 <h2 style="font-size:30px;margin-top:34px">What to check in any "private" tool</h2>
 <ul style="color:var(--mute);margin:12px 0 0 20px;display:grid;gap:8px"><li>Does it work with the network turned off?</li><li>Is the source code public so you can see what it sends?</li><li>Does it need an account, and does it send analytics?</li><li>Where do saved sessions live, and can you delete them?</li></ul>
