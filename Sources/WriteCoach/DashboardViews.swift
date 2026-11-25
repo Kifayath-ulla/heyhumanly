@@ -122,12 +122,14 @@ extension OllamaStatus {
     }
     /// Green only when the selected model can actually run; orange while checking or when it still needs downloading.
     func color(model: String) -> Color {
-        if case .running(let models) = self, !models.contains(where: { CoachModel.sameModel($0, model) }) { return .orange }
+        if case .running(let models) = self,
+           !CoachModel.isWritingModel(model) || !models.contains(where: { CoachModel.sameModel($0, model) }) { return .orange }
         return color
     }
     func summary(model: String) -> String {
         switch self {
         case .checking: return "Checking Ollama…"
+        case .running where !CoachModel.isWritingModel(model): return "\(model) can't write. Pick another model"
         case .running(let models): return models.contains(where: { CoachModel.sameModel($0, model) }) ? "Ollama · \(model)" : "\(model) not installed"
         case .notRunning: return "Ollama isn't running"
         case .noEndpoint: return "No AI endpoint set"
@@ -574,12 +576,12 @@ struct SettingsView: View {
                     Spacer()
                     Text("Works with any local model in Ollama").font(.system(size: 11)).foregroundStyle(.tertiary)
                 }
-                if model.installedModels.isEmpty {
+                if model.writingModels.isEmpty {
                     Text(model.ollama == .checking ? "Looking for installed models…" : "No installed models found in Ollama. Start Ollama, then run `ollama pull qwen2.5:7b` (or any model of your choice).")
                         .font(.system(size: 12.5)).foregroundStyle(.secondary)
                 } else {
                     VStack(spacing: 0) {
-                        ForEach(Array(model.installedModels.enumerated()), id: \.element) { index, name in
+                        ForEach(Array(model.writingModels.enumerated()), id: \.element) { index, name in
                             if index > 0 { Divider().overlay(Color.hairline) }
                             Button { model.selectModel(name) } label: {
                                 HStack {
