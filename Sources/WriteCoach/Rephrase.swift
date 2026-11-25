@@ -460,9 +460,7 @@ struct RephrasePane: View {
                 Text("WHAT CHANGED, AND WHY").font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(.tertiary)
                 ForEach(r.moves) { m in move(m) }
             } else {
-                let fixes = TextSafety.wordFixes(original: model.rephraseOriginal, rewrite: r.rewrite)
-                Text(fixes.isEmpty ? "This was already clear. Nothing to change."
-                     : "Fixed " + fixes.prefix(4).map { "“\($0.from)” → “\($0.to)”" }.joined(separator: ", ") + ". The rest was already clear.")
+                Text(TextSafety.changeSummary(original: model.rephraseOriginal, rewrite: r.rewrite))
                     .font(.system(size: 13.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             if !r.next.isEmpty {

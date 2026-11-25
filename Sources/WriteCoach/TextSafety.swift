@@ -91,10 +91,17 @@ enum TextSafety {
     private static let pronounRegex = try! NSRegularExpression(pattern: "(?<![\\p{L}\\p{N}'’_.@/`-])i(?=['’](?:m|d|ll|ve)\\b|[\\s,!?;:)]|\\.(?![\\p{L}\\p{N}])|$)")
 
     /// Single-word fixes in a rewrite ("thung" → "thing"), for showing what changed when no habit was found.
-    static func wordFixes(original: String, rewrite: String) -> [(from: String, to: String)] {
-        ChangeSet(original: original, rewrite: rewrite).changes
-            .filter { !$0.from.isEmpty && !$0.to.isEmpty && !$0.from.contains(" ") && !$0.to.contains(" ") }
-            .map { ($0.from, $0.to) }
+    /// One line naming the edits in a rewrite, including cut and added words.
+    static func changeSummary(original: String, rewrite: String) -> String {
+        let changes = ChangeSet(original: original, rewrite: rewrite).changes
+        guard !changes.isEmpty else { return "Only spacing changed. The rest was already clear." }
+        let parts = changes.prefix(4).map { c -> String in
+            if c.to.isEmpty { return "cut “\(c.from)”" }
+            if c.from.isEmpty { return "added “\(c.to)”" }
+            return "“\(c.from)” → “\(c.to)”"
+        }
+        let more = changes.count > 4 ? ", and \(changes.count - 4) more" : ""
+        return "Changed " + parts.joined(separator: ", ") + more + ". The rest was already clear."
     }
 
     /// Character edit distance, for matching short code spans.
