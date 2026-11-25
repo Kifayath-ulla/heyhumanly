@@ -27,7 +27,7 @@ The local model only proposes the corrected text. Before anything is shown, `Rew
 3. Open HeyHumanly. The first-run tour checks for [Ollama](https://ollama.com) and the model. **Get Ollama** opens its download page; **Download model** pulls the model with a progress bar.
 4. Allow Accessibility when asked (needed to read the text box you are typing in), then try the example.
 
-**Unsigned release:** releases are ad-hoc signed and not notarized, so macOS may refuse the first open. After checking the checksum, use System Settings › Privacy & Security › Open Anyway. See [heyhumanly.com/install](https://heyhumanly.com/install/#gatekeeper).
+**Unsigned release:** releases are ad-hoc signed and not notarized, so macOS may refuse the first open. After checking the checksum, use System Settings › Privacy & Security › Open Anyway. If macOS says the DMG "is damaged", check the checksum and run `xattr -d com.apple.quarantine` on that exact file only, for example `xattr -d com.apple.quarantine ~/Downloads/HeyHumanly-0.1.7.dmg`. See [heyhumanly.com/install](https://heyhumanly.com/install/#gatekeeper).
 
 ## Chrome extension (Mac, Windows, Linux)
 
