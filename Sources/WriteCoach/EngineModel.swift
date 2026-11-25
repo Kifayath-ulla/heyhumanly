@@ -40,7 +40,7 @@ extension CoachModel {
         case .appleOnDevice: return appleAvailability == "available"
         case .online: return settings.onlineConsent
         case .offlineManaged: return runtime.serverRunning
-        case .ollama: return ollamaRunning && modelInstalled
+        case .ollama: return ollamaRunning && modelInstalled && Self.isWritingModel(settings.model)
         case nil: return false
         }
     }
@@ -65,7 +65,7 @@ extension CoachModel {
     var writingModels: [String] { installedModels.filter(Self.isWritingModel) }
     /// Embedding, reranker and CLIP models can't write; cloud models leave this Mac. Only the model name itself (no
     /// registry, namespace or `:tag`) is checked, so a tag like `qwen2.5:clipboard` still counts. Mirrors `isWritingModel` in extension/core.js.
-    static func isWritingModel(_ name: String) -> Bool {
+    nonisolated static func isWritingModel(_ name: String) -> Bool {
         let base = (name.split(separator: "/").last ?? "").split(separator: ":").first.map(String.init) ?? ""
         return base.range(of: "embed|bge|minilm|rerank|clip", options: [.regularExpression, .caseInsensitive]) == nil && !isCloudModel(name)
     }
@@ -76,7 +76,7 @@ extension CoachModel {
         return (n.split(separator: "/").last ?? "").contains(":") ? n : n + ":latest"
     }
     /// Ollama "cloud" models (e.g. gpt-oss:120b-cloud) forward text to ollama.com, so they never count as on this Mac.
-    static func isCloudModel(_ name: String) -> Bool {
+    nonisolated static func isCloudModel(_ name: String) -> Bool {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard name.contains(":"), let tag = name.split(separator: ":").last else { return false }
         return tag == "cloud" || tag.hasSuffix("-cloud")
