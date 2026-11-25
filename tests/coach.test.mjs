@@ -100,59 +100,6 @@ test('provider errors, empty output and timeouts are refunded', async () => {
   }
 });
 
-test('a retried request id is not charged to the install twice, even on the last slot', async () => {
-  const { env, ledger, calls } = makeEnv(ok);
-  const REQ = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
-  for (let i = 0; i < LIMITS.perInstall - 1; i++) await post(env, { text: TEXT, install: ID }, '9.9.9.' + i);
-  const first = await (await post(env, { text: TEXT, install: ID, request: REQ })).json();
-  assert.equal(first.remaining, 0);
-  const again = await post(env, { text: TEXT, install: ID, request: REQ });
-  assert.equal(again.status, 200);
-  assert.equal((await again.json()).remaining, 0);
-  assert.equal(await ledger.store.get('i:' + ID), LIMITS.perInstall);
-  assert.equal(calls.length, LIMITS.perInstall + 1);
-  assert.equal((await post(env, { text: TEXT, install: ID, request: ID2 })).status, 429);
-  assert.equal((await post(env, { text: TEXT, install: ID2, request: REQ })).status, 200);
-  assert.equal(await ledger.store.get('i:' + ID2), 1);
-});
-
-test('a request id only covers one retry of the same text', async () => {
-  const { env } = makeEnv(ok);
-  const REQ = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
-  for (let i = 0; i < LIMITS.perInstall - 1; i++) await post(env, { text: TEXT, install: ID }, '9.9.9.' + i);
-  assert.equal((await post(env, { text: TEXT, install: ID, request: REQ })).status, 200);
-  assert.equal((await post(env, { text: 'something else entirely', install: ID, request: REQ })).status, 429);
-  assert.equal((await post(env, { text: TEXT, install: ID, request: REQ })).status, 200);
-  assert.equal((await post(env, { text: TEXT, install: ID, request: REQ })).status, 429);
-});
-
-test('a retry that overlaps a failing first attempt is still charged once', async () => {
-  let failFirst;
-  const first = new Promise((_, reject) => { failFirst = reject; });
-  let n = 0;
-  const { env, ledger } = makeEnv((m, o) => (n++ === 0 ? first : ok(m, o)));
-  const REQ = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
-  const a = post(env, { text: TEXT, install: ID, request: REQ });
-  while (n === 0) await new Promise((r) => setTimeout(r, 1));
-  const b = await post(env, { text: TEXT, install: ID, request: REQ });
-  assert.equal(b.status, 200);
-  failFirst(new Error('5xx'));
-  assert.equal((await a).status, 502);
-  assert.equal(await ledger.store.get('i:' + ID), 1);
-});
-
-test('a request id whose first try was refunded is charged when retried', async () => {
-  let fail = true;
-  const { env, ledger } = makeEnv(async (m, o) => { if (fail) { fail = false; throw new Error('5xx'); } return ok(m, o); });
-  const REQ = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
-  assert.equal((await post(env, { text: TEXT, install: ID, request: REQ })).status, 502);
-  assert.equal(await ledger.store.get('i:' + ID), 0);
-  const r = await post(env, { text: TEXT, install: ID, request: REQ });
-  assert.equal(r.status, 200);
-  assert.equal((await r.json()).remaining, LIMITS.perInstall - 1);
-  assert.equal(await ledger.store.get('i:' + ID), 1);
-});
-
 test('unusable model output keeps its cost and per-IP count, so it cannot be repeated for free', async () => {
   const { env, ledger, calls } = makeEnv(async () => ({ choices: [{ message: { content: 'cut off mid sen' }, finish_reason: 'length' }], usage: { prompt_tokens: 1400, completion_tokens: 900 } }));
   const statuses = [];

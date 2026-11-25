@@ -52,7 +52,7 @@ enum OnlineError: LocalizedError, Equatable {
     }
 }
 
-/// Client for POST /api/v1/coach and GET /api/v1/allowance. Sends only text, goal, the install ID and a random per-coaching request ID.
+/// Client for POST /api/v1/coach and GET /api/v1/allowance. Sends only text, goal and the install ID.
 enum OnlineCoach {
     struct Result { var rewrite: String; var casual: Bool; var allowance: Allowance }
 
@@ -97,9 +97,7 @@ enum OnlineCoach {
         guard let url = URL(string: endpoint) else { throw OnlineError.badRequest }
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        // One id per coaching, reused by the retry, so the server does not charge a repeat twice.
-        let requestID = UUID().uuidString.lowercased()
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["text": text, "goal": goal, "install": installID, "request": requestID])
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["text": text, "goal": goal, "install": installID])
         let data: Data, response: URLResponse
         do { (data, response) = try await send(request) } catch { throw OnlineError.network }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
@@ -116,12 +114,13 @@ enum OnlineCoach {
         }
     }
 
-    /// After the app sits idle, the first request can reuse a connection the server already closed and
-    /// fail with "network connection lost". Retry once on a fresh connection; the request id in the body
-    /// keeps the server from counting it twice if the first attempt did get through.
+    /// After the app sits idle, the shared session can hand the POST a pooled connection the server already
+    /// closed, and it fails with "network connection lost". Each coaching gets its own ephemeral session, so it
+    /// always opens a fresh connection. The POST is never retried, so it can never be counted twice.
     private static func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
-        do { return try await URLSession.shared.data(for: request) }
-        catch let error as URLError where error.code == .networkConnectionLost { return try await URLSession.shared.data(for: request) }
+        let session = URLSession(configuration: .ephemeral)
+        defer { session.finishTasksAndInvalidate() }
+        return try await session.data(for: request)
     }
 
     static func allowance(endpoint: String) async -> Allowance? {
