@@ -120,7 +120,7 @@
     run(false);
   });
   document.addEventListener('keydown', (e) => {
-    if (!host || !ui) return;
+    if (!host || !ui || !e.isTrusted) return;
     const mod = MAC ? e.metaKey : e.ctrlKey, key = e.key.toLowerCase();
     let handled = true;
     if (e.key === 'Escape') close();
@@ -133,6 +133,6 @@
     else handled = false;
     if (handled) { e.preventDefault(); e.stopImmediatePropagation(); }
   }, true);
-  document.addEventListener('mousedown', (e) => { if (host && !e.composedPath().includes(host)) close(); }, true);
+  document.addEventListener('mousedown', (e) => { if (host && e.isTrusted && !e.composedPath().includes(host)) close(); }, true);
   addEventListener('resize', () => { if (host) place(); });
 })();
