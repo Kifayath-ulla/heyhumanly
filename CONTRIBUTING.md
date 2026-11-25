@@ -4,7 +4,7 @@ Thanks for helping. Bug reports, fixes, new writing rules and docs are all welco
 
 ## Ground rules
 
-- **Privacy is the product.** Text goes only to the coaching engine the user chose: on this Mac (Apple, offline runtime, or their Ollama), or HeyHumanly's online coaching after explicit consent (text, goal and a random install ID only; never background checks). The only other network call is the one-time offline download the user confirms. Don't add analytics, telemetry, crash reporting, remote config, accounts or any other network call.
+- **Privacy is the product.** Text goes only to the coaching engine the user chose: on this Mac (Apple, offline runtime, or their Ollama), or HeyHumanly's online coaching after explicit consent (text, goal, a random install ID and a random per-coaching request ID only; never background checks). The only other network call is the one-time offline download the user confirms. Don't add analytics, telemetry, crash reporting, remote config, accounts or any other network call.
 - **Keep the writer's voice.** Casual stays casual. A change to the prompt, the detectors or the meaning guard should keep facts, names, numbers, questions and doubt.
 - **Cite real research.** A research note needs a source the reader can open. If there is no solid evidence, give the tip without a citation.
 - **Credit what you borrow.** Ported word lists, code or design go in `THIRD_PARTY_NOTICES.md` with their licence (MIT-compatible only).

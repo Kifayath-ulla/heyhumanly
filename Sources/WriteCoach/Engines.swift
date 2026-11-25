@@ -52,7 +52,7 @@ enum OnlineError: LocalizedError, Equatable {
     }
 }
 
-/// Client for POST /api/v1/coach and GET /api/v1/allowance. Sends only text, goal and the install ID.
+/// Client for POST /api/v1/coach and GET /api/v1/allowance. Sends only text, goal, the install ID and a random per-coaching request ID.
 enum OnlineCoach {
     struct Result { var rewrite: String; var casual: Bool; var allowance: Allowance }
 

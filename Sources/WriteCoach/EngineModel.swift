@@ -133,7 +133,7 @@ extension CoachModel {
         Task { if let a = await OnlineCoach.allowance(endpoint: endpoint) { allowance = a } }
     }
 
-    /// One explicit online coaching. Only text, goal and the install ID are sent.
+    /// One explicit online coaching. Only text, goal, the install ID and a random request ID are sent.
     func coachOnline(text: String, goal: String) async throws -> OnlineCoach.Result {
         onlineLimitHit = false; onlineFailed = false
         do {
