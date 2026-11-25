@@ -35,19 +35,24 @@ export class Ledger {
     const used = (await this.store.get('i:' + install)) || 0, spent = (await this.store.get('neurons')) || 0;
     return { used, remaining: Math.max(0, LIMITS.perInstall - used), budgetLeft: spent < LIMITS.dailyNeurons };
   }
-  // `req` is the app's id for one coaching. When the app retries after losing the response, the repeat
-  // is not charged to the install again; the per-IP count and the global budget still apply.
-  async reserve(install, ipKey, est, day, req = null) {
+  // `req` is the app's id for one coaching, `fp` a hash of its text and goal. When the app retries the same
+  // coaching after losing the response, the retry takes over the first attempt's charge instead of adding one.
+  // Only one retry per charge, and only for the same text; the per-IP count and global budget still apply.
+  async reserve(install, ipKey, est, day, req = null, fp = null) {
     await this.roll(day);
-    const repeat = !!req && (await this.store.get('r:' + req)) === install;
+    const rk = req && fp ? 'r:' + install + ':' + req : null;
+    const repeat = !!rk && (await this.store.get(rk)) === fp;
     const used = (await this.store.get('i:' + install)) || 0;
     if (!repeat && used >= LIMITS.perInstall) return { ok: false, reason: 'allowance_used', remaining: 0 };
     const ipUsed = ipKey ? (await this.store.get('p:' + ipKey)) || 0 : 0;
     if (ipKey && ipUsed >= LIMITS.perIp) return { ok: false, reason: 'allowance_used', remaining: LIMITS.perInstall - used };
     const spent = (await this.store.get('neurons')) || 0;
     if (spent + est > LIMITS.dailyNeurons) return { ok: false, reason: 'budget_exhausted', remaining: LIMITS.perInstall - used };
-    if (!repeat) await this.store.put('i:' + install, used + 1);
-    if (req && !repeat) await this.store.put('r:' + req, install);
+    if (repeat) await this.store.delete(rk);
+    else {
+      await this.store.put('i:' + install, used + 1);
+      if (rk) await this.store.put(rk, fp);
+    }
     if (ipKey) await this.store.put('p:' + ipKey, ipUsed + 1);
     await this.store.put('neurons', spent + est);
     return { ok: true, remaining: Math.max(0, LIMITS.perInstall - used - (repeat ? 0 : 1)), repeat };
@@ -55,14 +60,18 @@ export class Ledger {
   // Failed, timed-out and provider-error requests are refunded; successful ones are charged their real cost.
   // A billed failure (the model answered but the output was unusable) keeps its real cost and the per-IP count.
   async settle(install, ipKey, est, actual, success, day, billed = false, req = null, repeat = false) {
+    const rk = req ? 'r:' + install + ':' + req : null;
     if ((await this.store.get('day')) !== day) return;
     const spent = (await this.store.get('neurons')) || 0;
     if (success) { await this.store.put('neurons', Math.max(0, spent - est + actual)); return; }
     await this.store.put('neurons', Math.max(0, spent - est + (billed ? actual : 0)));
-    if (!repeat) {
+    // The install charge is refunded by whichever attempt holds it: a retry that took it over, or a first attempt
+    // whose id was not retried (still stored).
+    const owns = repeat || !rk || (await this.store.get(rk)) !== undefined;
+    if (owns) {
       const used = (await this.store.get('i:' + install)) || 0;
       await this.store.put('i:' + install, Math.max(0, used - 1));
-      if (req) await this.store.delete('r:' + req);
+      if (rk && !repeat) await this.store.delete(rk);
     }
     if (ipKey && !billed) { const p = (await this.store.get('p:' + ipKey)) || 0; await this.store.put('p:' + ipKey, Math.max(0, p - 1)); }
   }
@@ -103,12 +112,15 @@ export function ipBucket(ip) {
   return full.slice(0, 4).map((x) => (parseInt(x, 16) || 0).toString(16)).join(':') + '::/64';
 }
 
+async function sha(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf).slice(0, 12)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 async function ipKey(request, env, day) {
   if (!env.IP_SALT) return null;
   // Requests without Cloudflare's visitor-IP header share one bucket instead of skipping the per-IP limit.
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(env.IP_SALT + '|' + day + '|' + ipBucket(ip)));
-  return [...new Uint8Array(buf).slice(0, 12)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return sha(env.IP_SALT + '|' + day + '|' + ipBucket(ip));
 }
 
 function base(env, remaining, now) {
@@ -142,7 +154,8 @@ export async function handleCoach(request, env, now = Date.now()) {
   const maxOut = Math.min(LIMITS.maxOutputTokens, Math.max(120, Math.ceil(text.length / 2) + 80));
   const est = neurons(model, Math.ceil(prompt.length / 3), maxOut);
   const key = await ipKey(request, env, day), ledger = ledgerOf(env);
-  const r = await ledger.reserve(install, key, est, day, req);
+  const fp = req ? await sha(goal + '|' + text) : null;
+  const r = await ledger.reserve(install, key, est, day, req, fp);
   if (!r.ok) return json({ ...base(env, r.remaining, now), error: r.reason }, r.reason === 'budget_exhausted' ? 503 : 429);
 
   let timer, out;
