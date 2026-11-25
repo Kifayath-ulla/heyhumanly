@@ -215,9 +215,9 @@ how = """
 <div class="tile w b"><span class="meta">The evidence</span><h3>Tips with sources</h3><p>Concise text, readable wording and hedging each link to the study behind the tip. Where the research is mixed, it says so.</p></div>
 <div class="tile"><span class="meta">Style</span><h3>Wordy phrases</h3><p>“In order to” becomes “to”. “Due to the fact that” becomes “because”.</p></div>
 <div class="tile"><span class="meta">Clarity</span><h3>Passive and repeats</h3><p>Flags hidden doers and three sentences in a row that start the same way.</p></div>
-<div class="tile y"><span class="meta">Progress</span><h3>Your habits over time</h3><p>Insights shows which habits you repeat, so you work on one thing at a time.</p></div>
+<div class="tile y"><span class="meta">One shortcut</span><h3>Select, press ⌃⌥Space, Enter</h3><p>A small panel shows the rewrite next to your text. Enter puts it in place; ⌘Z puts yours back.</p></div>
 <div class="tile w"><span class="meta">Any local model</span><h3>Works with every model in Ollama</h3><p>Qwen, Gemma, Llama, Mistral, whatever you already run. HeyHumanly lists what is installed and recommends one for your Mac.</p></div>
-<div class="tile w r"><span class="meta">Review</span><h3>Practice with your own sentences</h3><p>Short drills built from your past mistakes, spaced out so the fixes stick.</p></div>
+<div class="tile w r"><span class="meta">Why</span><h3>Each change explained</h3><p>Press ⌘/ in the panel to see the rule behind every edit, quoted from your own sentence.</p></div>
 </div></div></section>
 
 <section id="styles" class="band"><div class="wrap split"><div><span class="eyebrow">Rewrites</span><h2>Same message, <em>your</em> voice.</h2>
@@ -267,7 +267,7 @@ privacy = f"""
 <div class="ok"><b>In offline modes, your text is checked by a model on your computer.</b> HeyHumanly has no account, analytics or tracking. Offline, it sends your text only to the model on this Mac (or the Ollama address in its Settings, <code>localhost</code> by default; Ollama cloud models count as online). Free online coaching is optional and asks first: only then is the text you choose sent to heyhumanly.com and rewritten by Cloudflare Workers AI.</div>
 <div class="grid">
 <div class="card"><h3>What it reads</h3><p>Only the one text box you are typing in, after you pause. Never password fields, password managers, terminals or code editors.</p></div>
-<div class="card"><h3>What it stores</h3><p>Sessions, review cards, your dictionary and settings stay in this app's preferences on your Mac. You can clear them in Settings.</p></div>
+<div class="card"><h3>What it stores</h3><p>Only your settings, in this app's preferences on your Mac. HeyHumanly keeps no history of your text.</p></div>
 <div class="card"><h3>What still uses the internet</h3><p>Optional online coaching, after you agree (one request per coaching and one to check how many are left). Downloading the offline model, and loading this website. HeyHumanly does not check for updates yet.</p></div>
 </div><p class="fine">Read the full <a href="/privacy/">privacy page</a>. If you point HeyHumanly at another computer in Settings, it warns you, because then your text leaves this computer.</p></div></section>"""
 
@@ -343,9 +343,9 @@ inst = f"""
 <ol class="steps">
 <li><h3>Open the DMG</h3><p>Double-click <code>{R['file']}</code>. If macOS shows a warning here, see below.</p></li>
 <li><h3>Drag to Applications</h3><p>Drag HeyHumanly onto the Applications folder in the window. Eject the disk image afterwards.</p></li>
-<li><h3>Open HeyHumanly from Applications</h3><p>A short tour opens. It checks for Ollama and the model, and offers buttons to install each.</p></li>
-<li><h3>Allow Accessibility</h3><p>Open <b>System Settings → Privacy &amp; Security → Accessibility</b> and switch HeyHumanly on. If you said no, you can turn it on later in the same place; until then the coach window still works with pasted text.</p></li>
-<li><h3>Try your first sentence</h3><p>In the tour choose <b>Try an example</b>, or type "Please send me that thung when you have time." in the coach window and press Teach Me. You are ready when you see the corrected sentence and the rule.</p></li></ol>
+<li><h3>Open HeyHumanly from Applications</h3><p>HeyHumanly lives in the menu bar. A three-step welcome lets you try the shortcut on a sample sentence and picks a model: Apple's on this Mac, your Ollama, or free online rewrites if you agree.</p></li>
+<li><h3>Allow Accessibility</h3><p>Open <b>System Settings → Privacy &amp; Security → Accessibility</b> and switch HeyHumanly on. It is only needed to replace text in other apps. If you said no, choose <b>Copy instead</b>: copy text, press ⌃⌥Space, and Enter copies the rewrite.</p></li>
+<li><h3>Try your first sentence</h3><p>Select some text in any app and press <b>⌃⌥Space</b>. You are ready when the panel shows the corrected sentence; press Enter to use it.</p></li></ol>
 <h2 id="gatekeeper" style="margin-top:34px">If macOS says it cannot check the app</h2>
 <p class="note">Version {V} is signed only with an ad-hoc signature and is <b>not notarized</b> by Apple, so macOS may block the first open. This is a known limit of this release, not something to ignore.</p>
 <p>Check the file first: in Terminal run <code>shasum -a 256 ~/Downloads/{R['file']}</code> and compare it to <code>{R['sha256']}</code>. If it matches and you want to continue, try to open HeyHumanly once, then open <b>System Settings → Privacy &amp; Security</b>, scroll to Security, and choose <b>Open Anyway</b> next to HeyHumanly. You can also read or build the <a href="{SRC}">source code</a> yourself. Do not turn off Gatekeeper or other security settings.</p>
@@ -367,9 +367,9 @@ priv = f"""
 <h2>In the app</h2><ul>
 <li><b>Read:</b> the single text box you are typing in, after you pause, and text you select when you press the shortcut. Never password fields, and never apps on the "Never read" list (password managers, terminals and code editors by default).</li>
 <li><b>Sent:</b> in offline modes (Apple's built-in model, HeyHumanly's offline model, or your Ollama), nowhere: the text stays on this Mac. Checking as you type only runs in offline modes. In optional online mode, used only after you agree, the text you choose and the goal are sent to heyhumanly.com and rewritten by Cloudflare Workers AI. Nothing else is sent: no app name, history or account.</li>
-<li><b>Stored:</b> a session is saved only when you accept a fix, start a lesson or use the coach window. It is kept in the app's preferences on your Mac. The log records timings, not your text.</li>
+<li><b>Stored:</b> nothing you write. Only your settings (and, with Labs: check as I type, suggestions you dismissed) are kept in the app's preferences on your Mac. The log records timings, not your text.</li>
 <li><b>Network:</b> no analytics, accounts, tracking or automatic update check. Online mode makes one request per coaching and one to check how many free coachings are left, with a random install ID (not tied to you) and your IP, which the server keeps only as a daily-salted hash to limit abuse. HeyHumanly's server does not log or store your text. Cloudflare says Workers AI keeps no prompts or outputs and does not train on them; it may keep request metadata such as time, size and model.</li>
-<li><b>Remove:</b> Settings → Privacy &amp; data → Clear history.</li></ul>
+<li><b>Remove:</b> delete the app and its preferences file; there is no history to clear.</li></ul>
 <h2 id="extension">In the Chrome extension</h2><ul>
 <li><b>Read:</b> only when you press <code>Alt+Shift+H</code>, click the HeyHumanly button or choose <b>Tighten with HeyHumanly</b> from the right-click menu. Then it reads the text you selected, or the text box you are in, on that one tab. No script runs on pages before that.</li>
 <li><b>Sent:</b> only to Ollama on this computer, <code>http://localhost:11434</code> or <code>http://127.0.0.1:11434</code>. The extension's permissions do not allow any other address.</li>

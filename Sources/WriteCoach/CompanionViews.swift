@@ -486,10 +486,6 @@ private struct FixCard: View {
                 Spacer(minLength: 0)
             }
             HStack(spacing: 2) {
-                if change.category == .spelling, !change.from.contains(" ") {
-                    QuietButton(title: "Add “\(change.from.trimmingCharacters(in: .punctuationCharacters))” to dictionary", icon: "plus") { session.addToDictionary(change.id) }
-                        .help("It's a real word or a name. Never flag it again")
-                }
                 QuietButton(title: "Stop flagging \(change.category.title.lowercased())") { session.muteCategory(of: change.id) }
                     .help("Keep fixing it quietly with Fix all, but stop pointing it out")
                 Spacer(minLength: 0)

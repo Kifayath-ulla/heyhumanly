@@ -42,42 +42,47 @@ struct HeyHumanlyApp: App {
     }
 
     var body: some Scene {
-        // Single dashboard window: openWindow(id:) brings it back instead of spawning copies.
-        Window("HeyHumanly", id: "dashboard") {
-            DashboardView(model: model)
-                .onAppear { NSApp.activate(ignoringOtherApps: true) }
-        }
-        .windowStyle(.hiddenTitleBar)
-        .defaultSize(width: 1120, height: 760)
-        .commands {
-            CommandGroup(replacing: .appSettings) {
-                Button("Settings…") { model.openDashboard(section: .settings) }.keyboardShortcut(",")
-            }
-            CommandGroup(after: .newItem) {
-                Button("Open Coach") { model.showCoach() }.keyboardShortcut("k")
-            }
-        }
-
-        // The coach is a floating NSPanel owned by CoachModel, so the shortcut works even when the dashboard is closed.
+        // Menu bar only (LSUIElement): no Dock icon and no main window. ⌃⌥Space opens the quick panel.
         MenuBarExtra {
-            Button("Open Coach  (\(model.shortcutLabel))") { model.showCoach() }
-            Button("Open Dashboard") { model.openDashboard(section: .home) }
-            Divider()
-            if model.isSnoozed {
-                Button("Resume coaching now") { model.setCoaching(true) }
-            } else if model.settings.autoCheck {
-                Button("Pause coaching for 1 hour") { model.snooze(minutes: 60) }
-                Button("Turn off checking as I type") { model.setCoaching(false) }
-            } else {
-                Button("Turn on checking as I type") { model.setCoaching(true) }
+            MenuBarContent(model: model)
+        } label: {
+            MenuBarLabel(model: model)
+        }
+        Settings {
+            SettingsView(model: model)
+        }
+    }
+}
+
+private struct MenuBarLabel: View {
+    @ObservedObject var model: CoachModel
+    @Environment(\.openSettings) private var openSettings
+    var body: some View {
+        Image(systemName: "text.cursor").accessibilityLabel("HeyHumanly")
+            .onAppear { model.openSettingsAction = { openSettings() } }
+    }
+}
+
+private struct MenuBarContent: View {
+    @ObservedObject var model: CoachModel
+    @Environment(\.openSettings) private var openSettings
+    var body: some View {
+        Button("Fix selection  (\(model.shortcutLabel))") { model.fixSelectionFromMenu() }
+        Picker("Style", selection: Binding(get: { model.settings.defaultStyle }, set: { model.settings.defaultStyle = $0; model.settings.save() })) {
+            ForEach(WritingStyle.allCases) { Text($0.rawValue).tag($0) }
+        }
+        .pickerStyle(.menu)
+        Menu("Engine") {
+            ForEach(CoachEngine.allCases, id: \.self) { e in
+                Toggle(e.label, isOn: Binding(get: { model.engine == e }, set: { _ in model.chooseEngine(e) }))
+                    .disabled(!model.engineSelectable(e))
             }
             Divider()
             Text(model.engineSummary)
-            Button("Settings…") { model.openDashboard(section: .settings) }
-            Divider()
-            Button("Quit HeyHumanly") { NSApp.terminate(nil) }.keyboardShortcut("q")
-        } label: {
-            Image(systemName: model.coachingActive ? "bubble.left.fill" : "bubble.left").accessibilityLabel(model.coachingActive ? "HeyHumanly" : "HeyHumanly, paused")
         }
+        Divider()
+        Button("Settings…") { NSApp.activate(ignoringOtherApps: true); openSettings() }.keyboardShortcut(",")
+        Divider()
+        Button("Quit HeyHumanly") { NSApp.terminate(nil) }.keyboardShortcut("q")
     }
 }

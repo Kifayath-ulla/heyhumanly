@@ -1,18 +1,16 @@
 # HeyHumanly
 
-HeyHumanly is a local-first writing coach for macOS. It sits beside whatever you are writing (Slack, Mail, a browser, Notes), catches mistakes after you pause, and teaches you the rule so you stop making them. Its promise: **fix this sentence now, or learn why it could be better.**
+HeyHumanly is a local-first writing tool for the macOS menu bar. Select text anywhere (Slack, Mail, a browser, Notes), press `⌃⌥Space`, see the rewrite next to your text, and press Enter. Press `⌘/` to see why each change was made.
 
 Everything runs on this Mac with a local [Ollama](https://ollama.com) model. No account, API key, cloud service, analytics or telemetry.
 
 ## What it does
 
-- **Checks as you type.** After a short typing pause it reads the one text box you are in. Real mistakes get a red wavy underline, optional wording ideas a violet dashed one, and a small dot shows the count. The dot sits outside the text and hides while you type.
-- **Teach me (default).** Click the dot: pick the right version, read the rule in one line with a way to remember it, then practise the same rule on a new sentence. A summary lists what you practised.
-- **Fix now.** `⌃⌥↩` fixes every mistake in one paste; `⌘Z` in the app (or `⌃⌥Z`) undoes it. Click any underline for a single fix.
-- **Dismiss.** `esc` closes a card. Dismissed suggestions are remembered and do not come back; "Stop flagging…" mutes a whole type; "Add to dictionary" keeps a word as written.
-- **Whole-message versions.** Suggested, Just fixes, Shorter, Warmer, Clearer, Professional, and Translate.
-- **Coach window.** Type or paste text, or select text anywhere and press your shortcut. Quick Fix, Teach Me, per-change accept/undo, Copy, Replace.
-- **Insights and Review.** The mistakes you make most, and spaced-repetition cards made from your own sentences. Only real usage is counted.
+- **One shortcut.** Select text and press `⌃⌥Space`. A small panel opens next to the selection and streams the rewrite as a word diff.
+- **Keys.** `↩` replaces in place (`⌘Z` right after puts yours back), `esc` closes, `⌘C` copies, `⇥`/`⇧⇥` or `⌘1`–`⌘5` switch style, `⌘/` shows why, `⌘R` tries again.
+- **Five styles.** Fix only, Polish (default), Shorter, Friendly, Professional.
+- **Menu bar only.** No Dock icon or main window: the menu has Fix selection, Style, Engine, Settings and Quit.
+- **Labs: check as I type.** Off by default. When on, mistakes in the text box you are in get underlined after you pause (engines on this Mac only).
 
 ## How the teaching works
 
@@ -24,8 +22,8 @@ The local model only proposes the corrected text. Before anything is shown, `Rew
 
 1. Download `HeyHumanly-<version>.dmg` from [heyhumanly.com](https://heyhumanly.com) or the [latest release](https://github.com/Kifayath-ulla/heyhumanly/releases/latest). Verify it with the `.sha256` file on the release page.
 2. Open the DMG and drag HeyHumanly into Applications.
-3. Open HeyHumanly. The first-run tour checks for [Ollama](https://ollama.com) and the model. **Get Ollama** opens its download page; **Download model** pulls the model with a progress bar.
-4. Allow Accessibility when asked (needed to read the text box you are typing in), then try the example.
+3. Open HeyHumanly. It lives in the menu bar. The three-step welcome lets you try `⌃⌥Space` on a sample sentence, asks for Accessibility, and picks an engine (Apple on-device, your Ollama, or free online rewrites if you agree).
+4. Allow Accessibility (only needed to replace text in other apps), or choose **Copy instead**.
 
 **Unsigned release:** releases are ad-hoc signed and not notarized, so macOS may refuse the first open. After checking the checksum, use System Settings › Privacy & Security › Open Anyway. If macOS says the DMG "is damaged", check the checksum and run `xattr -d com.apple.quarantine` on that exact file only, for example `xattr -d com.apple.quarantine ~/Downloads/HeyHumanly-0.1.7.dmg`. See [heyhumanly.com/install](https://heyhumanly.com/install/#gatekeeper).
 
@@ -64,14 +62,14 @@ Issues and pull requests are welcome; see `CONTRIBUTING.md`. Do not paste privat
 
 ## Permissions
 
-**Accessibility** (System Settings › Privacy & Security › Accessibility): needed to read the text box you are typing in and to paste a fix you accepted. Without it, the coach window still works with typed or pasted text. See `PRIVACY.md`.
+**Accessibility** (System Settings › Privacy & Security › Accessibility): needed to read your selection and replace it in other apps. Without it, copy text first: `⌃⌥Space` rewrites what you copied and Enter copies the result. See `PRIVACY.md`.
 
 
 ## Settings
 
-Check as I type · what clicking the dot does (teach or fix) · typing pause before a check · mistakes only or also wording ideas · learn by sentence or word · explanation language · apps never read · mistake types to teach · default writing style and per-app styles · Ollama endpoint and model · shortcut · appearance · personal dictionary · forget dismissals · replay the tour · clear history.
-
-The menu-bar leaf pauses coaching for an hour or turns it off.
+**General:** shortcut · default style · open at login · Accessibility · apps never read · Labs: check as I type · forget dismissed suggestions · show welcome again.
+**Engine:** Apple on-device · free online · offline (managed Ollama) · your Ollama with its model and endpoint.
+**Privacy:** where your text goes with each engine.
 
 ## Developer checks
 
