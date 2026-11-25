@@ -28,6 +28,11 @@ enum TextSafety {
 
     /// Puts every backtick span of the original back into the rewrite unchanged, each in place of the rewrite span
     /// closest to it (so reordered spans keep their own code). If the rewrite lost or added a span, the original is returned.
+    /// A message typed all in lowercase stays lowercase, even if the model capitalised it.
+    static func keepLowercase(original: String, rewrite: String) -> String {
+        original.contains(where: \.isUppercase) || !original.contains(where: \.isLowercase) ? rewrite : rewrite.lowercased()
+    }
+
     static func restoreCode(original: String, rewrite: String) -> String {
         let o = original as NSString
         let spans = codeRanges(o)

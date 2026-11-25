@@ -226,6 +226,8 @@
       return unused.splice(best, 1)[0];
     });
   }
+  // A message typed all in lowercase stays lowercase, even if the model capitalised it (same as TextSafety.swift).
+  function keepLowercase(original, rewrite) { return /\p{Lu}/u.test(original) || !/\p{Ll}/u.test(original) ? rewrite : rewrite.toLowerCase(); }
   function matchCase(word, like) { return like[0] && like[0] !== like[0].toLowerCase() ? (like.length > 1 && like === like.toUpperCase() ? word.toUpperCase() : word[0].toUpperCase() + word.slice(1)) : word; }
   function editDistance(a, b) {
     let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
@@ -356,7 +358,7 @@
     if (o.engine === 'builtin' || (o.engine === 'auto' && await builtinStatus() === 'available')) {
       const cleaned = cleanRewrite(await builtinTighten(text, o.goal, casual), text);
       if (!cleaned) throw fail('empty', 'Chrome’s built-in model returned nothing. Try again.');
-      return analyse(text, restoreCode(text, fixTypos(text, cleaned)), casual, 'Chrome built-in model', o.goal);
+      return analyse(text, restoreCode(text, keepLowercase(text, fixTypos(text, cleaned))), casual, 'Chrome built-in model', o.goal);
     }
     let model; try { model = await pickModel(o.endpoint, o.model); } catch (e) { if (e.code && e.code !== 'timeout') throw e; throw fail('offline', OFFLINE(o.endpoint)); }
     let res; try {
@@ -370,7 +372,7 @@
     const j = await res.json(); if (j.error) throw fail('model', /not found/i.test(j.error) ? 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.' : 'Ollama said: ' + j.error);
     if (j.done_reason === 'length') throw fail('cutoff', 'The rewrite stopped before the end of your text, so it isn’t shown. Select a shorter part and try again.');
     const cleaned = cleanRewrite(j.response, text); if (!cleaned) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
-    const rewrite = restoreCode(text, fixTypos(text, cleaned));
+    const rewrite = restoreCode(text, keepLowercase(text, fixTypos(text, cleaned)));
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
@@ -388,6 +390,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, STYLES, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, STYLES, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

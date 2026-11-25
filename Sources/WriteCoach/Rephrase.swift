@@ -132,7 +132,7 @@ enum RephraseService {
     /// Local post-processing shared by every engine: restore code and typos, then find the habits to teach.
     static func finish(text: String, raw: String, goal: RephraseGoal, casual: Bool) -> RephraseResult {
         // Code stays as written and known typos get the intended word. Casing is the writer's, so "i" is left alone here.
-        let rewrite = TextSafety.restoreCode(original: text, rewrite: TextSafety.fixTypos(original: text, rewrite: raw))
+        let rewrite = TextSafety.restoreCode(original: text, rewrite: TextSafety.keepLowercase(original: text, rewrite: TextSafety.fixTypos(original: text, rewrite: raw)))
         let moves = HabitDetector.moves(original: text, rewrite: rewrite, casual: casual)
         let next = moves.first?.habitValue.map { "Next time, work on one thing: \($0.rawValue.lowercased()). \($0.tip)" } ?? "This was already clear. Keep doing what you're doing."
         return RephraseResult(rewrite: rewrite, moves: moves, next: next, casual: casual, goal: goal)
