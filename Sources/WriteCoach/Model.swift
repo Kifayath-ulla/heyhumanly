@@ -325,6 +325,8 @@ final class CoachModel: ObservableObject {
                     self?.pullStatus = status == "success" ? "Installed" : (status.hasPrefix("pulling") ? "Downloading" : status.capitalized)
                 }
                 pullProgress = nil; pullStatus = ""
+                // Only pick it if Settings still points at the server it was downloaded to.
+                guard settings.endpoint == endpoint else { refreshStatus(); return }
                 selectModel(name)
                 refreshStatus()
             } catch {
