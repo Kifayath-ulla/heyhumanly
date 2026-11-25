@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -70,6 +71,15 @@ test('buildPrompt keeps the text verbatim and asks to preserve facts, questions 
   assert.match(p, /it stays a question/);
   assert.match(p, /keep that doubt/);
   assert.match(HH.buildPrompt('x', 'shorter', false), /as short as possible/);
+});
+
+test('buildPrompt fixes clear misspellings but keeps slang and casing, same as the Mac app', () => {
+  const p = HH.buildPrompt('thx, it realy saved me alot of time', 'sameTone', true);
+  assert.match(p, /fix clear spelling mistakes \("realy" becomes "really", "alot" becomes "a lot"\)/);
+  assert.match(p, /keep slang, abbreviations and casual spellings/);
+  const line = p.match(/ Also fix clear spelling mistakes[^\n]*?as written\./)[0];
+  const swift = readFileSync(new URL('../Sources/WriteCoach/Rephrase.swift', import.meta.url), 'utf8');
+  assert.ok(swift.includes(line), 'Rephrase.swift and core.js must share the spelling line');
 });
 
 function mockFetch(routes) {
