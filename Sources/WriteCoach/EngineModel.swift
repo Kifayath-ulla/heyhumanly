@@ -70,8 +70,8 @@ extension CoachModel {
         return base.range(of: "embed|bge|minilm|rerank|clip", options: [.regularExpression, .caseInsensitive]) == nil && !isCloudModel(name)
     }
     /// Ollama reads a name without a tag as `:latest`, so `mistral` and `mistral:latest` are the same model.
-    static func sameModel(_ a: String, _ b: String) -> Bool { canonicalModel(a) == canonicalModel(b) }
-    private static func canonicalModel(_ name: String) -> String {
+    nonisolated static func sameModel(_ a: String, _ b: String) -> Bool { canonicalModel(a) == canonicalModel(b) }
+    nonisolated private static func canonicalModel(_ name: String) -> String {
         let n = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return (n.split(separator: "/").last ?? "").contains(":") ? n : n + ":latest"
     }
