@@ -286,7 +286,7 @@ final class InlineSession: ObservableObject {
     private func run() {
         guard let model else { return }
         task?.cancel(); teachTask?.cancel()
-        let text = checkedText, app = appName, words = model.dictionary, chosen = tone
+        let text = checkedText, app = appName, words: [String] = [], chosen = tone
         let endpoint = model.activeEndpoint, modelName = model.activeModel
         let gen = generation
         let started = Date()
@@ -328,7 +328,6 @@ final class InlineSession: ObservableObject {
             return
         }
         phase = .ready
-        registerKeys()
         layout()
         explain(text: text, rewrite: rewrite)
     }
@@ -811,17 +810,6 @@ final class InlineSession: ObservableObject {
         afterEdit()
     }
 
-    /// "That's a real word": never flag it again.
-    func addToDictionary(_ id: UUID) {
-        guard let change = changes.first(where: { $0.id == id }) else { return }
-        let word = change.from.trimmingCharacters(in: .punctuationCharacters.union(.whitespaces))
-        model?.addDictionaryWord(word)
-        changes.removeAll { $0.id == id }
-        rebuildProposal(); openChangeID = nil
-        flash("“\(word)” is in your dictionary now.")
-        afterEdit()
-    }
-
     func muteCategory(of id: UUID) {
         guard let change = changes.first(where: { $0.id == id }) else { return }
         model?.setMuted(change.category, true)
@@ -923,14 +911,7 @@ final class InlineSession: ObservableObject {
         }
     }
 
-    /// History is only kept once the user acts on a check (nothing is stored for text you just typed).
-    private func recordIfNeeded() {
-        guard historyID == nil, let model else { return }
-        let local = changes.map { var c = $0; c.location = ($0.location ?? 0) - baseOffset; return c }
-        historyID = model.recordInline(original: checkedText, rewrite: rewriteForChanges, style: tone,
-                                       appName: appName, changes: local)
-        if !local.contains(where: \.pending), let id = historyID { model.updateInline(historyID: id, changes: local) }
-    }
+    private func recordIfNeeded() {}
 
     // MARK: Styles
 
@@ -944,7 +925,7 @@ final class InlineSession: ObservableObject {
         layout()
         // Tones start from the clean suggested version: small local models invent less that way.
         let base = (t == .fixOnly || rewriteForChanges.isEmpty) ? checkedText : rewriteForChanges
-        let text = base, app = appName, words = model.dictionary
+        let text = base, app = appName, words: [String] = []
         let endpoint = model.activeEndpoint, modelName = model.activeModel
         // Ollama answers one request at a time: pause the background explanations so the tone you
         // asked for comes first, then pick them up again.
@@ -1151,17 +1132,6 @@ final class InlineSession: ObservableObject {
     func endLearn() {
         learn = nil
         afterEdit()
-    }
-
-    // MARK: Session keys (only registered while suggestions are on screen)
-
-    private func registerKeys() {
-        keys.register([
-            (UInt32(kVK_Return), UInt32(controlKey | optionKey), { [weak self] in self?.fixAll() }),
-            (UInt32(kVK_ANSI_L), UInt32(controlKey | optionKey), { [weak self] in self?.learn == nil ? self?.startLearn() : self?.endLearn() }),
-            (UInt32(kVK_ANSI_Z), UInt32(controlKey | optionKey), { [weak self] in self?.undo() }),
-            (UInt32(kVK_ANSI_Period), UInt32(controlKey | optionKey), { [weak self] in self?.stop() }),
-        ])
     }
 }
 

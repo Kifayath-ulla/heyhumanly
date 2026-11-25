@@ -205,19 +205,6 @@ extension CoachModel {
         }
     }
 
-    /// Teach Me in online mode: the lesson comes from the local rule book, not another online call.
-    func localLesson(itemID: UUID, rewrite: String) {
-        let tip = InlineSession.lessonTip(for: changeSet.changes)
-        let updated = CoachResult(rewrite: rewrite, explanation: tip, exercise: "")
-        if currentItem?.id == itemID { result = updated }
-        if let index = history.firstIndex(where: { $0.id == itemID }) {
-            let item = HistoryItem(copying: history[index], result: updated)
-            history[index] = item
-            if currentItem?.id == itemID { currentItem = item }
-            HistoryItem.saveAll(history)
-        }
-    }
-
     /// Engine started on launch (offline runtime) and terminated on quit.
     func startEngineOnLaunch() {
         if settings.engine == .offlineManaged { Task { await runtime.startServer(); refreshStatus() } }
@@ -226,3 +213,27 @@ extension CoachModel {
         }
     }
 }
+
+extension OllamaStatus {
+    var color: Color {
+        switch self { case .running: return .added; case .checking: return .orange; default: return .removed }
+    }
+    /// Green only when the selected model can actually run; orange while checking or when it still needs downloading.
+    func color(model: String) -> Color {
+        if case .running(let models) = self,
+           !CoachModel.isWritingModel(model) || !models.contains(where: { CoachModel.sameModel($0, model) }) { return .orange }
+        return color
+    }
+    func summary(model: String) -> String {
+        switch self {
+        case .checking: return "Checking Ollama…"
+        case .running where !CoachModel.isWritingModel(model): return "\(model) can't write. Pick another model"
+        case .running(let models): return models.contains(where: { CoachModel.sameModel($0, model) }) ? "Ollama · \(model)" : "\(model) not installed"
+        case .notRunning: return "Ollama isn't running"
+        case .noEndpoint: return "No AI endpoint set"
+        }
+    }
+}
+
+// MARK: - Shared pieces
+

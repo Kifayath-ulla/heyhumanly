@@ -65,10 +65,6 @@ enum OnlineCoach {
         return id
     }
 
-    static func goal(_ g: RephraseGoal) -> String {
-        switch g { case .sameTone: return "sameTone"; case .shorter: return "shorter"; case .professional: return "formal" }
-    }
-    /// Each style maps to one of the server's goals (GOALS and STYLES in extension/core.js).
     static func goal(_ s: WritingStyle) -> String { s.onlineGoal }
 
     private static func parseDate(_ s: String?) -> Date? {
@@ -212,3 +208,19 @@ enum LLM {
         return String(s[start...end])
     }
 }
+
+enum Register {
+    static func isCasual(_ text: String) -> Bool {
+        let t = text.lowercased()
+        let slang = #"(?<![\w.])(yo|gang|bro|bruh|dude|lol|lmao|haha+|gonna|wanna|gotta|ya|u|ur|idk|tbh|omg|nah|yeah|yep|hey|hmm|bet|fr|rn|btw|sup|what's up|whats up)(?!\w|\.\w)"#
+        let hits = (try? NSRegularExpression(pattern: slang))?.numberOfMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length)) ?? 0
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let startsLower = trimmed.first.map { $0.isLowercase } ?? false
+        let emoji = text.unicodeScalars.contains { $0.properties.isEmojiPresentation }
+        // One signal (a "hey", an emoji, a lowercase start) is enough for a short message; longer text needs two.
+        let signals = hits + (startsLower ? 1 : 0) + (emoji ? 1 : 0)
+        let wordCount = text.split { !$0.isLetter && !$0.isNumber && $0 != "'" }.count
+        return signals >= (wordCount <= 15 ? 1 : 2)
+    }
+}
+

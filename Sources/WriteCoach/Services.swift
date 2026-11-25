@@ -6,30 +6,10 @@ import os
 /// Visible with: log show --last 10m --info --predicate 'subsystem == "com.heyhumanly.app"'
 let appLog = Logger(subsystem: "com.heyhumanly.app", category: "coach")
 
-enum CoachMode: String, Codable { case quickFix, teach }
-
-struct CoachResult: Codable {
-    var rewrite: String
-    var explanation: String
-    var exercise: String
-    static let empty = CoachResult(rewrite: "", explanation: "", exercise: "")
-    init(rewrite: String, explanation: String, exercise: String) {
-        self.rewrite = rewrite; self.explanation = explanation; self.exercise = exercise
-    }
-    init(from decoder: Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        rewrite = try values.decode(String.self, forKey: .rewrite)
-        explanation = try values.decodeIfPresent(String.self, forKey: .explanation) ?? ""
-        exercise = try values.decodeIfPresent(String.self, forKey: .exercise) ?? ""
-    }
-    enum CodingKeys: String, CodingKey { case rewrite, explanation, exercise }
-}
-
 struct AppSettings: Codable {
     var endpoint = "http://localhost:11434/api/generate"
     /// 16 GB Macs get the 7B model; smaller Macs get the 3B one.
     var model = ProcessInfo.processInfo.physicalMemory >= 12 * 1_073_741_824 ? "qwen2.5:7b" : "qwen2.5:3b"
-    var defaultMode = CoachMode.quickFix
     var shortcutHint = "Control + Option + Space"
     var shortcutKeyCode: UInt32 = UInt32(kVK_Space)
     var shortcutModifiers: UInt32 = UInt32(controlKey | optionKey)
@@ -64,7 +44,7 @@ struct AppSettings: Codable {
     var learnBySentence: Bool { get { learnByRaw != "word" } set { learnByRaw = newValue ? "sentence" : "word" } }
 
     /// Check the focused field automatically after a typing pause.
-    var autoCheck: Bool { get { autoCheckRaw ?? true } set { autoCheckRaw = newValue } }
+    var autoCheck: Bool { get { autoCheckRaw ?? false } set { autoCheckRaw = newValue } }
     /// Language used for explanations ("English", "Hindi", …).
     var explainLanguage: String { get { explainLanguageRaw ?? "English" } set { explainLanguageRaw = newValue } }
     /// Bundle ids where the companion never reads text.
@@ -108,28 +88,12 @@ struct AppSettings: Codable {
         guard let data = UserDefaults.standard.data(forKey: "heyhumanly.settings"), let value = try? JSONDecoder().decode(Self.self, from: data) else { return Self() }
         return value
     }
+    /// History, review cards and the dictionary were removed in 0.2; delete what older versions saved.
+    static func removeRetiredData() {
+        for key in ["heyhumanly.history", "heyhumanly.reviews", "heyhumanly.dictionary", "heyhumanly.tryFirst"] { UserDefaults.standard.removeObject(forKey: key) }
+    }
     func save() { if let data = try? JSONEncoder().encode(self) { UserDefaults.standard.set(data, forKey: "heyhumanly.settings") } }
 }
-
-struct HistoryItem: Codable, Identifiable {
-    let id: UUID; let date: Date; let original: String; let result: CoachResult; let mode: CoachMode
-    // Added in the review/insights release; optional so older history still loads.
-    var changes: [Change]?
-    var style: WritingStyle?
-    var appName: String?
-    init(original: String, result: CoachResult, mode: CoachMode, style: WritingStyle? = nil, appName: String? = nil, changes: [Change]? = nil) {
-        self.id = UUID(); self.date = Date(); self.original = original; self.result = result; self.mode = mode
-        self.style = style; self.appName = appName; self.changes = changes
-    }
-    /// Same session (id and date kept) with a new result, e.g. after the Teach Me lesson arrives.
-    init(copying old: HistoryItem, result: CoachResult) {
-        id = old.id; date = old.date; original = old.original; self.result = result; mode = old.mode
-        changes = old.changes; style = old.style; appName = old.appName
-    }
-    static func loadAll() -> [Self] { guard let data = UserDefaults.standard.data(forKey: "heyhumanly.history"), let value = try? JSONDecoder().decode([Self].self, from: data) else { return [] }; return value }
-    static func saveAll(_ value: [Self]) { if let data = try? JSONEncoder().encode(value) { UserDefaults.standard.set(data, forKey: "heyhumanly.history") } }
-}
-
 
 enum CoachError: LocalizedError {
     case noEndpoint, ollamaNotRunning, modelMissing(String), server(Int, String), invalidResponse, appleUnavailable(String), tooLongForApple
@@ -261,32 +225,6 @@ struct CoachService {
         return StyleChecker.collapseRepetitions(s)
     }
 
-    /// Teach Me lesson for an existing correction: principle + exercise.
-    static func lesson(original: String, rewrite: String, endpoint: String, model: String) async -> (String, String)? {
-        guard let url = URL(string: endpoint) else { return nil }
-        let prompt = """
-        You are a patient writing teacher. A writer's text was corrected.
-        Original: \(original)
-        Corrected: \(rewrite)
-        Return JSON {"explanation": "...", "exercise": "..."}.
-        explanation = 2-4 short sentences teaching the main writing principle behind the corrections, addressed to the writer as "you".
-        exercise = one practice instruction that starts with a verb such as "Write" or "Rewrite" and practises the same principle on a NEW sentence. Never repeat the writer's text and never include the answer.
-        """
-        let schema: [String: Any] = ["type": "object", "required": ["explanation", "exercise"],
-                                     "properties": ["explanation": ["type": "string"], "exercise": ["type": "string"]]]
-        var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 60
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "format": schema,
-                                                                        "keep_alive": "30m", "options": ["temperature": 0.2, "num_predict": 350]])
-        struct Outer: Decodable { let response: String }
-        struct L: Decodable { let explanation: String; let exercise: String }
-        guard let (data, _) = try? await LLM.data(for: request),
-              let outer = try? JSONDecoder().decode(Outer.self, from: data),
-              let l = try? JSONDecoder().decode(L.self, from: Data(outer.response.utf8)) else { return nil }
-        return (l.explanation, l.exercise)
-    }
-
-    /// Streams `ollama pull` progress (0...1). Throws on failure.
     static func pull(model: String, endpoint: String, progress: @escaping @MainActor (Double, String) -> Void) async throws {
         guard var comps = URLComponents(string: endpoint) else { throw CoachError.noEndpoint }
         comps.path = "/api/pull"; comps.query = nil
@@ -314,52 +252,8 @@ struct CoachService {
         request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model, "keep_alive": "30m", "stream": false, "think": false])
         _ = try? await LLM.data(for: request)
     }
-
-    func analyze(text: String, mode: CoachMode, style: WritingStyle = .fixOnly, appName: String? = nil, endpoint: String, model: String = "qwen2.5:3b", preserve: [String] = []) async throws -> CoachResult {
-        guard !endpoint.isEmpty, let url = URL(string: endpoint) else { throw CoachError.noEndpoint }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 120
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let modeRules = mode == .teach
-            ? "explanation = 2-4 sentences teaching the main writing principle behind the corrections, addressed to the writer as \"you\". exercise = one practice instruction that starts with a verb such as 'Write' or 'Rewrite' and practises the same principle on a NEW sentence, for example: Write two sentences that use the word there correctly. Never repeat the user's text as the exercise and never include the answer."
-            : "explanation = one short sentence summarising what changed (empty if nothing changed). exercise = an empty string."
-        let preserveRule = preserve.isEmpty ? "" : "\nKeep these words and phrases exactly as written: " + preserve.map { "\"\($0)\"" }.joined(separator: ", ") + "."
-        let context = appName.map { "\nThe text is being written in \($0)." } ?? ""
-        let prompt = """
-        You are HeyHumanly, a writing coach.
-        \(style.instruction)
-        Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links and technical terms exactly, and leave anything between backticks (`like this`) exactly as written. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.\(preserveRule)\(context)
-        Return ONLY JSON with string fields rewrite, explanation, exercise. rewrite = the full corrected text. \(modeRules)
-        Text:
-        \(text)
-        """
-        let schema: [String: Any] = ["type": "object", "properties": ["rewrite": ["type": "string"], "explanation": ["type": "string"], "exercise": ["type": "string"]], "required": ["rewrite", "explanation", "exercise"]]
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": false, "think": false, "format": schema, "keep_alive": "30m", "options": ["temperature": 0.1, "num_predict": 700]])
-
-        let data: Data, response: URLResponse
-        do {
-            (data, response) = try await LLM.data(for: request)
-        } catch let error as URLError where [.cannotConnectToHost, .cannotFindHost, .networkConnectionLost, .notConnectedToInternet].contains(error.code) {
-            throw CoachError.ollamaNotRunning
-        }
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 500
-        guard status < 300 else {
-            let body = String(data: data, encoding: .utf8) ?? ""
-            if status == 404 || body.localizedCaseInsensitiveContains("not found") { throw CoachError.modelMissing(model) }
-            throw CoachError.server(status, body)
-        }
-        struct OllamaResponse: Codable { let response: String }
-        guard let generated = try? JSONDecoder().decode(OllamaResponse.self, from: data),
-              let result = try? JSONDecoder().decode(CoachResult.self, from: Data(generated.response.utf8)),
-              !result.rewrite.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw CoachError.invalidResponse
-        }
-        return result
-    }
 }
 
-/// Saves every item and type on the clipboard so it can be put back exactly.
 struct PasteboardSnapshot {
     private let items: [[NSPasteboard.PasteboardType: Data]]
     init(_ pasteboard: NSPasteboard) {

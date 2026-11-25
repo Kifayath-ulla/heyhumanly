@@ -17,6 +17,8 @@ final class QuickSession: ObservableObject {
     @Published var notice: String?
     @Published var showWhy = false
     @Published var appName = ""
+    /// No Accessibility permission: the text comes from the clipboard and Enter copies the rewrite.
+    @Published var copyOnly = false
 
     weak var model: CoachModel?
     private var panel: QuickPanelWindow?
@@ -31,6 +33,9 @@ final class QuickSession: ObservableObject {
     private var undoKeys = SessionKeys(base: 300)
     private var undoExpiry: Task<Void, Never>?
     private var undoObserver: NSObjectProtocol?
+    /// The welcome window's sample box, which is ours so it needs no permission.
+    private weak var sample: NSTextView?
+    private var sampleRange: NSRange?
 
     var isOpen: Bool { panel?.isVisible == true }
     var hasText: Bool { !original.isEmpty }
@@ -45,7 +50,7 @@ final class QuickSession: ObservableObject {
         appName = front.localizedName ?? "this app"
         pid = front.processIdentifier
         original = ""; streamed = ""; rewrite = nil; changes = []; error = nil; notice = nil; cache = [:]
-        element = nil; range = nil; anchor = nil
+        element = nil; range = nil; anchor = nil; sample = nil; sampleRange = nil; copyOnly = false
         style = front.bundleIdentifier.flatMap { model.settings.appStyles[$0] } ?? model.settings.defaultStyle
 
         AXText.enableManualAccessibility(pid: pid)
@@ -78,6 +83,44 @@ final class QuickSession: ObservableObject {
         start(bundleID: front.bundleIdentifier)
     }
 
+    /// The sample box in the welcome window: same panel and rewrite, written back into the box.
+    func openSample(model: CoachModel, textView: NSTextView) {
+        self.model = model
+        task?.cancel(); generation += 1
+        clearUndo()
+        appName = "HeyHumanly"; pid = ProcessInfo.processInfo.processIdentifier
+        original = ""; streamed = ""; rewrite = nil; changes = []; error = nil; notice = nil; cache = [:]
+        element = nil; range = nil; copyOnly = false
+        style = model.settings.defaultStyle
+        var r = textView.selectedRange()
+        if r.length == 0 { r = NSRange(location: 0, length: (textView.string as NSString).length) }
+        sample = textView; sampleRange = r
+        original = (textView.string as NSString).substring(with: r)
+        let rect = textView.firstRect(forCharacterRange: r, actualRange: nil)
+        anchor = rect == .zero ? textView.window?.frame : rect
+        show()
+        original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? fail("Type or select some text in the box, then press \(model.shortcutLabel).") : run()
+    }
+
+    /// Without Accessibility HeyHumanly can't read the selection, so it rewrites what you copied; Enter copies the result.
+    func openFromClipboard(model: CoachModel, front: NSRunningApplication) {
+        self.model = model
+        task?.cancel(); generation += 1
+        clearUndo()
+        appName = front.localizedName ?? "this app"
+        pid = front.processIdentifier
+        original = ""; streamed = ""; rewrite = nil; changes = []; error = nil; notice = nil; cache = [:]
+        element = nil; range = nil; anchor = nil; sample = nil; sampleRange = nil; copyOnly = true
+        style = front.bundleIdentifier.flatMap { model.settings.appStyles[$0] } ?? model.settings.defaultStyle
+        original = NSPasteboard.general.string(forType: .string) ?? ""
+        show()
+        if original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            fail("Copy some text with ⌘C, then press \(model.shortcutLabel). To replace text in place, turn on Accessibility in Settings.")
+        } else {
+            start(bundleID: front.bundleIdentifier)
+        }
+    }
+
     /// Apps on the "Never read text in" list don't get an automatic rewrite: nothing is sent until you ask (⌘R, ⇥, ⌘1–5).
     private func start(bundleID: String?) {
         if let bundleID, model?.settings.pausedApps.contains(bundleID) == true {
@@ -106,6 +149,7 @@ final class QuickSession: ObservableObject {
         busy = false
         removeMonitor()
         panel?.orderOut(nil)
+        sample?.window?.makeKeyAndOrderFront(nil)
     }
 
     // MARK: Placement
@@ -175,7 +219,7 @@ final class QuickSession: ObservableObject {
         }
         busy = true; streamed = ""; rewrite = nil; changes = []
         layout()
-        let text = original, chosen = style, app = appName, words = model.dictionary
+        let text = original, chosen = style, app = appName, words: [String] = []
         let endpoint = model.activeEndpoint, modelName = model.activeModel, online = model.isOnline
         task = Task { [weak self] in
             do {
@@ -251,8 +295,21 @@ final class QuickSession: ObservableObject {
     func replace() {
         guard let text = rewrite, !busy else { return }
         guard text != original else { close(); return }
+        if copyOnly {
+            let pb = NSPasteboard.general
+            pb.clearContents(); pb.setString(text, forType: .string)
+            close()
+            return
+        }
+        if let tv = sample, let r = sampleRange {
+            close()
+            if NSMaxRange(r) <= (tv.string as NSString).length, (tv.string as NSString).substring(with: r) == original {
+                tv.insertText(text, replacementRange: r)
+                tv.setSelectedRange(NSRange(location: r.location, length: (text as NSString).length))
+            }
+            return
+        }
         let old = original, el = element, r = range, app = appName
-        _ = model?.recordInline(original: old, rewrite: text, style: style, appName: app, changes: changes)
         close()
         Task {
             var done = false, direct = false
@@ -336,11 +393,9 @@ final class QuickSession: ObservableObject {
 
     func setUpOffline() {
         guard let model else { return }
-        // The offline setup lives in the coach window; the text comes along.
-        model.draft = original
         close()
         model.openOfflineSetup()
-        model.showCoach()
+        model.openSettings(.engine)
     }
 
     /// Switches to the user's Ollama, then rewrites once it's connected (or shows why it couldn't).
@@ -537,7 +592,7 @@ struct QuickPanelView: View {
 
     private var footer: some View {
         HStack(spacing: 12) {
-            key("↩", "Replace"); key("⇥", "Style"); key("⌘1–5", ""); key("⌘/", "Why"); key("⌘R", "Retry"); key("⌘C", "Copy"); key("esc", "")
+            key("↩", session.copyOnly ? "Copy" : "Replace"); key("⇥", "Style"); key("⌘1–5", ""); key("⌘/", "Why"); key("⌘R", "Retry"); key("⌘C", "Copy"); key("esc", "")
             Spacer(minLength: 4)
             if let model = session.model {
                 Circle().fill(dotColor(model)).frame(width: 7, height: 7)

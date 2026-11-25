@@ -66,7 +66,7 @@ struct OnlineStatusStack: View {
                 if model.ollamaDetected {
                     Button("Connect an existing local model") { model.useMyOllama() }.buttonStyle(SecondaryButtonStyle())
                 } else {
-                    Button("Use my Ollama…") { model.openDashboard(section: .settings) }.buttonStyle(SecondaryButtonStyle())
+                    Button("Use my Ollama…") { model.openSettings(.engine) }.buttonStyle(SecondaryButtonStyle())
                         .help("Settings → Coaching → Advanced")
                 }
                 Button("Wait for allowance reset") { model.waitForReset() }.buttonStyle(SecondaryButtonStyle())
@@ -231,7 +231,7 @@ struct EngineSettingsCard: View {
 
     private func option(_ e: CoachEngine, detail: String, enabled: Bool) -> some View {
         Button {
-            if e == .online && !model.settings.onlineConsent { model.showConsent = true; model.showCoach() }
+            if e == .online && !model.settings.onlineConsent { model.showConsent = true }
             else if e == .offlineManaged && !offlineReady { model.runtime.prepare() }
             else if e == .ollama { model.useMyOllama() }
             else { model.setEngine(e) }

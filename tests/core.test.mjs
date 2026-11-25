@@ -78,13 +78,10 @@ test('buildPrompt keeps the text verbatim and asks to preserve facts, questions 
   assert.match(HH.buildPrompt('x', 'shorter', false), /as short as possible/);
 });
 
-test('buildPrompt fixes clear misspellings but keeps slang and casing, same as the Mac app', () => {
+test('buildPrompt fixes clear misspellings but keeps slang and casing', () => {
   const p = HH.buildPrompt('thx, it realy saved me alot of time', 'sameTone', true);
   assert.match(p, /fix clear spelling mistakes \("realy" becomes "really", "alot" becomes "a lot"\)/);
   assert.match(p, /keep slang, abbreviations and casual spellings/);
-  const line = p.match(/ Also fix clear spelling mistakes[^\n]*?as written\./)[0];
-  const swift = readFileSync(new URL('../Sources/WriteCoach/Rephrase.swift', import.meta.url), 'utf8');
-  assert.ok(swift.includes(line), 'Rephrase.swift and core.js must share the spelling line');
 });
 
 function mockFetch(routes) {

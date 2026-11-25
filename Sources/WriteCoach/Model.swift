@@ -1,11 +1,11 @@
 import SwiftUI
 import AppKit
+import ApplicationServices
 import Carbon.HIToolbox
-import os
+import ServiceManagement
 
 @MainActor
 final class CoachModel: ObservableObject {
-    @Published var draft = ""
     @Published var allowance: Allowance?
     @Published var onlineLimitHit = false
     @Published var onlineFailed = false
@@ -13,84 +13,35 @@ final class CoachModel: ObservableObject {
     @Published var showOfflineSetup = false
     @Published var appleAvailability = AppleModel.availabilityDescription
     let runtime = OfflineRuntime.shared
-    @Published var rephraseOn = true
-    @Published var rephraseResult: RephraseResult?
-    @Published var rephraseLoading = false
-    @Published var rephraseOriginal = ""
     @Published var browserAllowed: Bool? = nil
     @Published var browserBusy = false
     @Published var browserNote: String? = nil
-    @Published var rephraseGoal: RephraseGoal = .sameTone
-    @Published var habitsVersion = 0
-    @Published var result = CoachResult.empty
-    @Published var resultMode: CoachMode?
-    @Published var loadingMode: CoachMode?
     @Published var errorMessage: String?
     @Published var statusMessage: String?
     @Published var settings = AppSettings()
-    @Published var history: [HistoryItem] = []
     @Published var settingsEndpoint = ""
     @Published var settingsModel = ""
-    @Published var section: DashboardSection = .home
-    @Published var selectedMode: CoachMode = .quickFix
-    @Published var historySearch = ""
-    @Published var expandedHistoryID: UUID?
     @Published var ollama: OllamaStatus = .checking
     @Published var installedModels: [String] = []
-    /// In-app model download (Ollama /api/pull). nil progress = not downloading.
-    @Published var pullFraction: Double?
-    @Published var pullDetail = ""
-    @Published var pullError: String?
-    var pullTask: Task<Void, Never>?
     @Published var accessibilityTrusted = AccessibilityBridge.isTrusted
-    @Published var confirmClearHistory = false
-    /// Exercise the user is practising, shown above the editor.
-    @Published var practicePrompt: String?
-    @Published var showRemovedWords = false
-    /// The saved session the coach is showing (original text + result).
-    @Published var currentItem: HistoryItem?
     @Published var isRecordingShortcut = false
     @Published var shortcutLabel = "⌃⌥Space"
     @Published var shortcutError: String?
-    @Published var sourceAppName: String?
-    @Published var dictionary: [String] = []
-    @Published var newDictionaryWord = ""
-    // Review & learning
-    @Published var selectedStyle: WritingStyle = .fixOnly
-    @Published var changeSet = ChangeSet()
-    @Published var acceptedChanges: Set<UUID> = []
-    @Published var explaining = false
-    /// Rewrite text as it streams in.
-    @Published var streamingText = ""
-    @Published var lessonLoading = false
-    @Published var reviews: [ReviewItem] = []
-    @Published var reviewIndex = 0
-    @Published var reviewAnswer = ""
-    @Published var reviewFeedback: Bool?
     @Published var pullProgress: Double?
     @Published var pullStatus = ""
-    private var sourceBundleID: String?
-    /// In-app underlines + suggestion cards (the main experience).
+    @Published var snoozedUntil: Date?
+    @Published var dismissedCount = RewriteGuard.dismissed.count
+    @Published var settingsTab: SettingsTab = .general
+
     let inline = InlineSession()
     let quick = QuickSession()
     let watcher = TextWatcher()
-    @Published var showQuietFixes = false
-    // Make it better + interactive learning
-    @Published var styleFindings: [StyleFinding] = []
-    @Published var styleBusy: UUID?
-    @Published var proposedRewrites: [UUID: String] = [:]
-    @Published var openLesson: UUID?
-    @Published var tryFirst = UserDefaults.standard.bool(forKey: "heyhumanly.tryFirst") {
-        didSet { UserDefaults.standard.set(tryFirst, forKey: "heyhumanly.tryFirst") }
-    }
-    @Published var spotRevealed = true
-    @Published var spotPicked: Set<Int> = []
-    @Published var quiz: QuizState?
-    /// First-run tour (nil = not showing).
-    @Published var onboardingStep: Int?
-    /// "Pause for an hour" from the menu bar.
-    @Published var snoozedUntil: Date?
-    @Published var dismissedCount = RewriteGuard.dismissed.count
+    /// Opens the Settings scene; set by the menu bar item, which has SwiftUI's openSettings action.
+    var openSettingsAction: (() -> Void)?
+    /// The sample box in the welcome window, so ⌃⌥Space works there before any permission.
+    weak var onboardingSample: NSTextView?
+    private var onboardingWindow: NSWindow?
+    private var shortcutMonitor: Any?
 
     var isSnoozed: Bool { snoozedUntil.map { $0 > Date() } ?? false }
     /// Checking as you type is on and not snoozed.
@@ -104,76 +55,22 @@ final class CoachModel: ObservableObject {
         snoozedUntil = Date().addingTimeInterval(Double(minutes) * 60)
         inline.stop()
     }
-    func finishOnboarding() {
-        onboardingStep = nil
-        settings.onboarded = true; settings.save()
-    }
     func resetDismissals() { RewriteGuard.clearDismissals(); dismissedCount = 0 }
-
-    // MARK: Appearance
-
-    var appearanceName: String { settings.appearanceRaw ?? "Light" }
-    var appearanceIcon: String {
-        switch appearanceName { case "Light": return "sun.max"; case "Dark": return "moon"; default: return "circle.lefthalf.filled" }
-    }
-    func cycleAppearance() {
-        let order = ["System", "Light", "Dark"]
-        let next = order[((order.firstIndex(of: appearanceName) ?? 0) + 1) % order.count]
-        settings.appearanceRaw = next; settings.save(); applyAppearance(); objectWillChange.send()
-    }
-    func applyAppearance() {
-        // One-time move to the light default; the toggle still lets people choose Light or System.
-        if !UserDefaults.standard.bool(forKey: "heyhumanly.lightDefaultV2") {
-            UserDefaults.standard.set(true, forKey: "heyhumanly.lightDefaultV2")
-            settings.appearanceRaw = "Light"; settings.save()
-        }
-        switch appearanceName {
-        case "Light": NSApp?.appearance = NSAppearance(named: .aqua)
-        case "Dark": NSApp?.appearance = NSAppearance(named: .darkAqua)
-        default: NSApp?.appearance = nil
-        }
-    }
-
-    // MARK: Muted ("I already know this") categories
-
     func isMuted(_ category: MistakeCategory) -> Bool { settings.mutedCategories.contains(category) }
 
     func setMuted(_ category: MistakeCategory, _ muted: Bool) {
         var set = settings.mutedCategories
         if muted { set.insert(category) } else { set.remove(category) }
         settings.mutedCategories = set; settings.save()
-        if muted {
-            // Make sure muted fixes are applied, and drop their review cards.
-            for c in changeSet.changes where c.category == category { acceptedChanges.insert(c.id) }
-            reviews.removeAll { $0.category == category }; ReviewItem.saveAll(reviews)
-        }
         objectWillChange.send()
     }
 
-    /// Changes shown in the review list (muted categories are applied silently).
-    var visibleChanges: [Change] { changeSet.changes.filter { !isMuted($0.category) } }
-    var quietChanges: [Change] { changeSet.changes.filter { isMuted($0.category) } }
-
-    var isLoading: Bool { loadingMode != nil }
-    var openDashboardAction: (() -> Void)?
-
-    private var shortcutMonitor: Any?
-    let bridge = AccessibilityBridge()
-    private let coach = CoachService()
-    private var coachWindow: NSPanel?
-    var sourceApp: NSRunningApplication?
-
     init() {
         settings = AppSettings.load()
+        AppSettings.removeRetiredData()
         settingsEndpoint = settings.endpoint
         settingsModel = settings.model
-        history = HistoryItem.loadAll()
-        reviews = ReviewItem.loadAll()
-        selectedStyle = settings.defaultStyle
-        applyAppearance()
-        dictionary = UserDefaults.standard.stringArray(forKey: "heyhumanly.dictionary") ?? []
         shortcutLabel = settings.shortcutLabel
-        if settings.onboarded != true { onboardingStep = 0 }
         appLog.notice("apple on-device availability: \(AppleModel.availabilityDescription, privacy: .public)")
         startEngineOnLaunch()
         refreshStatus()
@@ -186,60 +83,44 @@ final class CoachModel: ObservableObject {
         } else if status != noErr {
             shortcutError = "\(shortcutLabel) couldn't be registered (error \(status)). It may be taken by macOS or another app. Pick a different shortcut in Settings."
         }
+        if settings.onboarded != true { DispatchQueue.main.async { [weak self] in self?.showOnboarding() } }
     }
 
     // MARK: Windows
 
-    func showCoach() {
-        if coachWindow == nil {
-            let host = NSHostingView(rootView: CoachPanelView(model: self).tint(Color.brand))
-            let panel = CoachPanel(
-                contentRect: NSRect(x: 0, y: 0, width: 640, height: 720),
-                styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
-                backing: .buffered, defer: false)
-            panel.title = "Writing coach"
-            panel.titleVisibility = .hidden
-            panel.titlebarAppearsTransparent = true
-            panel.isMovableByWindowBackground = true
-            panel.isFloatingPanel = true
-            panel.level = .floating
-            panel.hidesOnDeactivate = false
-            panel.isReleasedWhenClosed = false
-            panel.backgroundColor = .clear
-            panel.isOpaque = false
-            panel.hasShadow = true
-            panel.contentView = host
-            for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] { panel.standardWindowButton(button)?.isHidden = true }
-            panel.minSize = NSSize(width: 520, height: 360)
-            if let screen = NSScreen.main {   // Spotlight-style: centred, upper third
-                let f = screen.visibleFrame
-                panel.setFrameOrigin(NSPoint(x: f.midX - 320, y: max(f.minY + 20, f.maxY - 720 - f.height * 0.05)))
-            }
-            coachWindow = panel
-        }
-        refreshStatus()
+    func openSettings(_ tab: SettingsTab? = nil) {
+        if let tab { settingsTab = tab }
         NSApp.activate(ignoringOtherApps: true)
-        coachWindow?.makeKeyAndOrderFront(nil)
-        // Put the cursor in the editor so the user can type straight away.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            guard let panel = self?.coachWindow, let content = panel.contentView,
-                  let textView = Self.firstTextView(in: content) else { return }
-            panel.makeFirstResponder(textView)
-        }
+        openSettingsAction?()
     }
 
-    private static func firstTextView(in view: NSView) -> NSTextView? {
-        if let tv = view as? NSTextView, tv.isEditable { return tv }
-        for sub in view.subviews { if let found = firstTextView(in: sub) { return found } }
-        return nil
+    func showOnboarding() {
+        if onboardingWindow == nil {
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 440), styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
+            w.titlebarAppearsTransparent = true; w.titleVisibility = .hidden
+            w.isMovableByWindowBackground = true
+            w.isReleasedWhenClosed = false
+            w.contentView = NSHostingView(rootView: OnboardingView(model: self))
+            w.center()
+            onboardingWindow = w
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        onboardingWindow?.makeKeyAndOrderFront(nil)
     }
 
-    func closeCoach() { coachWindow?.orderOut(nil) }
+    func finishOnboarding() {
+        settings.onboarded = true; settings.save()
+        onboardingWindow?.close()
+    }
 
-    func openDashboard(section: DashboardSection? = nil) {
-        if let section { self.section = section }
-        NSApp.activate(ignoringOtherApps: true)
-        openDashboardAction?()
+    /// Starts HeyHumanly at login (macOS asks the user to confirm in System Settings > General > Login Items).
+    var launchAtLogin: Bool {
+        get { SMAppService.mainApp.status == .enabled }
+        set {
+            do { newValue ? try SMAppService.mainApp.register() : try SMAppService.mainApp.unregister() }
+            catch { statusMessage = "Couldn't change Open at Login: \(error.localizedDescription)" }
+            objectWillChange.send()
+        }
     }
 
     // MARK: Status
@@ -289,80 +170,6 @@ final class CoachModel: ObservableObject {
         settings.model = settingsModel.trimmingCharacters(in: .whitespaces)
         settings.save()
         refreshStatus()
-    }
-
-    // MARK: Stats (all computed from saved sessions)
-
-    var lessonCount: Int { history.filter { $0.mode == .teach }.count }
-    var wordsCoached: Int { history.reduce(0) { $0 + $1.original.split(whereSeparator: \.isWhitespace).count } }
-    var dayStreak: Int {
-        let cal = Calendar.current
-        let days = Set(history.map { cal.startOfDay(for: $0.date) })
-        var day = cal.startOfDay(for: Date())
-        if !days.contains(day) { day = cal.date(byAdding: .day, value: -1, to: day)! }
-        var streak = 0
-        while days.contains(day) { streak += 1; day = cal.date(byAdding: .day, value: -1, to: day)! }
-        return streak
-    }
-
-    var setupSteps: [SetupStep] {
-        [
-            SetupStep(title: "Choose how to coach", detail: engineReady ? engineLabel : "Online, or offline on this Mac", done: engineReady),
-            SetupStep(title: "Try Quick Fix", detail: "Fix a sentence in one step", done: history.contains { $0.mode == .quickFix }),
-            SetupStep(title: "Try Teach Me", detail: "Get a lesson and an exercise", done: history.contains { $0.mode == .teach }),
-            SetupStep(title: "Coach in other apps", detail: "Optional: needs Accessibility", done: accessibilityTrusted),
-        ]
-    }
-
-    // MARK: History
-
-    var filteredHistory: [HistoryItem] {
-        let q = historySearch.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return history }
-        return history.filter { $0.original.localizedCaseInsensitiveContains(q) || $0.result.rewrite.localizedCaseInsensitiveContains(q) }
-    }
-
-    /// Sessions grouped by calendar day, newest first.
-    var historyByDay: [(day: Date, items: [HistoryItem])] {
-        let cal = Calendar.current
-        let groups = Dictionary(grouping: filteredHistory) { cal.startOfDay(for: $0.date) }
-        return groups.keys.sorted(by: >).map { ($0, groups[$0]!.sorted { $0.date > $1.date }) }
-    }
-
-    func deleteHistoryItem(_ id: UUID) {
-        history.removeAll { $0.id == id }
-        HistoryItem.saveAll(history)
-    }
-
-    func clearHistory() {
-        history = []; HistoryItem.saveAll(history); confirmClearHistory = false
-    }
-
-    func reopen(_ item: HistoryItem) {
-        currentItem = item
-        changeSet = ChangeSet(original: item.original, rewrite: item.result.rewrite)
-        if let saved = item.changes, saved.count == changeSet.changes.count { changeSet.changes = saved }
-        acceptedChanges = Set(changeSet.changes.map(\.id))
-        selectedStyle = item.style ?? settings.defaultStyle
-        spotRevealed = true; quiz = nil; proposedRewrites = [:]
-        draft = item.original; result = item.result; resultMode = item.mode; selectedMode = item.mode
-        sourceApp = nil; sourceAppName = nil; errorMessage = nil; statusMessage = nil
-        refreshStyle()
-        showCoach()
-    }
-
-    // MARK: Dictionary
-
-    func addDictionaryWord(_ raw: String) {
-        let word = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !word.isEmpty, !dictionary.contains(where: { $0.caseInsensitiveCompare(word) == .orderedSame }) else { return }
-        dictionary.append(word)
-        UserDefaults.standard.set(dictionary, forKey: "heyhumanly.dictionary")
-    }
-
-    func removeDictionaryWord(_ word: String) {
-        dictionary.removeAll { $0 == word }
-        UserDefaults.standard.set(dictionary, forKey: "heyhumanly.dictionary")
     }
 
     // MARK: Shortcut
@@ -455,262 +262,49 @@ final class CoachModel: ObservableObject {
         return value + ((key?.isEmpty == false) ? key! : "Key \(keyCode)")
     }
 
-    // MARK: Capture and replace
+    // MARK: Capture
 
+    /// ⌃⌥Space: rewrite the selection in the frontmost app (or the welcome window's sample box).
     func captureSelection() {
         appLog.notice("hotkey fired; frontmost=\(NSWorkspace.shared.frontmostApplication?.localizedName ?? "nil", privacy: .public)")
         errorMessage = nil
         statusMessage = nil
-        guard let front = NSWorkspace.shared.frontmostApplication,
-              front.processIdentifier != ProcessInfo.processInfo.processIdentifier else {
-            showCoach()   // pressed while HeyHumanly is in front: just open the coach
-            return
-        }
-        guard AccessibilityBridge.isTrusted else {
-            sourceApp = nil; sourceAppName = nil
-            errorMessage = "HeyHumanly needs Accessibility permission to read and replace selected text. Turn it on in System Settings > Privacy & Security > Accessibility, then try again."
-            AccessibilityBridge.requestTrust()
-            showCoach()
-            return
-        }
         // The shortcut again while the panel is open closes it.
         if quick.isOpen { quick.close(); return }
+        guard let front = NSWorkspace.shared.frontmostApplication else { return }
+        if front.processIdentifier == ProcessInfo.processInfo.processIdentifier {
+            if let sample = onboardingSample, sample.window?.isVisible == true { quick.openSample(model: self, textView: sample) }
+            return
+        }
+        accessibilityTrusted = AccessibilityBridge.isTrusted
+        guard accessibilityTrusted else { quick.openFromClipboard(model: self, front: front); return }
         quick.open(model: self, front: front)
     }
 
-    func apply() {
-        errorMessage = nil; statusMessage = nil
-        guard !result.rewrite.isEmpty else { return }
-        guard let app = sourceApp else {
-            errorMessage = "There's no captured selection to replace. Select text in another app and press \(shortcutLabel), or use Copy rewrite."
-            return
-        }
-        let name = sourceAppName ?? "the original app"
-        guard !app.isTerminated else {
-            sourceApp = nil
-            errorMessage = "\(name) is no longer open. Use Copy rewrite instead."
-            return
-        }
-        guard AccessibilityBridge.isTrusted else {
-            errorMessage = "Accessibility permission is off, so HeyHumanly can't paste into \(name). Turn it on in System Settings > Privacy & Security > Accessibility."
-            return
-        }
-        let rewrite = finalText
-        app.activate(options: [])
-        Task {
-            var switched = false
-            for _ in 0..<50 {
-                if NSWorkspace.shared.frontmostApplication?.processIdentifier == app.processIdentifier { switched = true; break }
-                try? await Task.sleep(nanoseconds: 20_000_000)
-            }
-            guard switched else {
-                errorMessage = "Couldn't switch back to \(name). Use Copy rewrite instead."
-                return
-            }
-            try? await Task.sleep(nanoseconds: 150_000_000)
-            await bridge.replaceSelectedText(with: rewrite)
-            statusMessage = "Replaced in \(name) · ⌘Z there to undo"
-            sourceApp = nil   // the original selection no longer exists
+    /// The menu closes first so the source app is frontmost again when the selection is read.
+    func fixSelectionFromMenu() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in self?.captureSelection() }
+    }
+
+    func engineSelectable(_ e: CoachEngine) -> Bool {
+        switch e {
+        case .appleOnDevice: return appleAvailability == "available"
+        case .ollama: return ollamaDetected
+        case .online, .offlineManaged: return true
         }
     }
 
-    func copyRewrite() {
-        guard !result.rewrite.isEmpty else { return }
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(finalText, forType: .string)
-        errorMessage = nil
-        statusMessage = "Copied to clipboard"
-    }
-
-    // MARK: Coaching
-
-    func run() { analyze(mode: selectedMode) }
-
-    // MARK: Change review
-
-    /// The result with only the accepted changes applied.
-    var finalText: String {
-        changeSet.changes.isEmpty ? result.rewrite : changeSet.text(accepted: acceptedChanges)
-    }
-
-    func toggleChange(_ id: UUID) {
-        if acceptedChanges.contains(id) { acceptedChanges.remove(id) } else { acceptedChanges.insert(id) }
-        statusMessage = nil
-        refreshStyle()
-    }
-
-    func setAllChanges(_ on: Bool) {
-        acceptedChanges = on ? Set(changeSet.changes.map(\.id)) : []
-    }
-
-    /// Second, short model call: category + reason for every locally computed change.
-    private func explainChanges(itemID: UUID, original: String, rewrite: String, endpoint: String, model: String) async {
-        // Mechanical edits (spelling, capitals, punctuation) are already categorised locally; the model
-        // only explains the rest, which keeps this call short.
-        // The rule book answers first: exact, instant, and never invented.
-        for i in changeSet.changes.indices {
-            let loc = changeSet.changes[i].location
-            if RuleBook.match(from: changeSet.changes[i].from, to: changeSet.changes[i].to, original: original, location: loc) != nil {
-                changeSet.changes[i].teach(original: original, location: loc)
-            }
-        }
-        let pendingIndices = changeSet.changes.indices.filter { changeSet.changes[$0].pending }
-        guard !pendingIndices.isEmpty else {
-            if let index = history.firstIndex(where: { $0.id == itemID }) {
-                history[index].changes = changeSet.changes
-                if currentItem?.id == itemID { currentItem = history[index] }
-                HistoryItem.saveAll(history); addReviews(from: history[index])
-            }
-            return
-        }
-        explaining = true
-        let subset = pendingIndices.map { changeSet.changes[$0] }
-        let explainedSubset = await CoachService.explain(original: original, rewrite: rewrite, changes: subset, endpoint: endpoint, model: model)
-        explaining = false
-        var explained: [Int: (MistakeCategory, String)] = [:]
-        if let explainedSubset { for (k, i) in pendingIndices.enumerated() where k < explainedSubset.count { explained[i] = explainedSubset[k] } }
-        var updated = changeSet
-        for i in updated.changes.indices {
-            let guess = ChangeSet.guessCategory(from: updated.changes[i].from, to: updated.changes[i].to)
-            if let e = explained[i] {
-                // Mechanical categories from the local check beat the model's guess.
-                updated.changes[i].category = guess ?? e.0
-                if !e.1.isEmpty { updated.changes[i].reason = e.1 }
-            }
-            if updated.changes[i].reason.isEmpty { updated.changes[i].reason = updated.changes[i].category.fallbackReason }
-            updated.changes[i].pending = false
-        }
-        // Only update if the coach is still showing this session.
-        if currentItem?.id == itemID { changeSet = updated }
-        if let index = history.firstIndex(where: { $0.id == itemID }) {
-            history[index].changes = updated.changes
-            if currentItem?.id == itemID { currentItem = history[index] }
-            HistoryItem.saveAll(history)
-            addReviews(from: history[index])
-        }
-    }
-
-    private func loadLesson(itemID: UUID, original: String, rewrite: String, endpoint: String, model: String) async {
-        lessonLoading = true
-        let lesson = await CoachService.lesson(original: original, rewrite: rewrite, endpoint: endpoint, model: model)
-        lessonLoading = false
-        guard let (explanation, exercise) = lesson else { return }
-        let updated = CoachResult(rewrite: rewrite, explanation: explanation, exercise: exercise)
-        if currentItem?.id == itemID { result = updated }
-        if let index = history.firstIndex(where: { $0.id == itemID }) {
-            let old = history[index]
-            let item = HistoryItem(copying: old, result: updated)
-            history[index] = item
-            if currentItem?.id == itemID { currentItem = item }
-            HistoryItem.saveAll(history)
-        }
-    }
-
-    // MARK: Inline session bookkeeping
-
-    /// Saves an inline check as a session so Insights and Review learn from it. Returns its id.
-    func recordInline(original: String, rewrite: String, style: WritingStyle, appName: String, changes: [Change]) -> UUID {
-        let item = HistoryItem(original: original, result: CoachResult(rewrite: rewrite, explanation: "", exercise: ""),
-                               mode: .quickFix, style: style, appName: appName, changes: changes)
-        history.insert(item, at: 0)
-        history = Array(history.prefix(500)); HistoryItem.saveAll(history)
-        return item.id
-    }
-
-    func updateInline(historyID: UUID, changes: [Change]) {
-        guard let index = history.firstIndex(where: { $0.id == historyID }) else { return }
-        history[index].changes = changes
-        HistoryItem.saveAll(history)
-        addReviews(from: history[index])
+    /// Same as picking it in Settings: online asks for consent and offline runs setup there first.
+    func chooseEngine(_ e: CoachEngine) {
+        if e == .online && !settings.onlineConsent { showConsent = true; openSettings(.engine) }
+        else if e == .offlineManaged && !(OfflineRuntime.isInstalled && settings.managedModelRaw != nil) { runtime.prepare(); openSettings(.engine) }
+        else if e == .ollama { useMyOllama() }
+        else { setEngine(e) }
     }
 
     func noteInlineAccepted(_ change: Change) {
         appLog.notice("inline accepted \(change.category.rawValue, privacy: .public)")
     }
-
-    /// Menu / button entry point: check the text field of the app that was frontmost before HeyHumanly.
-    func checkFrontApp() { captureSelection() }
-
-    // MARK: Review (spaced repetition of the user's own mistakes)
-
-    var dueReviews: [ReviewItem] { reviews.filter { $0.due <= Date() && !isMuted($0.category) }.sorted { $0.due < $1.due } }
-    /// The card on screen. Pinned after answering so the feedback stays with the card it belongs to.
-    @Published var pinnedReviewID: UUID?
-    var currentReview: ReviewItem? {
-        if let id = pinnedReviewID, let item = reviews.first(where: { $0.id == id }) { return item }
-        let due = dueReviews; return reviewIndex < due.count ? due[reviewIndex] : nil
-    }
-
-    private func addReviews(from item: HistoryItem) {
-        guard let changes = item.changes else { return }
-        var added = 0
-        for change in changes where change.category != .capitalization && change.category != .punctuation && change.category != .tone && !isMuted(change.category) {
-            guard !change.from.isEmpty, !change.to.isEmpty,
-                  !reviews.contains(where: { $0.from.lowercased() == change.from.lowercased() && $0.to.lowercased() == change.to.lowercased() }) else { continue }
-            let (sentence, corrected) = Self.sentencePair(original: item.original, rewrite: item.result.rewrite, containing: change.from)
-            reviews.append(ReviewItem(created: Date(), sentence: sentence, corrected: corrected, from: change.from, to: change.to,
-                                      category: change.category, reason: change.reason,
-                                      due: Date().addingTimeInterval(20 * 3600)))   // first review tomorrow
-            added += 1
-            if added >= 3 { break }
-        }
-        if added > 0 { ReviewItem.saveAll(reviews) }
-    }
-
-    /// The sentence that contains the mistake, and its corrected counterpart.
-    static func sentencePair(original: String, rewrite: String, containing fragment: String) -> (String, String) {
-        func sentences(_ t: String) -> [String] {
-            var out: [String] = []
-            t.enumerateSubstrings(in: t.startIndex..., options: .bySentences) { s, _, _, _ in
-                if let s = s?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty { out.append(s) }
-            }
-            return out.isEmpty ? [t] : out
-        }
-        let o = sentences(original), r = sentences(rewrite)
-        guard let i = o.firstIndex(where: { $0.contains(fragment) }) else { return (original, rewrite) }
-        if o.count == r.count { return (o[i], r[i]) }
-        // Sentence counts differ (e.g. a comma splice became two sentences): pick the corrected
-        // sentence(s) that share the most words with the original sentence.
-        let words = { (s: String) in Set(s.lowercased().split(whereSeparator: { !$0.isLetter }).map(String.init)) }
-        let target = words(o[i])
-        var best = (score: -1, text: rewrite)
-        for start in r.indices {
-            for end in start..<min(r.count, start + 3) {
-                let candidate = r[start...end].joined(separator: " ")
-                let cw = words(candidate)
-                let score = target.intersection(cw).count * 2 - cw.subtracting(target).count - target.subtracting(cw).count
-                if score > best.score { best = (score, candidate) }
-            }
-        }
-        return (o[i], best.text)
-    }
-
-    @Published var reviewHintShown = false
-
-    func checkReview() {
-        guard let item = currentReview, let idx = reviews.firstIndex(where: { $0.id == item.id }) else { return }
-        let correct = item.check(reviewAnswer)
-        pinnedReviewID = item.id
-        reviewFeedback = correct
-        reviews[idx].record(correct: correct)
-        ReviewItem.saveAll(reviews)
-    }
-
-    func nextReview() {
-        reviewAnswer = ""; reviewFeedback = nil; reviewHintShown = false; pinnedReviewID = nil
-        // The answered item moved out of "due" (or to 10 minutes later), so index 0 is the next one.
-        reviewIndex = 0
-    }
-
-    func skipReview() {
-        guard let item = currentReview, let idx = reviews.firstIndex(where: { $0.id == item.id }) else { return }
-        reviews[idx].due = Date().addingTimeInterval(86_400)
-        ReviewItem.saveAll(reviews); nextReview()
-    }
-
-    var masteredCount: Int { reviews.filter(\.mastered).count }
-
-    // MARK: Model download
 
     /// Bigger models give much better corrections; 7B runs well on 16 GB Apple silicon Macs.
     var recommendedModel: String { ProcessInfo.processInfo.physicalMemory >= 15_000_000_000 ? "qwen2.5:7b" : "qwen2.5:3b" }
@@ -733,105 +327,6 @@ final class CoachModel: ObservableObject {
             }
         }
     }
-
-    // MARK: Insights
-
-    var categoryStats: [CategoryStat] { Insights.stats(history: history).filter { !isMuted($0.category) } }
-
-    var privacyIsLocal: Bool { engineIsLocal }
-
-    func practice(_ item: HistoryItem) {
-        clearDraft()
-        practicePrompt = item.result.exercise
-        selectedMode = .quickFix
-        showCoach()
-    }
-
-    func clearDraft() {
-        practicePrompt = nil
-        currentItem = nil
-        draft = ""; result = .empty; resultMode = nil; errorMessage = nil; statusMessage = nil
-        sourceApp = nil; sourceAppName = nil; sourceBundleID = nil
-        changeSet = ChangeSet(); acceptedChanges = []; selectedStyle = settings.defaultStyle
-        styleFindings = []; proposedRewrites = [:]; quiz = nil; spotPicked = []; spotRevealed = true
-    }
-
-    func analyze(mode: CoachMode) {
-        selectedMode = mode
-        let original = draft
-        guard !original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Type or paste some text first."
-            return
-        }
-        guard readyToCoach() else { return }
-        loadingMode = mode; errorMessage = nil; statusMessage = nil
-        let online = isOnline
-        let endpoint = online ? "" : activeEndpoint, modelName = activeModel, words = dictionary
-        let style = selectedStyle, app = sourceAppName
-        streamingText = ""
-        // Keep macOS from App-Napping us mid-request (we're often not the frontmost app).
-        let activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .latencyCritical], reason: "Coaching text")
-        Task {
-            defer { ProcessInfo.processInfo.endActivity(activity) }
-            do {
-                var rewrite: String
-                if online {
-                    // Only the text and goal go online; explanations below come from the local rule book.
-                    rewrite = try await coachOnline(text: original, goal: OnlineCoach.goal(style)).rewrite
-                    streamingText = rewrite
-                } else {
-                    rewrite = try await CoachService.streamRewrite(text: original, style: style, appName: app, preserve: words,
-                                                                   endpoint: endpoint, model: modelName) { [weak self] token in
-                        self?.streamingText += token
-                    }
-                }
-                // Light styles must not change meaning, slang or harmless wording.
-                if style == .fixOnly || style == .polish { rewrite = RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: words) }
-                else { rewrite = TextSafety.apply(original: original, rewrite: rewrite, preserve: words) }
-                let response = CoachResult(rewrite: rewrite, explanation: "", exercise: "")
-                let set = ChangeSet(original: original, rewrite: response.rewrite)
-                changeSet = set
-                acceptedChanges = Set(set.changes.map(\.id))
-                result = response; resultMode = mode; loadingMode = nil
-                refreshStyle()
-                quiz = nil; spotPicked = []
-                spotRevealed = !(tryFirst && !visibleChanges.isEmpty)
-                let item = HistoryItem(original: original, result: response, mode: mode, style: style, appName: app, changes: set.changes)
-                currentItem = item
-                history.insert(item, at: 0)
-                history = Array(history.prefix(500)); HistoryItem.saveAll(history)
-                syncOllamaStatus(after: nil)
-                await explainChanges(itemID: item.id, original: original, rewrite: response.rewrite, endpoint: endpoint, model: modelName)
-                if mode == .teach, online { localLesson(itemID: item.id, rewrite: rewrite) }
-                else if mode == .teach { await loadLesson(itemID: item.id, original: original, rewrite: rewrite, endpoint: endpoint, model: modelName) }
-            } catch {
-                appLog.error("analyze failed: \(String(describing: error), privacy: .public)")
-                errorMessage = error.localizedDescription
-                loadingMode = nil
-                syncOllamaStatus(after: error)
-            }
-        }
-    }
-}
-
-enum DashboardSection: String, CaseIterable, Identifiable {
-    case home = "Home", insights = "Insights", review = "Review", history = "History", dictionary = "Dictionary", settings = "Settings"
-    var id: String { rawValue }
-    var icon: String {
-        switch self {
-        case .home: return "house"
-        case .history: return "clock.arrow.circlepath"
-        case .insights: return "chart.bar.xaxis"
-        case .review: return "rectangle.stack"
-        case .dictionary: return "character.book.closed"
-        case .settings: return "gearshape"
-        }
-    }
-}
-
-struct SetupStep: Identifiable {
-    let title: String; let detail: String; let done: Bool
-    var id: String { title }
 }
 
 enum OllamaStatus: Equatable {
@@ -851,9 +346,5 @@ enum OllamaStatus: Equatable {
     }
 }
 
-/// Floating, key-capable panel for the coach. Esc closes it.
-final class CoachPanel: NSPanel {
-    override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { true }
-    override func cancelOperation(_ sender: Any?) { orderOut(nil) }
-}
+
+enum SettingsTab: Hashable { case general, engine, privacy }

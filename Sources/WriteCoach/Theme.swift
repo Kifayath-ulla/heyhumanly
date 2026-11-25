@@ -204,17 +204,6 @@ struct ShortcutKeys: View {
     }
 }
 
-struct ModeBadge: View {
-    let mode: CoachMode
-    var body: some View {
-        Label(mode == .teach ? "Teach Me" : "Quick Fix", systemImage: mode == .teach ? "graduationcap.fill" : "bolt.fill")
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(mode == .teach ? Color.teach : Color.brand)
-            .padding(.horizontal, 9).padding(.vertical, 4)
-            .background((mode == .teach ? Color.teach : Color.brand).opacity(0.12), in: Capsule())
-    }
-}
-
 struct StatusDot: View {
     let color: Color
     var body: some View { Circle().fill(color).frame(width: 8, height: 8).overlay(Circle().stroke(color.opacity(0.25), lineWidth: 3)) }

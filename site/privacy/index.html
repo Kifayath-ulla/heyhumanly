@@ -131,9 +131,9 @@ main>section:first-child,main>.wrap:first-child{}
 <h2>In the app</h2><ul>
 <li><b>Read:</b> the single text box you are typing in, after you pause, and text you select when you press the shortcut. Never password fields, and never apps on the "Never read" list (password managers, terminals and code editors by default).</li>
 <li><b>Sent:</b> in offline modes (Apple's built-in model, HeyHumanly's offline model, or your Ollama), nowhere: the text stays on this Mac. Checking as you type only runs in offline modes. In optional online mode, used only after you agree, the text you choose and the goal are sent to heyhumanly.com and rewritten by Cloudflare Workers AI. Nothing else is sent: no app name, history or account.</li>
-<li><b>Stored:</b> a session is saved only when you accept a fix, start a lesson or use the coach window. It is kept in the app's preferences on your Mac. The log records timings, not your text.</li>
+<li><b>Stored:</b> nothing you write. Only your settings (and, with Labs: check as I type, suggestions you dismissed) are kept in the app's preferences on your Mac. The log records timings, not your text.</li>
 <li><b>Network:</b> no analytics, accounts, tracking or automatic update check. Online mode makes one request per coaching and one to check how many free coachings are left, with a random install ID (not tied to you) and your IP, which the server keeps only as a daily-salted hash to limit abuse. HeyHumanly's server does not log or store your text. Cloudflare says Workers AI keeps no prompts or outputs and does not train on them; it may keep request metadata such as time, size and model.</li>
-<li><b>Remove:</b> Settings → Privacy &amp; data → Clear history.</li></ul>
+<li><b>Remove:</b> delete the app and its preferences file; there is no history to clear.</li></ul>
 <h2 id="extension">In the Chrome extension</h2><ul>
 <li><b>Read:</b> only when you press <code>Alt+Shift+H</code>, click the HeyHumanly button or choose <b>Tighten with HeyHumanly</b> from the right-click menu. Then it reads the text you selected, or the text box you are in, on that one tab. No script runs on pages before that.</li>
 <li><b>Sent:</b> only to Ollama on this computer, <code>http://localhost:11434</code> or <code>http://127.0.0.1:11434</code>. The extension's permissions do not allow any other address.</li>
