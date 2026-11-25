@@ -32,7 +32,7 @@ enum WritingStyle: CaseIterable, Identifiable, Codable, RawRepresentable, Hashab
     var onlineGoal: String {
         switch self {
         case .fixOnly: return "fixOnly"
-        case .polish: return "sameTone"
+        case .polish: return "polish"
         case .shorter: return "shorter"
         case .friendly: return "friendly"
         case .professional: return "formal"
