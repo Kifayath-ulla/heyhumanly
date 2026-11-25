@@ -13,11 +13,12 @@ export default {
     }
     if (url.pathname.startsWith('/api/')) return handleCoach(request, env);
     const res = await env.ASSETS.fetch(request);
-    if (url.hostname.endsWith('.workers.dev')) {
-      const r = new Response(res.body, res);
-      r.headers.set('X-Robots-Tag', 'noindex, nofollow');
-      return r;
+    const r = new Response(res.body, res);
+    // no-transform stops Cloudflare from injecting its Web Analytics beacon; the site promises no analytics.
+    if ((r.headers.get('Content-Type') || '').startsWith('text/html')) {
+      r.headers.set('Cache-Control', 'public, max-age=0, must-revalidate, no-transform');
     }
-    return res;
+    if (url.hostname.endsWith('.workers.dev')) r.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return r;
   },
 };

@@ -30,3 +30,12 @@ test('/api/ goes to the coaching API, which is off unless enabled', async () => 
   assert.equal(r.status, 503);
   assert.equal((await r.json()).error, 'unavailable');
 });
+
+test('HTML pages, including the 404 page, are marked no-transform so no analytics beacon is injected', async () => {
+  const html = { ASSETS: { fetch: async () => new Response('missing', { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }) } };
+  const r = await worker.fetch(new Request('https://heyhumanly.com/nope'), html);
+  assert.equal(r.status, 404);
+  assert.match(r.headers.get('Cache-Control'), /no-transform/);
+  const font = { ASSETS: { fetch: async () => new Response('x', { headers: { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable' } }) } };
+  assert.equal((await worker.fetch(new Request('https://heyhumanly.com/fonts/a.woff2'), font)).headers.get('Cache-Control'), 'public, max-age=31536000, immutable');
+});
