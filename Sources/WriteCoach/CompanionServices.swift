@@ -5,36 +5,50 @@ enum CompanionService {
     struct Explained { var category: MistakeCategory; var kind: String; var level: String; var label: String; var why: String }
     struct Teaching { var items: [Explained]; var messageTip: String }
 
-    /// Rewrites the whole message in a tone, or translates it. Plain text, streamed for speed.
-    static func rewrite(_ text: String, tone: CompanionTone, appName: String, preserve: [String], endpoint: String, model: String) async throws -> String {
-        // Short, direct prompts work best for small local models (measured on qwen2.5:7b: the long
-        // version invented "planning to go"; this one kept the facts on 3 of 3 runs).
+    /// The local prompt for one style. Short, direct prompts work best for small local models (measured on
+    /// qwen2.5:7b: the long version invented "planning to go"; the Polish one kept the facts on 3 of 3 runs).
+    static func prompt(_ text: String, style: WritingStyle, appName: String, preserve: [String]) -> String {
         let task: String
-        switch tone {
-        case .auto:
+        switch style {
+        case .polish:
             task = "Rewrite this \(appName) message so it is clear and natural. Remove repeated or abandoned phrases, fix mistakes, keep the writer's casual tone and every fact. Do not invent facts or plans; drop unclear fragments instead of guessing. Leave slang and abbreviations alone, and fix a typo to the word that was meant (never a different word). Example: \"I was thinking that tomorrow since the dentist is there, I would like to. I wanted to say you. I wanted to tell you I'll be late.\" becomes \"I have a dentist appointment tomorrow, so I'll be late. Just wanted to tell you.\""
         case .fixOnly:
             task = "Fix only the real mistakes in this \(appName) message: spelling, grammar, verb forms, articles, punctuation. Do not rephrase or reorder correct words and keep the tone. Keep the writer's own slang, abbreviations and contractions exactly as typed. If a phrase is repeated back to back, keep it once. If nothing is wrong, return the message unchanged."
         case .shorter:
             task = "Make this \(appName) message noticeably shorter and more direct, in complete natural sentences. Keep every fact and the writer's tone. Do not invent facts."
-        case .warmer:
+        case .friendly:
             task = "Rewrite this \(appName) message to sound warmer and friendlier. Keep every fact. No emojis unless the original had them. Do not invent facts."
-        case .clearer:
-            task = "Rewrite this \(appName) message so the main point comes first and every sentence is easy to follow. Keep every fact and the writer's tone. Do not invent facts."
         case .professional:
             task = "Rewrite this \(appName) message to be polite, clear and professional. Keep every fact. Do not add greetings, sign-offs or ideas that were not there."
-        case .translate(let language):
-            task = "Translate this \(appName) message into natural, fluent \(language). Keep the tone, names, numbers and links, and fix mistakes of the original while translating."
         }
         let preserveRule = preserve.isEmpty ? "" : " Keep these words exactly: " + preserve.map { "\"\($0)\"" }.joined(separator: ", ") + "."
         let lines = text.contains("\n") ? " Keep the line breaks." : ""
-        let prompt = "\(task)\(preserveRule)\(lines) Reply with only the message.\nMessage: \(text)"
-        let limit = min(2048, max(160, text.count / 2 + 120))
-        var out = try await generate(prompt: prompt, endpoint: endpoint, model: model, limit: limit)
+        return "\(task)\(preserveRule)\(lines) Reply with only the message.\nMessage: \(text)"
+    }
+
+    static func tokenLimit(_ text: String) -> Int { min(2048, max(160, text.count / 2 + 120)) }
+
+    /// Rewrites the whole message in a style. Plain text.
+    static func rewrite(_ text: String, style: WritingStyle, appName: String, preserve: [String], endpoint: String, model: String, temperature: Double = 0.1) async throws -> String {
+        let prompt = prompt(text, style: style, appName: appName, preserve: preserve)
+        let limit = tokenLimit(text)
+        var out = try await generate(prompt: prompt, endpoint: endpoint, model: model, limit: limit, temperature: temperature)
         // Small models occasionally drift into another language mid-answer. Try once more, then refuse rather than show it.
-        if hasForeignScript(out, source: text, tone: tone) {
+        if hasForeignScript(out, source: text) {
             out = try await generate(prompt: prompt, endpoint: endpoint, model: model, limit: limit, temperature: 0.4)
-            if hasForeignScript(out, source: text, tone: tone) { throw CoachError.invalidResponse }
+            if hasForeignScript(out, source: text) { throw CoachError.invalidResponse }
+        }
+        return StyleChecker.collapseRepetitions(out)
+    }
+
+    /// Same prompt as `rewrite`, streamed so the panel shows words as they arrive.
+    static func streamRewrite(_ text: String, style: WritingStyle, appName: String, preserve: [String], endpoint: String, model: String,
+                              temperature: Double = 0.1, onToken: @escaping @MainActor (String) -> Void) async throws -> String {
+        let prompt = prompt(text, style: style, appName: appName, preserve: preserve)
+        var out = try await CoachService.stream(prompt: prompt, endpoint: endpoint, model: model, limit: tokenLimit(text), temperature: temperature, onToken: onToken)
+        if hasForeignScript(out, source: text) {
+            out = try await generate(prompt: prompt, endpoint: endpoint, model: model, limit: tokenLimit(text), temperature: 0.4)
+            if hasForeignScript(out, source: text) { throw CoachError.invalidResponse }
         }
         return StyleChecker.collapseRepetitions(out)
     }
@@ -101,8 +115,8 @@ enum CompanionService {
                            endpoint: endpoint, model: model, limit: 200)
     }
 
-    /// True when the answer contains writing systems that neither the original nor the target language uses.
-    static func hasForeignScript(_ out: String, source: String, tone: CompanionTone) -> Bool {
+    /// True when the answer contains writing systems the original doesn't use.
+    static func hasForeignScript(_ out: String, source: String) -> Bool {
         func scripts(_ s: String) -> Set<String> {
             var found = Set<String>()
             for u in s.unicodeScalars {
@@ -118,17 +132,7 @@ enum CompanionService {
             }
             return found
         }
-        var allowed = scripts(source)
-        if case .translate(let language) = tone {
-            switch language {
-            case "Chinese": allowed.insert("han")
-            case "Japanese": allowed.formUnion(["han", "kana"])
-            case "Korean": allowed.insert("hangul")
-            case "Arabic", "Urdu": allowed.insert("arabic")
-            case "Hindi": allowed.insert("devanagari")
-            default: break
-            }
-        }
+        let allowed = scripts(source)
         return !scripts(out).isSubset(of: allowed)
     }
 
@@ -161,20 +165,4 @@ enum CompanionService {
         guard let host = URL(string: endpoint)?.host?.lowercased() else { return false }
         return ["localhost", "127.0.0.1", "::1", "[::1]"].contains(host)
     }
-}
-
-enum CompanionTone: Equatable, Hashable {
-    case auto, fixOnly, shorter, warmer, clearer, professional, translate(String)
-    var title: String {
-        switch self {
-        case .auto: return "Suggested"
-        case .fixOnly: return "Just fixes"
-        case .shorter: return "Shorter"
-        case .warmer: return "Warmer"
-        case .clearer: return "Clearer"
-        case .professional: return "Professional"
-        case .translate(let l): return l
-        }
-    }
-    static let chips: [CompanionTone] = [.auto, .fixOnly, .shorter, .warmer, .clearer, .professional]
 }

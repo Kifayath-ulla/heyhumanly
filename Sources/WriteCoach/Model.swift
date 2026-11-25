@@ -72,6 +72,7 @@ final class CoachModel: ObservableObject {
     private var sourceBundleID: String?
     /// In-app underlines + suggestion cards (the main experience).
     let inline = InlineSession()
+    let quick = QuickSession()
     let watcher = TextWatcher()
     @Published var showQuietFixes = false
     // Make it better + interactive learning
@@ -472,32 +473,9 @@ final class CoachModel: ObservableObject {
             showCoach()
             return
         }
-        // Preferred: check the text right inside the app, with underlines and cards.
-        // The shortcut on a field that's already being coached opens (or closes) the companion.
-        if let el = AXText.focusedElement(), inline.isSameElement(el), inline.phase == .ready {
-            inline.toggleExpanded(); return
-        }
-        AXText.enableManualAccessibility(pid: front.processIdentifier)
-        if let el = AXText.focusedElement(),
-           inline.start(element: el, appName: front.localizedName ?? "this app", bundleID: front.bundleIdentifier ?? "", auto: false) {
-            appLog.notice("inline session started in \(front.localizedName ?? "?", privacy: .public)")
-            return
-        }
-        Task {
-            let text = await bridge.selectedText()
-            if let text {
-                draft = text
-                result = .empty; resultMode = nil; statusMessage = nil; practicePrompt = nil; currentItem = nil
-                sourceApp = front
-                sourceAppName = front.localizedName ?? "the original app"
-                sourceBundleID = front.bundleIdentifier
-                selectedStyle = front.bundleIdentifier.flatMap { settings.appStyles[$0] } ?? settings.defaultStyle
-            } else {
-                sourceApp = nil; sourceAppName = nil
-                errorMessage = "No text was selected in \(front.localizedName ?? "that app"). Select some text and press \(shortcutLabel), or type or paste here."
-            }
-            showCoach()
-        }
+        // The shortcut again while the panel is open closes it.
+        if quick.isOpen { quick.close(); return }
+        quick.open(model: self, front: front)
     }
 
     func apply() {

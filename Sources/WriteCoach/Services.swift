@@ -89,7 +89,7 @@ struct AppSettings: Codable {
     }
 
     var defaultStyle: WritingStyle {
-        get { defaultStyleRaw.flatMap(WritingStyle.init(rawValue:)) ?? .fixOnly }
+        get { defaultStyleRaw.flatMap(WritingStyle.init(rawValue:)) ?? .polish }
         set { defaultStyleRaw = newValue.rawValue }
     }
     /// Per-app default styles, keyed by bundle identifier.
@@ -187,7 +187,7 @@ struct CoachService {
     /// Capped with num_predict so a small model can never run away.
     static func streamRewrite(text: String, style: WritingStyle, appName: String?, preserve: [String],
                               endpoint: String, model: String, onToken: @escaping @MainActor (String) -> Void) async throws -> String {
-        guard !endpoint.isEmpty, let url = URL(string: endpoint) else { throw CoachError.noEndpoint }
+        guard !endpoint.isEmpty else { throw CoachError.noEndpoint }
         let preserveRule = preserve.isEmpty ? "" : "\nKeep these words and phrases exactly as written: " + preserve.map { "\"\($0)\"" }.joined(separator: ", ") + "."
         let context = appName.map { "\nThe text is being written in \($0)." } ?? ""
         let prompt = """
@@ -200,9 +200,16 @@ struct CoachService {
         \(text)
         """
         let limit = min(2048, max(200, text.count / 2 + 120))
+        return try await stream(prompt: prompt, endpoint: endpoint, model: model, limit: limit, temperature: 0.1, onToken: onToken)
+    }
+
+    /// Streams one prompt from the active engine (Apple answers in one piece). Returns the cleaned answer.
+    static func stream(prompt: String, endpoint: String, model: String, limit: Int, temperature: Double,
+                       onToken: @escaping @MainActor (String) -> Void) async throws -> String {
+        guard !endpoint.isEmpty, let url = URL(string: endpoint) else { throw CoachError.noEndpoint }
         if LLM.isApple(endpoint) {
-            guard text.count <= AppleModel.maxInputChars else { throw CoachError.tooLongForApple }
-            let answer = try await AppleModel.respond(prompt: prompt, maxTokens: limit, temperature: 0.1)
+            guard prompt.count <= AppleModel.maxInputChars + 1200 else { throw CoachError.tooLongForApple }
+            let answer = try await AppleModel.respond(prompt: prompt, maxTokens: limit, temperature: temperature)
             await onToken(answer)
             let cleaned = cleanRewrite(answer)
             guard !cleaned.isEmpty else { throw CoachError.invalidResponse }
@@ -211,7 +218,7 @@ struct CoachService {
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 90
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model, "prompt": prompt, "stream": true, "think": false, "keep_alive": "30m",
-                                                                       "options": ["temperature": 0.1, "num_predict": limit]])
+                                                                       "options": ["temperature": temperature, "num_predict": limit]])
         let bytes: URLSession.AsyncBytes, response: URLResponse
         do { (bytes, response) = try await URLSession.shared.bytes(for: request) }
         catch let error as URLError where [.cannotConnectToHost, .cannotFindHost, .networkConnectionLost, .notConnectedToInternet].contains(error.code) {

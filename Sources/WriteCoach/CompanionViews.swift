@@ -238,24 +238,11 @@ private struct ExpandedCompanion: View {
             // Tones
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    ForEach(CompanionTone.chips, id: \.self) { t in Chip(title: t.title, on: session.tone == t) { session.setTone(t) } }
-                    Chip(title: translateTitle, icon: "globe", on: isTranslate || session.showLanguages) { session.showLanguages.toggle() }
+                    ForEach(WritingStyle.allCases) { t in Chip(title: t.title, on: session.tone == t) { session.setTone(t) } }
                 }
                 .padding(.horizontal, 12)
             }
             .padding(.vertical, 9)
-
-            if session.showLanguages {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(["English", "Hindi", "Spanish", "French", "German", "Arabic", "Urdu", "Portuguese", "Japanese", "Chinese"], id: \.self) { lang in
-                            Chip(title: lang, on: session.tone == .translate(lang), small: true) { session.setTone(.translate(lang)) }
-                        }
-                    }.padding(.horizontal, 12)
-                }
-                .padding(.bottom, 8)
-                .transition(.opacity)
-            }
 
             // Preview of the message
             ScrollView {
@@ -264,8 +251,6 @@ private struct ExpandedCompanion: View {
                         Shimmer(lines: 3)
                     } else if session.proposal.isEmpty {
                         Text("No version yet.").foregroundStyle(.secondary)
-                    } else if isTranslate {
-                        Text(session.proposal)
                     } else {
                         Text(Self.preview(old: session.checkedText, new: session.proposal, showRemoved: session.showRemoved))
                     }
@@ -279,20 +264,13 @@ private struct ExpandedCompanion: View {
             .frame(maxHeight: .infinity)
             .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.ink.opacity(0.035)))
             .overlay(alignment: .bottomTrailing) {
-                if !session.proposal.isEmpty && !isTranslate {
+                if !session.proposal.isEmpty {
                     QuietButton(title: session.showRemoved ? "Hide original" : "Show original", icon: session.showRemoved ? "eye.slash" : "eye") { session.showRemoved.toggle() }
                         .padding(4)
                 }
             }
             .padding(.horizontal, 10)
 
-            if case .translate(let lang) = session.tone, !session.proposal.isEmpty {
-                Label(lang == "Hindi" ? "This local model translates Hindi poorly (it changed the day in our tests). Check it carefully before sending."
-                                      : "Translated on this Mac. Check names, days and numbers before sending.",
-                      systemImage: "exclamationmark.triangle")
-                    .font(.system(size: 11)).foregroundStyle(lang == "Hindi" ? Color.orange : Color.secondary)
-                    .padding(.horizontal, 12).padding(.top, 6)
-            }
             HStack(spacing: 6) {
                 ActionButton(title: "Use this", hint: nil, primary: true) { session.useProposal() }
                     .disabled(session.proposal.isEmpty || session.toneBusy)
@@ -345,8 +323,6 @@ private struct ExpandedCompanion: View {
         return out
     }
 
-    private var isTranslate: Bool { if case .translate = session.tone { return true }; return false }
-    private var translateTitle: String { if case .translate(let l) = session.tone { return l }; return "Translate" }
     private var title: String {
         let e = session.errorCount, s = session.styleCount
         if session.phase == .checking { return "Reading your message…" }

@@ -3,17 +3,50 @@ import Foundation
 
 // MARK: - Styles
 
-/// How far a Quick Fix may go. "Fix only" is the default: it never rewrites correct text.
-enum WritingStyle: String, Codable, CaseIterable, Identifiable {
-    case fixOnly = "Fix only", polish = "Polish", professional = "Professional", friendly = "Friendly", concise = "Concise"
+/// The five rewrite styles, in ⌘1–⌘5 order. Polish is the default: clear and natural, still in the writer's voice.
+enum WritingStyle: CaseIterable, Identifiable, Codable, RawRepresentable, Hashable {
+    case fixOnly, polish, shorter, friendly, professional
     var id: String { rawValue }
+    var rawValue: String {
+        switch self {
+        case .fixOnly: return "Fix only"
+        case .polish: return "Polish"
+        case .shorter: return "Shorter"
+        case .friendly: return "Friendly"
+        case .professional: return "Professional"
+        }
+    }
+    /// Accepts names saved by older versions ("Concise" became "Shorter").
+    init?(rawValue: String) {
+        switch rawValue {
+        case "Fix only": self = .fixOnly
+        case "Polish": self = .polish
+        case "Shorter", "Concise": self = .shorter
+        case "Friendly": self = .friendly
+        case "Professional": self = .professional
+        default: return nil
+        }
+    }
+    var title: String { rawValue }
+    /// Goal sent to the online coach (worker/coach.js).
+    var onlineGoal: String {
+        switch self {
+        case .fixOnly: return "fixOnly"
+        case .polish: return "polish"
+        case .shorter: return "shorter"
+        case .friendly: return "friendly"
+        case .professional: return "formal"
+        }
+    }
+    /// Light styles must not change meaning, slang or harmless wording, so the meaning guard checks every change.
+    var guarded: Bool { self == .fixOnly || self == .polish }
     var icon: String {
         switch self {
         case .fixOnly: return "checkmark.seal"
         case .polish: return "wand.and.stars"
         case .professional: return "briefcase"
         case .friendly: return "face.smiling"
-        case .concise: return "scissors"
+        case .shorter: return "scissors"
         }
     }
     var blurb: String {
@@ -22,7 +55,7 @@ enum WritingStyle: String, Codable, CaseIterable, Identifiable {
         case .polish: return "Clear and natural, still sounds like you."
         case .professional: return "Polite and clear for work email."
         case .friendly: return "Warm and casual for chat."
-        case .concise: return "Shorter, same meaning."
+        case .shorter: return "Shorter, same meaning."
         }
     }
     var instruction: String {
@@ -35,7 +68,7 @@ enum WritingStyle: String, Codable, CaseIterable, Identifiable {
             return "Rewrite it as a clear, polite, professional message. Keep the meaning and every fact. Do not add greetings, sign-offs or ideas that were not there."
         case .friendly:
             return "Rewrite it in a warm, friendly, casual tone suitable for chat. Keep the meaning and every fact. Do not add emojis or new ideas."
-        case .concise:
+        case .shorter:
             return "Make it shorter and more direct while keeping every fact and the user's tone. Remove filler words and redundancy. Do not add new ideas."
         }
     }

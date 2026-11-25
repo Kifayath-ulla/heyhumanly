@@ -155,7 +155,7 @@ final class InlineSession: ObservableObject {
     @Published var appName = ""
     @Published var bundleID = ""
     @Published var expanded = false
-    @Published var tone: CompanionTone = .auto
+    @Published var tone: WritingStyle = .polish
     @Published var proposal = ""          // whole-message rewrite for the current tone
     @Published var toneBusy = false
     @Published var showLanguages = false { didSet { if oldValue != showLanguages { placeCompanion() } } }
@@ -277,8 +277,8 @@ final class InlineSession: ObservableObject {
         undoStack = []; historyID = nil; orbAnchor = nil
     }
 
-    private static var savedTone: CompanionTone {
-        UserDefaults.standard.string(forKey: "heyhumanly.companionTone") == "fixOnly" ? .fixOnly : .auto
+    private static var savedTone: WritingStyle {
+        UserDefaults.standard.string(forKey: "heyhumanly.companionTone") == "fixOnly" ? .fixOnly : .polish
     }
 
     // MARK: Checking
@@ -292,7 +292,7 @@ final class InlineSession: ObservableObject {
         let started = Date()
         task = Task { [weak self] in
             do {
-                let raw = try await CompanionService.rewrite(text, tone: chosen == .fixOnly ? .fixOnly : .auto, appName: app, preserve: words,
+                let raw = try await CompanionService.rewrite(text, style: chosen == .fixOnly ? .fixOnly : .polish, appName: app, preserve: words,
                                                              endpoint: endpoint, model: modelName)
                 guard let self, !Task.isCancelled, gen == self.generation else { return }
                 // Nothing reaches the screen until each change has been checked against what was written.
@@ -723,7 +723,7 @@ final class InlineSession: ObservableObject {
 
     /// The ready-made version = what's in the field now plus every suggestion still open.
     private func rebuildProposal() {
-        guard tone == .auto || tone == .fixOnly else { proposal = ""; return }
+        guard tone.guarded else { proposal = ""; return }
         let clen = (checkedText as NSString).length
         let m = NSMutableString(string: checkedText)
         for c in changes.sorted(by: { ($0.location ?? 0) > ($1.location ?? 0) }) {
@@ -760,7 +760,7 @@ final class InlineSession: ObservableObject {
         return a == b || n(a) == n(b)
     }
 
-    private static func waitForModifierRelease() async {
+    static func waitForModifierRelease() async {
         let deadline = Date().addingTimeInterval(1.0)
         let mask: CGEventFlags = [.maskCommand, .maskControl, .maskAlternate, .maskShift]
         while Date() < deadline, !CGEventSource.flagsState(.combinedSessionState).intersection(mask).isEmpty {
@@ -768,7 +768,7 @@ final class InlineSession: ObservableObject {
         }
     }
 
-    private static func postCommand(_ key: CGKeyCode) {
+    static func postCommand(_ key: CGKeyCode) {
         let src = CGEventSource(stateID: .combinedSessionState)
         let down = CGEvent(keyboardEventSource: src, virtualKey: key, keyDown: true)
         let up = CGEvent(keyboardEventSource: src, virtualKey: key, keyDown: false)
@@ -927,19 +927,19 @@ final class InlineSession: ObservableObject {
     private func recordIfNeeded() {
         guard historyID == nil, let model else { return }
         let local = changes.map { var c = $0; c.location = ($0.location ?? 0) - baseOffset; return c }
-        historyID = model.recordInline(original: checkedText, rewrite: rewriteForChanges, style: tone == .fixOnly ? .fixOnly : .polish,
+        historyID = model.recordInline(original: checkedText, rewrite: rewriteForChanges, style: tone,
                                        appName: appName, changes: local)
         if !local.contains(where: \.pending), let id = historyID { model.updateInline(historyID: id, changes: local) }
     }
 
-    // MARK: Tone and translate
+    // MARK: Styles
 
-    func setTone(_ t: CompanionTone) {
+    func setTone(_ t: WritingStyle) {
         guard let model else { return }
         tone = t
-        if t == .auto || t == .fixOnly { UserDefaults.standard.set(t == .fixOnly ? "fixOnly" : "auto", forKey: "heyhumanly.companionTone") }
+        if t.guarded { UserDefaults.standard.set(t == .fixOnly ? "fixOnly" : "auto", forKey: "heyhumanly.companionTone") }
         showLanguages = false
-        if t == .auto && !rewriteForChanges.isEmpty { proposal = rewriteForChanges; layout(); return }
+        if t == .polish && !rewriteForChanges.isEmpty { proposal = rewriteForChanges; layout(); return }
         toneBusy = true; proposal = ""
         layout()
         // Tones start from the clean suggested version: small local models invent less that way.
@@ -951,9 +951,9 @@ final class InlineSession: ObservableObject {
         let resumeExplain = explaining
         if resumeExplain { teachTask?.cancel(); explaining = false }
         Task { [weak self] in
-            var out = try? await CompanionService.rewrite(text, tone: t, appName: app, preserve: words, endpoint: endpoint, model: modelName)
+            var out = try? await CompanionService.rewrite(text, style: t, appName: app, preserve: words, endpoint: endpoint, model: modelName)
             guard let self else { return }
-            if t == .fixOnly || t == .auto, let raw = out { out = RewriteGuard.sanitize(original: text, rewrite: raw, preserve: words) }
+            if let raw = out { out = t.guarded ? RewriteGuard.sanitize(original: text, rewrite: raw, preserve: words) : TextSafety.apply(original: text, rewrite: raw, preserve: words) }
             if resumeExplain, self.changes.contains(where: \.pending) { self.explain(text: self.checkedText, rewrite: self.rewriteForChanges) }
             guard self.tone == t else { return }
             self.toneBusy = false
