@@ -257,7 +257,7 @@ final class CoachModel: ObservableObject {
             ollama = status
             if case .running(let models) = status {
                 installedModels = models
-                if settings.engine == .ollama, models.contains(settings.model) { await CoachService.prewarm(endpoint: endpoint, model: settings.model) }
+                if settings.engine == .ollama, models.contains(where: { CoachModel.sameModel($0, settings.model) }) { await CoachService.prewarm(endpoint: endpoint, model: settings.model) }
             }
         }
     }
@@ -276,7 +276,7 @@ final class CoachModel: ObservableObject {
         }
     }
 
-    var modelInstalled: Bool { installedModels.contains(settings.model) }
+    var modelInstalled: Bool { installedModels.contains { CoachModel.sameModel($0, settings.model) } }
 
     func selectModel(_ name: String) {
         settings.model = name; settingsModel = name; settings.save()
