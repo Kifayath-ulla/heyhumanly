@@ -195,7 +195,9 @@ struct OnboardingView: View {
                       badText: "Choose how to coach",
                       detail: model.engineReady
                         ? (model.isOnline ? "\(model.allowance?.limit ?? 10) free online coachings a day, no account."
-                           : model.privacyIsLocal ? "Never leaves your Mac." : "Sent to the Ollama server you chose.")
+                           : model.privacyIsLocal ? "Never leaves your Mac."
+                           : CoachModel.isCloudModel(model.settings.model) ? "Your Ollama sends it to ollama.com (cloud model)."
+                           : "Sent to the Ollama server you chose.")
                         : "The coach window asks before anything goes online, or sets up offline coaching on this Mac.")
             if !model.engineReady, model.ollamaDetected {
                 Button("Use my Ollama (found \(model.writingModels.count) model\(model.writingModels.count == 1 ? "" : "s"))") { model.useMyOllama() }
