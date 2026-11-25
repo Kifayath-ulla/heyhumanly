@@ -65,6 +65,18 @@ test('one IP cannot mint unlimited installs', async () => {
   assert.equal(blocked, 2);
 });
 
+test('requests without a visitor IP share one per-IP allowance', async () => {
+  const { env } = makeEnv(ok);
+  let blocked = 0;
+  for (let i = 0; i < LIMITS.perIp + 2; i++) {
+    const id = '11111111-2222-4333-8444-' + String(i).padStart(12, '0');
+    const r = await handleCoach(new Request('https://heyhumanly.com/api/v1/coach', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: TEXT, install: id }) }), env, NOW);
+    if (r.status === 429) blocked++;
+  }
+  assert.equal(blocked, 2);
+});
+
 test('the global budget stops requests before the free daily allocation', async () => {
   const { env, ledger } = makeEnv(ok);
   await ledger.store.put('day', '2026-11-21');
