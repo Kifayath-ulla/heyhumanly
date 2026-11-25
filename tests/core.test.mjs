@@ -221,3 +221,8 @@ test('isWritingModel skips embedding models by name, not by tag', () => {
   for (const m of ['nomic-embed-text', 'all-minilm:latest', 'bge-m3', 'llava-clip:7b', 'localhost:5000/nomic-embed-text:latest', 'localhost:5000/bge-m3']) assert.equal(HH.isWritingModel(m), false, m);
   for (const m of ['qwen2.5:3b', 'qwen2.5:clipboard', 'mistral', 'llama3.2:embedded-tuned', 'localhost:5000/clip-lab/qwen2.5:latest']) assert.equal(HH.isWritingModel(m), true, m);
 });
+
+test('analyse counts a capitalization-only fix as a change for Fix only', () => {
+  assert.equal(HH.analyse('i met john in paris.', 'I met John in Paris.', true, 'm', 'fixOnly').unchanged, false);
+  assert.equal(HH.analyse('i met john in paris.', 'I met John in Paris.', true, 'm', 'polish').unchanged, true);
+});

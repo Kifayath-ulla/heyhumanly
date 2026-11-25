@@ -190,6 +190,15 @@
     polish: 'Fix mistakes and make it read clearly and naturally, like a fluent native speaker wrote it. Keep the user\'s meaning, voice and roughly the same length. Do not add new ideas.',
     friendly: 'Rewrite it in a warm, friendly, casual tone suitable for chat. Keep the meaning and every fact. Do not add emojis or new ideas.',
   };
+  /** The five styles in the order the Mac quick panel shows them (⌘1–⌘5); values are the goals the prompts and Worker accept. */
+  const STYLE_LIST = [
+    { goal: 'fixOnly', title: 'Fix only', blurb: 'Fixes real mistakes only.' },
+    { goal: 'polish', title: 'Polish', blurb: 'Clear and natural, still sounds like you.' },
+    { goal: 'shorter', title: 'Shorter', blurb: 'Shorter, same meaning.' },
+    { goal: 'friendly', title: 'Friendly', blurb: 'Warm and casual for chat.' },
+    { goal: 'formal', title: 'Professional', blurb: 'Polite and clear for work email.' },
+  ];
+  const promptFor = (text, goal, casual) => (STYLES[goal] ? buildStylePrompt(text, goal) : buildPrompt(text, goal, casual));
   function buildStylePrompt(text, style) {
     return 'You are HeyHumanly, a writing coach.\n' + (STYLES[style] || STYLES.fixOnly) + '\n' +
       'Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links, line breaks and technical terms exactly, and leave anything between backticks (`like this`) exactly as written. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.\n' +
@@ -346,7 +355,7 @@
   async function builtinTighten(text, goal, casual) {
     const session = await builtinSession();
     let t; try {
-      const raw = await Promise.race([session.prompt(buildPrompt(text, goal, casual)),
+      const raw = await Promise.race([session.prompt(promptFor(text, goal, casual)),
         new Promise((_, rej) => { t = setTimeout(() => rej(fail('timeout', 'Chrome’s built-in model took more than 3 minutes. Try a shorter piece of text.')), GENERATE_MS); })]);
       return raw;
     } finally { clearTimeout(t); try { session.destroy(); } catch (e) { /* already gone */ } }
@@ -364,7 +373,7 @@
     let model; try { model = await pickModel(o.endpoint, o.model); } catch (e) { if (e.code && e.code !== 'timeout') throw e; throw fail('offline', OFFLINE(o.endpoint)); }
     let res; try {
       res = await fetchT(base(o.endpoint) + '/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, prompt: buildPrompt(text, o.goal, casual), stream: false, think: false, keep_alive: '30m', options: { temperature: 0.2, num_predict: Math.min(2048, Math.max(120, Math.ceil(text.length / 3) + 80)) } }) }, GENERATE_MS);
+        body: JSON.stringify({ model, prompt: promptFor(text, o.goal, casual), stream: false, think: false, keep_alive: '30m', options: { temperature: 0.2, num_predict: Math.min(2048, Math.max(120, Math.ceil(text.length / 3) + 80)) } }) }, GENERATE_MS);
     } catch (e) {
       if (e.code === 'timeout') throw fail('timeout', model + ' took more than 3 minutes, so HeyHumanly stopped waiting. Try a shorter piece of text, or a smaller model such as qwen2.5:3b (Settings).');
       throw fail('offline', OFFLINE(o.endpoint));
@@ -377,7 +386,8 @@
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
-    const norm = (s) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+    // Fix only is asked to correct capitalization, so a case-only edit counts there; elsewhere it doesn't.
+    const norm = (s) => { s = s.trim().replace(/\s+/g, ' '); return goal === 'fixOnly' ? s : s.toLowerCase(); };
     const unchanged = norm(original) === norm(rewrite);
     const ra = readability(original), rb = readability(rewrite);
     const moves = unchanged ? [] : detect(original, rewrite, casual);
@@ -391,6 +401,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, STYLES, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

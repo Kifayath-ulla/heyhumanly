@@ -12,3 +12,5 @@ textarea,input,select{width:100%;box-sizing:border-box;font:14px -apple-system,s
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.hint{display:block;color:#956400;margin:-4px 0 6px}#setup{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:13px}#setup[hidden]{display:none}.err button{margin-top:6px}
 
 .preview{font-size:10px;font-weight:600;padding:1px 6px;border-radius:999px;background:#fff3cd;color:#664d03}
+del{color:#9F2F2D;text-decoration:line-through}ins{text-decoration:none;color:#346538;background:#EDF3EC;border-radius:3px;padding:0 1px}
+.whyd{margin-top:8px;font-size:13px}.whyd summary{cursor:pointer;color:#636360}.whys{list-style:none;margin:6px 0 0;padding:0}.whys li{margin-top:6px;font-weight:500}.hb{font:10.5px ui-monospace,Menlo,monospace;text-transform:uppercase;color:#636360;margin-right:4px}.wy{font-weight:400;font-size:12px;color:#636360}.wy a{color:inherit}.why-none{font-size:12px;color:#636360;margin-top:6px}

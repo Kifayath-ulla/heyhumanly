@@ -21,7 +21,7 @@ async function openPanel(tab) {
   if (!tab || !tab.id) return;
   if (/^(chrome|edge|about|chrome-extension|devtools|view-source):/.test(tab.url || '')) return cantRunHere(tab);
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: false }, files: ['ui.js', 'content.js'] });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: false }, files: ['core.js', 'ui.js', 'content.js'] });
     await chrome.tabs.sendMessage(tab.id, { type: 'hh:open' });
   } catch (e) { cantRunHere(tab); }
 }

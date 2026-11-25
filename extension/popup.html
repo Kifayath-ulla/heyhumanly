@@ -3,8 +3,8 @@
 <div id="setup" class="err" hidden><span id="setup-msg"></span> <button id="setup-go" class="p">Open setup</button></div>
 <label for="t" class="sr">Text to tighten</label>
 <textarea id="t" placeholder="Paste a message. Slang and casual are fine." rows="5"></textarea>
-<div class="row"><button id="go" class="p">Tighten, keep my tone</button><button id="shorter">Shorter</button><button id="formal">More formal</button></div>
+<div class="row" id="styles" role="toolbar" aria-label="Style"></div>
 <div id="out" class="out" aria-live="polite"></div>
 <details class="set"><summary>Settings</summary><label>Ollama address<input id="endpoint" spellcheck="false" placeholder="http://localhost:11434" aria-describedby="ep-msg"></label><small id="ep-msg" class="hint"></small><label>Model<select id="model"><option value="">Choose automatically</option></select></label><button id="save">Save</button></details>
-<p class="foot">Tip: select text on any page and press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>. <a href="setup.html" target="_blank">Setup checks</a> · <a href="https://heyhumanly.com/extension/" target="_blank" rel="noopener">Help</a></p>
+<p class="foot">Tip: select text on any page and press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>, then <kbd>Enter</kbd> to replace. <a href="setup.html" target="_blank">Setup checks</a> · <a href="https://heyhumanly.com/extension/" target="_blank" rel="noopener">Help</a></p>
 <script src="core.js"></script><script src="ui.js"></script><script src="popup.js"></script></body></html>
