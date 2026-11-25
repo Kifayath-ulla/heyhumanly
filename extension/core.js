@@ -386,7 +386,8 @@
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
-    const norm = (s) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+    // Fix only is asked to correct capitalization, so a case-only edit counts there; elsewhere it doesn't.
+    const norm = (s) => { s = s.trim().replace(/\s+/g, ' '); return goal === 'fixOnly' ? s : s.toLowerCase(); };
     const unchanged = norm(original) === norm(rewrite);
     const ra = readability(original), rb = readability(rewrite);
     const moves = unchanged ? [] : detect(original, rewrite, casual);
