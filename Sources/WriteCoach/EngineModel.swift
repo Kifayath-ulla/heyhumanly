@@ -134,7 +134,7 @@ extension CoachModel {
     }
 
     /// One explicit online coaching. Only text, goal and the install ID are sent.
-    func coachOnline(text: String, goal: RephraseGoal) async throws -> OnlineCoach.Result {
+    func coachOnline(text: String, goal: String) async throws -> OnlineCoach.Result {
         onlineLimitHit = false; onlineFailed = false
         do {
             let r = try await OnlineCoach.coach(text: text, goal: goal, endpoint: settings.onlineEndpoint)

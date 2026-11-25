@@ -184,6 +184,18 @@
       'Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure ("I\'m not sure", "maybe"), keep that doubt; never drop it and never turn it into a decision. ' + (GOALS[goal] || GOALS.sameTone) + '\n' +
       'Reply with ONLY the edited text.\nText:\n' + text;
   }
+  // Quick Fix styles from the Mac app's coach window; same text as WritingStyle.instruction and CoachService.streamRewrite.
+  const STYLES = {
+    fixOnly: 'Fix only real mistakes: spelling, grammar, verb forms, articles, punctuation and capitalization. Do not rephrase, reorder or replace words that are already correct, and do not change the tone (keep casual words like \'kinda\', \'hey\', \'asap\'). If nothing is wrong, return the text unchanged.',
+    polish: 'Fix mistakes and make it read clearly and naturally, like a fluent native speaker wrote it. Keep the user\'s meaning, voice and roughly the same length. Do not add new ideas.',
+    friendly: 'Rewrite it in a warm, friendly, casual tone suitable for chat. Keep the meaning and every fact. Do not add emojis or new ideas.',
+  };
+  function buildStylePrompt(text, style) {
+    return 'You are HeyHumanly, a writing coach.\n' + (STYLES[style] || STYLES.fixOnly) + '\n' +
+      'Correct obvious typos when the meaning makes the intended word clear (for example, "thung" becomes "thing"). Keep names, numbers, links, line breaks and technical terms exactly, and leave anything between backticks (`like this`) exactly as written. Never replace a vague word such as "thing", "stuff" or "it" with a more specific noun, and never swap a correct word for one with a different meaning.\n' +
+      'If the writer repeats a phrase back to back ("I don\'t know, I don\'t know"), keep it once. Never introduce a repeated phrase.\n' +
+      'Reply with ONLY the corrected text. No quotes, no labels, no notes.\nText:\n' + text;
+  }
   function cleanRewrite(raw) {
     let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
     s = s.replace(/^(here(?:'|’)s|here is)[^\n:]*:\s*/i, '').trim();
@@ -364,6 +376,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, STYLES, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);
