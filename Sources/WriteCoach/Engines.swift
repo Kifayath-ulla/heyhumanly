@@ -115,10 +115,14 @@ enum OnlineCoach {
     }
 
     /// After the app sits idle, the first request can reuse a connection the server already closed and
-    /// fail with "network connection lost". Retry once on a fresh connection.
+    /// fail at once with "network connection lost". Retry once on a fresh connection, but only when it
+    /// failed too fast for the server to have coached (and counted) it.
     private static func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        let start = Date()
         do { return try await URLSession.shared.data(for: request) }
-        catch let error as URLError where error.code == .networkConnectionLost { return try await URLSession.shared.data(for: request) }
+        catch let error as URLError where error.code == .networkConnectionLost && Date().timeIntervalSince(start) < 1.5 {
+            return try await URLSession.shared.data(for: request)
+        }
     }
 
     static func allowance(endpoint: String) async -> Allowance? {
