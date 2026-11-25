@@ -216,3 +216,8 @@ test('Chrome built-in model: an all-lowercase message stays lowercase too', asyn
   try { assert.equal((await HH.tighten('thx, it realy saved me alot of time lol', { engine: 'builtin' })).rewrite, 'thx, it really saved me a lot of time lol'); }
   finally { delete globalThis.LanguageModel; }
 });
+
+test('isWritingModel skips embedding models by name, not by tag', () => {
+  for (const m of ['nomic-embed-text', 'all-minilm:latest', 'bge-m3', 'llava-clip:7b', 'localhost:5000/nomic-embed-text:latest', 'localhost:5000/bge-m3']) assert.equal(HH.isWritingModel(m), false, m);
+  for (const m of ['qwen2.5:3b', 'qwen2.5:clipboard', 'mistral', 'llama3.2:embedded-tuned', 'localhost:5000/clip-lab/qwen2.5:latest']) assert.equal(HH.isWritingModel(m), true, m);
+});

@@ -258,7 +258,8 @@
   const MAX_CHARS = 6000, GENERATE_MS = 180000;
   const base = (endpoint) => String(endpoint || DEFAULTS.endpoint).trim().replace(/\/+$/, '');
   const isLocalEndpoint = (endpoint) => /^http:\/\/(localhost|127\.0\.0\.1):11434$/.test(base(endpoint));
-  const isWritingModel = (name) => !/embed|bge|minilm|rerank|clip/i.test(name);
+  // Only the model name itself (no registry, namespace or :tag) is checked, so qwen2.5:clipboard still counts. Mirrors CoachModel.isWritingModel.
+  const isWritingModel = (name) => !/embed|bge|minilm|rerank|clip/i.test(String(name).split('/').pop().split(':')[0]);
   const fail = (code, message) => { const e = new Error(message); e.code = code; return e; };
   async function fetchT(url, opts, ms) {
     const c = new AbortController(), t = setTimeout(() => c.abort(), ms);

@@ -62,7 +62,19 @@ extension CoachModel {
     }
 
     /// Ollama models that can write (embedding models can't).
-    var writingModels: [String] { installedModels.filter { !$0.localizedCaseInsensitiveContains("embed") && !Self.isCloudModel($0) } }
+    var writingModels: [String] { installedModels.filter(Self.isWritingModel) }
+    /// Embedding, reranker and CLIP models can't write; cloud models leave this Mac. Only the model name itself (no
+    /// registry, namespace or `:tag`) is checked, so a tag like `qwen2.5:clipboard` still counts. Mirrors `isWritingModel` in extension/core.js.
+    static func isWritingModel(_ name: String) -> Bool {
+        let base = (name.split(separator: "/").last ?? "").split(separator: ":").first.map(String.init) ?? ""
+        return base.range(of: "embed|bge|minilm|rerank|clip", options: [.regularExpression, .caseInsensitive]) == nil && !isCloudModel(name)
+    }
+    /// Ollama reads a name without a tag as `:latest`, so `mistral` and `mistral:latest` are the same model.
+    nonisolated static func sameModel(_ a: String, _ b: String) -> Bool { canonicalModel(a) == canonicalModel(b) }
+    nonisolated private static func canonicalModel(_ name: String) -> String {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return (n.split(separator: "/").last ?? "").contains(":") ? n : n + ":latest"
+    }
     /// Ollama "cloud" models (e.g. gpt-oss:120b-cloud) forward text to ollama.com, so they never count as on this Mac.
     static func isCloudModel(_ name: String) -> Bool {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -80,7 +92,7 @@ extension CoachModel {
         UserDefaults.standard.set(true, forKey: chooserKey)
         if AppleModel.isAvailable { setEngine(.appleOnDevice); return }
         if case .running(let models) = await OllamaStatus.check(endpoint: settings.endpoint),
-           let pick = models.contains(settings.model) ? settings.model : models.first(where: { !$0.localizedCaseInsensitiveContains("embed") && !Self.isCloudModel($0) }) {
+           let pick = models.first(where: { Self.sameModel($0, settings.model) && Self.isWritingModel($0) }) ?? models.first(where: Self.isWritingModel) {
             settings.model = pick; settingsModel = pick
             setEngine(.ollama)
         }
@@ -98,10 +110,28 @@ extension CoachModel {
         refreshStatus()
     }
 
+    /// Re-reads the model list from the current endpoint first, so it never picks from a stale list or claims a connection that isn't there.
     func useMyOllama() {
-        if !installedModels.contains(settings.model), let first = writingModels.first { settings.model = first; settingsModel = first }
-        setEngine(.ollama)
-        statusMessage = "Connected to your Ollama (\(settings.model)). Your writing stays on this Mac."
+        let endpoint = settings.endpoint
+        Task {
+            let status = await OllamaStatus.check(endpoint: endpoint)
+            guard endpoint == settings.endpoint else { return }
+            ollama = status
+            guard case .running(let models) = status else {
+                statusMessage = nil
+                errorMessage = "Couldn't reach Ollama at \(endpoint). Open the Ollama app or run `ollama serve`, then try again."
+                return
+            }
+            installedModels = models
+            guard let pick = models.first(where: { Self.sameModel($0, settings.model) && Self.isWritingModel($0) }) ?? writingModels.first else {
+                statusMessage = nil
+                errorMessage = "Your Ollama has no writing model yet. Download one in Settings → Local AI, then try again."
+                return
+            }
+            settings.model = pick; settingsModel = pick
+            setEngine(.ollama)
+            statusMessage = "Connected to your Ollama (\(pick)). Your writing stays on this Mac."
+        }
     }
 
     func consentToOnline() {
