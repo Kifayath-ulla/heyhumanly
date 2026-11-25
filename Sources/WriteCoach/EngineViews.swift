@@ -181,7 +181,7 @@ struct EngineSettingsCard: View {
                 option(.offlineManaged, detail: offlineReady ? "Private Ollama run by HeyHumanly (\(model.settings.managedModel)). Never leaves your Mac." : "Download once, then unlimited and works with Wi-Fi off.",
                        enabled: true)
                 Divider().overlay(Color.hairline)
-                option(.ollama, detail: model.ollamaDetected ? "Use my Ollama (found \(model.writingModels.count) model\(model.writingModels.count == 1 ? "" : "s")). Never leaves your Mac." : "Ollama isn't running on \(URLComponents(string: model.settings.endpoint)?.port.map(String.init) ?? "11434").",
+                option(.ollama, detail: model.ollamaDetected ? "Use my Ollama (found \(model.writingModels.count) model\(model.writingModels.count == 1 ? "" : "s")). Never leaves your Mac." : model.ollamaRunning ? "Your Ollama is running but has no writing model yet. Download or pick one in My Ollama below." : "Ollama isn't running on \(URLComponents(string: model.settings.endpoint)?.port.map(String.init) ?? "11434").",
                        enabled: model.ollamaDetected)
                 Divider().overlay(Color.hairline)
                 option(.online, detail: "\(model.allowance.map { "\($0.limit)" } ?? "10") free coachings a day. Sends the text you choose to HeyHumanly and Cloudflare Workers AI; not stored or logged.",
@@ -202,7 +202,7 @@ struct EngineSettingsCard: View {
                     TextField(AppSettings.defaultOnlineEndpoint, text: $onlineEndpoint)
                         .textFieldStyle(.roundedBorder).font(.system(size: 12, design: .monospaced))
                         .onSubmit(saveEndpoint).accessibilityLabel("Online endpoint")
-                    Text("Press Return to save. Leave empty for the default. Ollama endpoint and model are in Local AI below. Install ID: \(OnlineCoach.installID.prefix(8))… (random, sent only with online requests).")
+                    Text("Press Return to save. Leave empty for the default. Ollama endpoint and model are in My Ollama below. Install ID: \(OnlineCoach.installID.prefix(8))… (random, sent only with online requests).")
                         .font(.system(size: 11)).foregroundStyle(.tertiary)
                 }
                 .padding(.top, 6)

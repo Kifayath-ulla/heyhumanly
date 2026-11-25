@@ -36,8 +36,9 @@ final class TextWatcher {
     }
 
     private func tick() {
-        guard let model, let session, model.coachingActive, AXIsProcessTrusted(),
-              model.engineIsLocal else { return }
+        guard let model, let session else { return }
+        // Forget the last check while off, so turning Labs back on rechecks the text already there.
+        guard model.coachingActive, AXIsProcessTrusted(), model.engineIsLocal else { lastChecked = ""; return }
         guard let front = NSWorkspace.shared.frontmostApplication,
               front.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
         let bundle = front.bundleIdentifier ?? ""
