@@ -22,6 +22,8 @@ test('cleanRewrite strips think blocks, "Here is" preambles and wrapping quotes'
   assert.equal(HH.cleanRewrite('Here is the edited text: Here is the plan: here’s the gist: ship.', 'Here is the plan: here’s the gist: ship'), 'Here is the plan: here’s the gist: ship.');
   assert.equal(HH.cleanRewrite('Here’s the plan: we ship Friday.', 'Heres the plan: we ship Friday.'), 'Here’s the plan: we ship Friday.');
   assert.equal(HH.cleanRewrite('Corrected text: ship it.'), 'ship it.');
+  assert.equal(HH.cleanRewrite('Here is the corrected sentence: we ship Friday.', 'we ship friday'), 'we ship Friday.');
+  assert.equal(HH.cleanRewrite('Here is the edited text: Here is the text: ship it.', 'Here is teh text: ship it'), 'Here is the text: ship it.');
 });
 
 test('wordyHits and passiveHits find Lexicon-style patterns', () => {

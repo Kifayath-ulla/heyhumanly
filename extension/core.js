@@ -197,13 +197,14 @@
       'Reply with ONLY the corrected text. No quotes, no labels, no notes.\nText:\n' + text;
   }
   // A label the model put before its answer ("Here is the edited text:"), not an opening like "Here is the plan:".
-  const LABEL = /^(?:(?:here(?:'|’)?s|here is)\s+(?:the|your|a)\s+(?:[\w-]+\s+){0,3}(?:text|version|rewrite|message|draft|edit)|(?:corrected|edited|rewritten|revised)(?:\s+text)?|rewrite)\s*:\s*/i;
+  const LABEL = /^(?:(?:here(?:'|’)?s|here is)\s+(?:the|your|a)\s+(?:[\w-]+\s+){0,3}(?:text|version|rewrite|message|draft|edit|sentences?|paragraphs?|email|reply|response)|(?:corrected|edited|rewritten|revised)(?:\s+text)?|rewrite)\s*:\s*/i;
   const QUOTED = /^["“].*["”]$/s;
-  // Pass the original so a label or wrapping quotes the writer typed are kept.
+  function labels(s) { let n = 0; while (LABEL.test(s)) { s = s.replace(LABEL, '').trim(); n++; } return n; }
+  // Pass the original so a label or wrapping quotes the writer typed are kept; only the extra labels the model added are stripped.
   function cleanRewrite(raw, original = '') {
     const o = (original || '').trim();
     let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    if (!LABEL.test(o)) s = s.replace(LABEL, '').trim();
+    for (let n = labels(s) - labels(o); n > 0; n--) s = s.replace(LABEL, '').trim();
     if (QUOTED.test(s) && !QUOTED.test(o)) s = s.slice(1, -1).trim();
     return s;
   }
