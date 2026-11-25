@@ -68,16 +68,8 @@ enum OnlineCoach {
     static func goal(_ g: RephraseGoal) -> String {
         switch g { case .sameTone: return "sameTone"; case .shorter: return "shorter"; case .professional: return "formal" }
     }
-    /// Quick Fix styles map to the server's style prompts (STYLES in extension/core.js).
-    static func goal(_ s: WritingStyle) -> String {
-        switch s {
-        case .fixOnly: return "fixOnly"
-        case .polish: return "polish"
-        case .friendly: return "friendly"
-        case .professional: return "formal"
-        case .concise: return "shorter"
-        }
-    }
+    /// Each style maps to one of the server's goals (GOALS and STYLES in extension/core.js).
+    static func goal(_ s: WritingStyle) -> String { s.onlineGoal }
 
     private static func parseDate(_ s: String?) -> Date? {
         guard let s else { return nil }

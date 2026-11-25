@@ -19,7 +19,7 @@ struct HeyHumanlyApp: App {
             let s = AppSettings.load()
             Task { @MainActor in
                 do {
-                    let raw = try await CompanionService.rewrite(text, tone: fixOnly ? .fixOnly : .auto, appName: "Slack", preserve: [], endpoint: s.endpoint, model: s.model)
+                    let raw = try await CompanionService.rewrite(text, style: fixOnly ? .fixOnly : .polish, appName: "Slack", preserve: [], endpoint: s.endpoint, model: s.model)
                     let clean = RewriteGuard.sanitize(original: text, rewrite: raw, preserve: [])
                     print("REWRITE: \(clean)")
                     let changes = ChangeSet(original: text, rewrite: clean).changes.map { c -> Change in var c = c; c.teach(original: text, location: c.location); return c }
