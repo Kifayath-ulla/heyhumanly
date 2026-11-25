@@ -116,6 +116,10 @@ final class QuickSession: ObservableObject {
         show()
         if original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             fail("Copy some text with ⌘C, then press \(model.shortcutLabel). To replace text in place, turn on Accessibility in Settings.")
+        } else if model.isOnline {
+            // The clipboard may hold something older than the selection, so nothing is sent online until you ask.
+            notice = "This is the text you last copied. Press ⌘R to rewrite it online."
+            layout()
         } else {
             start(bundleID: front.bundleIdentifier)
         }
