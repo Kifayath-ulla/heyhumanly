@@ -97,7 +97,9 @@ enum OnlineCoach {
         guard let url = URL(string: endpoint) else { throw OnlineError.badRequest }
         var request = URLRequest(url: url); request.httpMethod = "POST"; request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["text": text, "goal": goal, "install": installID])
+        // One id per coaching, reused by the retry, so the server does not charge a repeat twice.
+        let requestID = UUID().uuidString.lowercased()
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["text": text, "goal": goal, "install": installID, "request": requestID])
         let data: Data, response: URLResponse
         do { (data, response) = try await send(request) } catch { throw OnlineError.network }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
@@ -115,14 +117,11 @@ enum OnlineCoach {
     }
 
     /// After the app sits idle, the first request can reuse a connection the server already closed and
-    /// fail at once with "network connection lost". Retry once on a fresh connection, but only when it
-    /// failed too fast for the server to have coached (and counted) it.
+    /// fail with "network connection lost". Retry once on a fresh connection; the request id in the body
+    /// keeps the server from counting it twice if the first attempt did get through.
     private static func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
-        let start = Date()
         do { return try await URLSession.shared.data(for: request) }
-        catch let error as URLError where error.code == .networkConnectionLost && Date().timeIntervalSince(start) < 1.5 {
-            return try await URLSession.shared.data(for: request)
-        }
+        catch let error as URLError where error.code == .networkConnectionLost { return try await URLSession.shared.data(for: request) }
     }
 
     static func allowance(endpoint: String) async -> Allowance? {

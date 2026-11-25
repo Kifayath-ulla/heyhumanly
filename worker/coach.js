@@ -35,28 +35,35 @@ export class Ledger {
     const used = (await this.store.get('i:' + install)) || 0, spent = (await this.store.get('neurons')) || 0;
     return { used, remaining: Math.max(0, LIMITS.perInstall - used), budgetLeft: spent < LIMITS.dailyNeurons };
   }
-  async reserve(install, ipKey, est, day) {
+  // `req` is the app's id for one coaching. When the app retries after losing the response, the repeat
+  // is not charged to the install again; the per-IP count and the global budget still apply.
+  async reserve(install, ipKey, est, day, req = null) {
     await this.roll(day);
+    const repeat = !!req && (await this.store.get('r:' + req)) === install;
     const used = (await this.store.get('i:' + install)) || 0;
-    if (used >= LIMITS.perInstall) return { ok: false, reason: 'allowance_used', remaining: 0 };
+    if (!repeat && used >= LIMITS.perInstall) return { ok: false, reason: 'allowance_used', remaining: 0 };
     const ipUsed = ipKey ? (await this.store.get('p:' + ipKey)) || 0 : 0;
     if (ipKey && ipUsed >= LIMITS.perIp) return { ok: false, reason: 'allowance_used', remaining: LIMITS.perInstall - used };
     const spent = (await this.store.get('neurons')) || 0;
     if (spent + est > LIMITS.dailyNeurons) return { ok: false, reason: 'budget_exhausted', remaining: LIMITS.perInstall - used };
-    await this.store.put('i:' + install, used + 1);
+    if (!repeat) await this.store.put('i:' + install, used + 1);
+    if (req && !repeat) await this.store.put('r:' + req, install);
     if (ipKey) await this.store.put('p:' + ipKey, ipUsed + 1);
     await this.store.put('neurons', spent + est);
-    return { ok: true, remaining: LIMITS.perInstall - used - 1 };
+    return { ok: true, remaining: Math.max(0, LIMITS.perInstall - used - (repeat ? 0 : 1)), repeat };
   }
   // Failed, timed-out and provider-error requests are refunded; successful ones are charged their real cost.
   // A billed failure (the model answered but the output was unusable) keeps its real cost and the per-IP count.
-  async settle(install, ipKey, est, actual, success, day, billed = false) {
+  async settle(install, ipKey, est, actual, success, day, billed = false, req = null, repeat = false) {
     if ((await this.store.get('day')) !== day) return;
     const spent = (await this.store.get('neurons')) || 0;
     if (success) { await this.store.put('neurons', Math.max(0, spent - est + actual)); return; }
     await this.store.put('neurons', Math.max(0, spent - est + (billed ? actual : 0)));
-    const used = (await this.store.get('i:' + install)) || 0;
-    await this.store.put('i:' + install, Math.max(0, used - 1));
+    if (!repeat) {
+      const used = (await this.store.get('i:' + install)) || 0;
+      await this.store.put('i:' + install, Math.max(0, used - 1));
+      if (req) await this.store.delete('r:' + req);
+    }
     if (ipKey && !billed) { const p = (await this.store.get('p:' + ipKey)) || 0; await this.store.put('p:' + ipKey, Math.max(0, p - 1)); }
   }
 }
@@ -125,6 +132,7 @@ export async function handleCoach(request, env, now = Date.now()) {
   let body; try { body = await request.json(); } catch { return json({ error: 'bad_request' }, 400); }
   const text = typeof body?.text === 'string' ? body.text.trim() : '', goal = GOALS.has(body?.goal) ? body.goal : 'sameTone';
   const install = typeof body?.install === 'string' ? body.install.toLowerCase() : '';
+  const req = typeof body?.request === 'string' && INSTALL.test(body.request) ? body.request.toLowerCase() : null;
   if (!INSTALL.test(install) || !text) return json({ error: 'bad_request' }, 400);
   if (text.length > LIMITS.maxChars) return json({ error: 'too_long', maxChars: LIMITS.maxChars }, 413);
   if (!enabled) return json({ ...base(env, 0, now), error: 'unavailable' }, 503);
@@ -134,7 +142,7 @@ export async function handleCoach(request, env, now = Date.now()) {
   const maxOut = Math.min(LIMITS.maxOutputTokens, Math.max(120, Math.ceil(text.length / 2) + 80));
   const est = neurons(model, Math.ceil(prompt.length / 3), maxOut);
   const key = await ipKey(request, env, day), ledger = ledgerOf(env);
-  const r = await ledger.reserve(install, key, est, day);
+  const r = await ledger.reserve(install, key, est, day, req);
   if (!r.ok) return json({ ...base(env, r.remaining, now), error: r.reason }, r.reason === 'budget_exhausted' ? 503 : 429);
 
   let timer, out;
@@ -157,7 +165,7 @@ export async function handleCoach(request, env, now = Date.now()) {
     const u = out?.usage || {};
     const actual = billed ? neurons(model, u.prompt_tokens ?? Math.ceil(prompt.length / 3), u.completion_tokens ?? maxOut) : 0;
     // A timed-out call may still finish and be billed, so keep its estimated cost in the global budget.
-    await ledger.settle(install, key, timeout ? 0 : est, actual, false, day, billed);
-    return json({ ...base(env, r.remaining + 1, now), error: timeout ? 'timeout' : 'provider_error' }, timeout ? 504 : 502);
+    await ledger.settle(install, key, timeout ? 0 : est, actual, false, day, billed, req, r.repeat);
+    return json({ ...base(env, r.remaining + (r.repeat ? 0 : 1), now), error: timeout ? 'timeout' : 'provider_error' }, timeout ? 504 : 502);
   } finally { clearTimeout(timer); }
 }
