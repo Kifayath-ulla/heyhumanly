@@ -130,7 +130,7 @@ export async function handleCoach(request, env, now = Date.now()) {
   if (!enabled) return json({ ...base(env, 0, now), error: 'unavailable' }, 503);
 
   const model = env.COACH_MODEL || DEFAULT_MODEL;
-  const casual = HH.isCasual(text), prompt = HH.STYLES[goal] ? HH.buildStylePrompt(text, goal) : HH.buildPrompt(text, goal, casual);
+  const casual = HH.isCasual(text), prompt = HH.promptFor(text, goal, casual);
   const maxOut = Math.min(LIMITS.maxOutputTokens, Math.max(120, Math.ceil(text.length / 2) + 80));
   const est = neurons(model, Math.ceil(prompt.length / 3), maxOut);
   const key = await ipKey(request, env, day), ledger = ledgerOf(env);

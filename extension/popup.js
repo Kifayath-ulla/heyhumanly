@@ -2,17 +2,23 @@ const $ = (id) => document.getElementById(id);
 const openSetup = () => chrome.runtime.sendMessage({ type: 'hh:setup' });
 function run(goal) {
   const text = $('t').value.trim(); if (!text) { $('out').innerHTML = '<div class="err">Paste some text first.</div>'; return; }
-  $('out').innerHTML = '<span class="sp"></span>Tightening on your computer…';
-  ['go', 'shorter', 'formal'].forEach((id) => ($(id).disabled = true));
+  $('out').innerHTML = '<span class="sp"></span>Rewriting on your computer…';
+  const buttons = $('styles').querySelectorAll('button');
+  buttons.forEach((b) => { b.disabled = true; b.className = b.dataset.goal === goal ? 'p' : ''; });
   chrome.runtime.sendMessage({ type: 'hh:tighten', text, goal }, (res) => {
-    ['go', 'shorter', 'formal'].forEach((id) => ($(id).disabled = false));
+    buttons.forEach((b) => (b.disabled = false));
     if (!res) { $('out').innerHTML = '<div class="err">The extension could not run. Reopen this popup.</div>'; return; }
     if (!res.ok) {
       $('out').innerHTML = '<div class="err">' + HHUI.E(res.error) + (res.setup ? ' <button class="p" data-setup>Open setup</button>' : '') + '</div>' + HHUI.quick(res.quick);
       const b = $('out').querySelector('[data-setup]'); if (b) b.onclick = openSetup;
       return;
     }
-    $('status').textContent = res.result.model; $('out').innerHTML = HHUI.render(res.result);
+    const r = res.result;
+    $('status').textContent = r.model;
+    $('out').innerHTML = r.unchanged ? '<div class="ok"><b>This already reads well.</b> Nothing to change.</div>'
+      : '<div class="better"><div class="new">' + HHUI.diffHTML(r.original, r.rewrite) + '</div></div><div class="row"><button class="p" id="copy">Copy</button></div>' +
+        '<details class="whyd"><summary>Why these changes</summary>' + HHUI.whyHTML(r) + '</details>';
+    const c = $('copy'); if (c) c.onclick = () => navigator.clipboard.writeText(r.rewrite).then(() => (c.textContent = 'Copied'));
   });
 }
 async function showStatus(d) {
@@ -26,7 +32,7 @@ async function showStatus(d) {
   $('status').textContent = problem ? 'Not ready' : 'Ready · ' + (d.model && d.models.includes(d.model) ? d.model : 'auto model');
   $('setup').hidden = !problem; $('setup-msg').textContent = problem;
 }
-$('go').onclick = () => run('sameTone'); $('shorter').onclick = () => run('shorter'); $('formal').onclick = () => run('formal');
+HH.STYLE_LIST.forEach((s) => { const b = document.createElement('button'); b.textContent = s.title; b.title = s.blurb; b.dataset.goal = s.goal; b.onclick = () => run(s.goal); $('styles').appendChild(b); });
 $('setup-go').onclick = openSetup;
 chrome.storage.local.get({ endpoint: HH.DEFAULTS.endpoint, model: '' }, (s) => {
   $('endpoint').value = s.endpoint;

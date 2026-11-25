@@ -7,7 +7,7 @@ Runs on your local Ollama model. No server, no account, no analytics.
 1. Install [Ollama](https://ollama.com/download) (Mac, Windows or Linux) and open it.
 2. Open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick this folder.
 3. A setup page opens. It checks that Ollama is running, that Ollama allows this extension (`OLLAMA_ORIGINS`), and that a writing model is installed. For each missing step it shows the exact command for your system and can download the model. You can reopen it from the popup under "Setup checks".
-4. Select text in any text box and press Alt+Shift+H (or right-click, Tighten with HeyHumanly).
+4. Select text in any text box and press Alt+Shift+H (or right-click, Tighten with HeyHumanly). A small panel opens next to the text with the rewrite as a diff. Enter replaces it, Esc closes, Tab or 1–5 switches style (Fix only, Polish, Shorter, Friendly, Professional), Ctrl+/ (⌘/ on Mac) shows why, Ctrl+R retries, Ctrl+C copies. Ctrl+Z (⌘Z) after Enter undoes the replacement.
 
 ## Privacy
 The extension only runs when you press the shortcut or use the context menu. It sends the selected text to the Ollama address on your own computer and nowhere else.

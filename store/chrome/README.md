@@ -23,8 +23,8 @@ Copy for the Chrome Web Store developer dashboard. Nothing here is submitted aut
 > • Tightens text and keeps your tone: casual messages stay casual, slang and lowercase stay as written.
 > • Keeps facts: names, numbers, dates, links and code are preserved.
 > • Explains each change: filler, wordy phrases, passive voice and repeated openers, with a short reason and a source you can check.
-> • Shorter and More formal versions when you want them.
-> • Apply replaces the text in place; Copy puts it on your clipboard.
+> • Five styles, one key each: Fix only, Polish, Shorter, Friendly and Professional.
+> • The panel opens next to your text and shows the edit as a diff. Enter replaces the text in place; Ctrl+C copies it.
 > • Works in text boxes and most rich-text editors. On pages Chrome protects (chrome://, the Web Store, PDFs), paste text into the toolbar popup instead.
 >
 > Setup
