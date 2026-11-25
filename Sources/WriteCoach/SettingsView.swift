@@ -76,8 +76,8 @@ private struct GeneralSettings: View {
             }
             Section {
                 Toggle("Labs: check as I type", isOn: Binding(get: { model.settings.autoCheck }, set: { model.setCoaching($0) }))
-                if model.dismissedCount > 0 {
-                    LabeledContent("\(model.dismissedCount) dismissed suggestion\(model.dismissedCount == 1 ? "" : "s")") {
+                if model.dismissedCount > 0 || !model.settings.mutedCategories.isEmpty {
+                    LabeledContent(hiddenSummary) {
                         Button("Forget dismissed suggestions") { model.resetDismissals() }
                     }
                 }
@@ -92,6 +92,11 @@ private struct GeneralSettings: View {
         .formStyle(.grouped)
         .frame(height: 560)
         .onDisappear { model.stopRecording() }
+    }
+
+    private var hiddenSummary: String {
+        let d = model.dismissedCount, m = model.settings.mutedCategories.count
+        return [d > 0 ? "\(d) dismissed suggestion\(d == 1 ? "" : "s")" : nil, m > 0 ? "\(m) muted type\(m == 1 ? "" : "s")" : nil].compactMap { $0 }.joined(separator: ", ")
     }
 
     private var appStyles: [(id: String, title: String)] {

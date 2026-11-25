@@ -55,7 +55,11 @@ final class CoachModel: ObservableObject {
         snoozedUntil = Date().addingTimeInterval(Double(minutes) * 60)
         inline.stop()
     }
-    func resetDismissals() { RewriteGuard.clearDismissals(); dismissedCount = 0 }
+    /// Brings back dismissed suggestions and mistake types muted with "Stop flagging…".
+    func resetDismissals() {
+        RewriteGuard.clearDismissals(); dismissedCount = 0
+        settings.mutedCategories = []; settings.save()
+    }
     func isMuted(_ category: MistakeCategory) -> Bool { settings.mutedCategories.contains(category) }
 
     func setMuted(_ category: MistakeCategory, _ muted: Bool) {
