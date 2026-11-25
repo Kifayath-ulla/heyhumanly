@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.11 — 2026-11-26
+
+Redesign: one shortcut, one small panel.
+
+- Select text in any app and press ⌃⌥Space. A small panel opens next to the text with the rewrite as a word diff. Enter replaces it, ⌘Z undoes, Esc closes, ⌘C copies.
+- Five styles: Fix only, Polish, Shorter, Friendly, Professional. Switch with Tab or ⌘1–⌘5; ⌘/ shows why each change was made; ⌘R tries again.
+- The app lives in the menu bar only. Settings has three tabs: General, Engine and Privacy.
+- A three-step welcome lets you try the panel on a sample before granting any permission. Without Accessibility, ⌃⌥Space rewrites the clipboard instead.
+- Removed the dashboard, Insights, review cards, history, dictionary and exercises. Checking as you type is now an opt-in Labs setting.
+- Settings from earlier versions are kept when you upgrade.
+- Chrome extension: Alt+Shift+H opens the same panel next to your selection with the same five styles; Enter replaces, Tab or 1–5 switches style. The toolbar popup has the five styles too.
+- Not notarized by Apple.
+
 ## 0.1.10 — 2026-11-26
 
 - Settings → Local AI lists only models that can write. If an embedding model such as `all-minilm` is still saved, the status turns orange and asks you to pick another model, instead of coaching failing.
