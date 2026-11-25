@@ -99,7 +99,7 @@ enum OnlineCoach {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["text": text, "goal": goal, "install": installID])
         let data: Data, response: URLResponse
-        do { (data, response) = try await URLSession.shared.data(for: request) } catch { throw OnlineError.network }
+        do { (data, response) = try await send(request) } catch { throw OnlineError.network }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let body = try? JSONDecoder().decode(Body.self, from: data)
         switch status {
@@ -112,6 +112,15 @@ enum OnlineCoach {
         case 503: throw OnlineFailure(error: .busy, allowance: body?.allowance)
         default: throw OnlineFailure(error: .failed, allowance: body?.allowance)
         }
+    }
+
+    /// After the app sits idle, the shared session can hand the POST a pooled connection the server already
+    /// closed, and it fails with "network connection lost". Each coaching gets its own ephemeral session, so it
+    /// always opens a fresh connection. The POST is never retried, so it can never be counted twice.
+    private static func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        let session = URLSession(configuration: .ephemeral)
+        defer { session.finishTasksAndInvalidate() }
+        return try await session.data(for: request)
     }
 
     static func allowance(endpoint: String) async -> Allowance? {
