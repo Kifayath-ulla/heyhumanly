@@ -326,6 +326,7 @@ extension CoachModel {
                 habitsVersion += 1
             } catch {
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? "Couldn't rephrase that. Try again."
+                refreshStatusIfOllamaDown(error)
             }
             rephraseLoading = false
         }

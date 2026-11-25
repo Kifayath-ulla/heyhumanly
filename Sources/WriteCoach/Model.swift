@@ -262,6 +262,14 @@ final class CoachModel: ObservableObject {
         }
     }
 
+    /// A coaching that found Ollama stopped (or its model gone) updates the status dots right away.
+    func refreshStatusIfOllamaDown(_ error: Error) {
+        switch error as? CoachError {
+        case .ollamaNotRunning, .modelMissing: refreshStatus()
+        default: break
+        }
+    }
+
     var modelInstalled: Bool { installedModels.contains(settings.model) }
 
     func selectModel(_ name: String) {
@@ -815,6 +823,7 @@ final class CoachModel: ObservableObject {
                 appLog.error("analyze failed: \(String(describing: error), privacy: .public)")
                 errorMessage = error.localizedDescription
                 loadingMode = nil
+                refreshStatusIfOllamaDown(error)
             }
         }
     }
