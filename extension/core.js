@@ -204,7 +204,9 @@
   function cleanRewrite(raw, original = '') {
     const o = letters(original || '');
     let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim(), m;
-    while ((m = s.match(LABEL)) && !o.startsWith(letters(m[0]))) s = s.slice(m[0].length).trim();
+    // Strip a label the writer didn't type, or a copy of their opening the model put in front of it.
+    const extra = (l, rest) => !o.startsWith(l) || (letters(rest).startsWith(l) && !o.startsWith(l + l));
+    while ((m = s.match(LABEL)) && extra(letters(m[0]), s.slice(m[0].length))) s = s.slice(m[0].length).trim();
     if (QUOTED.test(s) && !QUOTED.test((original || '').trim())) s = s.slice(1, -1).trim();
     return s;
   }
