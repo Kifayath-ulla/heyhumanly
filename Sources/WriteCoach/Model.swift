@@ -100,10 +100,11 @@ final class CoachModel: ObservableObject {
             w.titlebarAppearsTransparent = true; w.titleVisibility = .hidden
             w.isMovableByWindowBackground = true
             w.isReleasedWhenClosed = false
-            w.contentView = NSHostingView(rootView: OnboardingView(model: self))
             w.center()
             onboardingWindow = w
         }
+        // A fresh view each time, so Show Welcome Again starts on the first step.
+        if onboardingWindow?.isVisible != true { onboardingWindow?.contentView = NSHostingView(rootView: OnboardingView(model: self)) }
         NSApp.activate(ignoringOtherApps: true)
         onboardingWindow?.makeKeyAndOrderFront(nil)
     }
