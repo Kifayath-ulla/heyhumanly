@@ -16,7 +16,7 @@
     const s = r.stats, words = s.wordsBefore === s.wordsAfter ? s.wordsAfter + ' words' : s.wordsBefore + ' → ' + s.wordsAfter + ' words';
     const grade = s.gradeBefore === s.gradeAfter ? s.gradeAfter : s.gradeBefore + ' → ' + s.gradeAfter;
     const phrases = r.moves.flatMap((m) => [m.before].concat(m.also || []));
-    const note = r.goal === 'sameTone' ? '<div class="note">' + (r.casual ? 'Casual message, so it stays casual. Only filler, repeats and extra words are trimmed.' : 'Your voice is kept. Only filler, repeats and extra words are trimmed.') + '</div>' : '';
+    const note = r.goal === 'sameTone' ? '<div class="note">' + (r.casual ? 'Casual message, so it stays casual. Only filler, repeats and extra words are trimmed, and clear misspellings fixed.' : 'Your voice is kept. Only filler, repeats and extra words are trimmed, and clear misspellings fixed.') + '</div>' : '';
     return '<div class="lab">You wrote</div><div class="orig">' + highlight(r.original, phrases, 'bad') + '</div>' +
       '<div class="better"><div class="lab2"><span>Maybe this reads better' + (r.goal === 'sameTone' ? ' · same tone' : '') + '</span><span>' + E(words) + ' · ' + E(grade) + ' · ' + E(s.read) + ' read</span></div><div class="new" id="hh-new">' + E(r.rewrite) + '</div>' + note + '</div>' +
       (r.moves.length ? '<div class="lab" style="margin-top:12px">What changed, and why</div>' + r.moves.map(moveCard).join('') : '') +

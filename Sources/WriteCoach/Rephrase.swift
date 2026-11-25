@@ -448,7 +448,7 @@ struct RephrasePane: View {
                 highlighted(r.rewrite, phrases: r.moves.map(\.after).filter { $0.count < 60 }, color: Color.added).font(.system(size: 16)).foregroundStyle(Color.ink)
                     .textSelection(.enabled)
                 if r.goal == .sameTone {
-                    Text(r.casual ? "Casual message, so it stays casual. Only filler, repeats and extra words are trimmed. Research on language style matching links sounding like the person you are talking to with closer connection." : "Your voice is kept. Only filler, repeats and extra words are trimmed.")
+                    Text(r.casual ? "Casual message, so it stays casual. Only filler, repeats and extra words are trimmed, and clear misspellings fixed. Research on language style matching links sounding like the person you are talking to with closer connection." : "Your voice is kept. Only filler, repeats and extra words are trimmed, and clear misspellings fixed.")
                         .font(.system(size: 11.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 2)
                 }
             }
