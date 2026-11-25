@@ -180,7 +180,7 @@
     return 'You are HeyHumanly, a writing coach that edits lightly. The text may be typed or transcribed speech.\n' +
       'Step 1: notice the writer’s register (slang, casual, blunt, warm, formal, emoji, lowercase). Keep it. Same energy, same slang, same contractions, same punctuation style. Never make the text more formal, polite or corporate than the writer made it' + (casual ? '. This one is casual: keep it casual' : '') + '.\n' +
       'Keep the writer’s capitalization and punctuation habits as they are (a message written in lowercase stays lowercase; a message with normal capitals keeps normal capitals; "!!" and "..." stay). Leave anything between backticks (`like this`) exactly as written. ' +
-      'Step 2: make small cuts only. If a sentence runs past about 25 words, split it into shorter sentences using the writer’s own words. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.\n' +
+      'Step 2: make small cuts only. If a sentence runs past about 25 words, split it into shorter sentences using the writer’s own words. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled. Also fix clear spelling mistakes ("realy" becomes "really", "alot" becomes "a lot"), but keep slang, abbreviations and casual spellings (rn, wanna, idk, u) and the capitalization exactly as written.\n' +
       'Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure ("I\'m not sure", "maybe"), keep that doubt; never drop it and never turn it into a decision. ' + (GOALS[goal] || GOALS.sameTone) + '\n' +
       'Reply with ONLY the edited text.\nText:\n' + text;
   }
@@ -374,7 +374,7 @@
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
-    const norm = (s) => s.replace(/\s+/g, '').toLowerCase();
+    const norm = (s) => s.trim().replace(/\s+/g, ' ').toLowerCase();
     const unchanged = norm(original) === norm(rewrite);
     const ra = readability(original), rb = readability(rewrite);
     const moves = unchanged ? [] : detect(original, rewrite, casual);
