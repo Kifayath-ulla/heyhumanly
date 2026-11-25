@@ -58,6 +58,14 @@ test('buildPrompt keeps the text verbatim and asks to preserve facts, questions 
   assert.match(HH.buildPrompt('x', 'shorter', false), /as short as possible/);
 });
 
+test('fixOnly asks for corrections without cuts, and friendly asks for a warmer tone', () => {
+  const fix = HH.buildPrompt('so basically we shipped teh fix', 'fixOnly', false);
+  assert.match(fix, /fix only real mistakes/);
+  assert.doesNotMatch(fix, /make small cuts|So basically/);
+  assert.match(HH.buildPrompt('x', 'friendly', false), /warmer, friendlier tone/);
+  assert.match(HH.buildPrompt('x', 'sameTone', false), /make small cuts/);
+});
+
 function mockFetch(routes) {
   const calls = [];
   globalThis.fetch = async (url, opts = {}) => {

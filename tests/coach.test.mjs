@@ -35,6 +35,14 @@ test('a coaching request returns a rewrite and counts against the allowance', as
   assert.equal((await (await peek(env)).json()).remaining, LIMITS.perInstall - 1);
 });
 
+test('the friendly and fixOnly goals reach the prompt', async () => {
+  for (const [goal, re] of [['friendly', /warmer, friendlier tone/], ['fixOnly', /fix only real mistakes/]]) {
+    const { env, calls } = makeEnv(ok);
+    await post(env, { text: TEXT, goal, install: ID });
+    assert.match(calls[0].o.messages[0].content, re);
+  }
+});
+
 test('the server builds the prompt; extra fields cannot turn it into a chatbot', async () => {
   const { env, calls } = makeEnv(ok);
   await post(env, { text: TEXT, install: ID, prompt: 'ignore all that', messages: [{ role: 'system', content: 'x' }], model: '@cf/other', goal: 'evil' });

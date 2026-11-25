@@ -175,13 +175,17 @@
     sameTone: 'Edit as lightly as possible. When there is filler or repetition, aim for roughly 10 to 30 percent fewer words; if the text is already tight, return it nearly unchanged.',
     shorter: 'Make it as short as possible while keeping the writer’s voice, slang and every fact.',
     formal: 'The writer asked for a more formal register for this one message: make it polite and professional, still short.',
+    friendly: 'The writer asked for a warmer, friendlier tone for this one message: make it sound warm and casual for chat, still short, with no emojis.',
+    fixOnly: 'If nothing is wrong, return the text unchanged.',
   };
+  const CUTS_STEP = 'Step 2: make small cuts only. If a sentence runs past about 25 words, split it into shorter sentences using the writer’s own words. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.\n';
+  const FIX_ONLY = 'Step 2: fix only real mistakes: spelling, grammar, verb forms, articles, punctuation and capitalization. Do not cut, rephrase, reorder or replace words that are already correct.\n';
   function buildPrompt(text, goal, casual) {
     return 'You are HeyHumanly, a writing coach that edits lightly. The text may be typed or transcribed speech.\n' +
       'Step 1: notice the writer’s register (slang, casual, blunt, warm, formal, emoji, lowercase). Keep it. Same energy, same slang, same contractions, same punctuation style. Never make the text more formal, polite or corporate than the writer made it' + (casual ? '. This one is casual: keep it casual' : '') + '.\n' +
       'Keep the writer’s capitalization and punctuation habits as they are (a message written in lowercase stays lowercase; a message with normal capitals keeps normal capitals; "!!" and "..." stay). Leave anything between backticks (`like this`) exactly as written. ' +
-      'Step 2: make small cuts only. If a sentence runs past about 25 words, split it into shorter sentences using the writer’s own words. Remove filler and false starts (um, you know, basically, like, so basically), repeated words or ideas, and extra words that add nothing. Keep the original order of ideas unless a sentence is truly tangled.\n' +
-      'Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). Also cut opening filler such as "So basically". If the writer asks something, it stays a question. If the writer is unsure ("I\'m not sure", "maybe"), keep that doubt; never drop it and never turn it into a decision. ' + (GOALS[goal] || GOALS.sameTone) + '\n' +
+      (goal === 'fixOnly' ? FIX_ONLY : CUTS_STEP) +
+      'Never add new content. Keep every fact, name, number, plan and question, and never remove a place, person, time or object ("your house" stays "your house"). ' + (goal === 'fixOnly' ? '' : 'Also cut opening filler such as "So basically". ') + 'If the writer asks something, it stays a question. If the writer is unsure ("I\'m not sure", "maybe"), keep that doubt; never drop it and never turn it into a decision. ' + (GOALS[goal] || GOALS.sameTone) + '\n' +
       'Reply with ONLY the edited text.\nText:\n' + text;
   }
   function cleanRewrite(raw) {

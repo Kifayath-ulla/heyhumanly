@@ -12,7 +12,7 @@ const PRICES = {
   '@cf/ibm-granite/granite-4.0-h-micro': [0.017, 0.112],
   '@cf/zai-org/glm-4.7-flash': [0.0605, 0.40],
 };
-const GOALS = new Set(['sameTone', 'shorter', 'formal']);
+const GOALS = new Set(['sameTone', 'shorter', 'formal', 'friendly', 'fixOnly']);
 const INSTALL = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function neurons(model, inTokens, outTokens) {
