@@ -198,12 +198,12 @@
   }
   // Pass the original so a preamble or wrapping quotes the writer typed are kept.
   const PREAMBLE = /^(here(?:'|’)s|here is)[^\n:]*:\s*/i, QUOTED = /^["“].*["”]$/s;
+  function openers(s) { let n = 0; while (PREAMBLE.test(s)) { s = s.replace(PREAMBLE, '').trim(); n++; } return n; }
   function cleanRewrite(raw, original = '') {
     const o = (original || '').trim();
     let s = (raw || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    // When the writer's text opens with "Here is …:", strip only a label the model put in front of it.
-    const rest = s.replace(PREAMBLE, '').trim();
-    if (!PREAMBLE.test(o) || PREAMBLE.test(rest)) s = rest;
+    // Strip only the "Here is …:" labels the model added in front of the writer's own openings.
+    for (let n = openers(s) - openers(o); n > 0; n--) s = s.replace(PREAMBLE, '').trim();
     if (QUOTED.test(s) && !QUOTED.test(o)) s = s.slice(1, -1).trim();
     return s;
   }
