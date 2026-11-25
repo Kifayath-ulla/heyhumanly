@@ -417,7 +417,7 @@ struct RephrasePane: View {
     }
 
     private func result(_ r: RephraseResult) -> some View {
-        let norm: (String) -> String = { $0.filter { !$0.isWhitespace }.lowercased() }
+        let norm: (String) -> String = { $0.split(whereSeparator: \.isWhitespace).joined(separator: " ").lowercased() }
         if norm(r.rewrite) == norm(model.rephraseOriginal) { return AnyView(unchanged(r)) }
         return AnyView(changed(r))
     }

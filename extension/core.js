@@ -374,7 +374,7 @@
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
-    const norm = (s) => s.replace(/\s+/g, '').toLowerCase();
+    const norm = (s) => s.trim().replace(/\s+/g, ' ').toLowerCase();
     const unchanged = norm(original) === norm(rewrite);
     const ra = readability(original), rb = readability(rewrite);
     const moves = unchanged ? [] : detect(original, rewrite, casual);

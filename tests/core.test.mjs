@@ -59,6 +59,11 @@ test('analyse treats case/whitespace-only edits as unchanged with no moves', () 
   assert.deepEqual(r.moves, []);
 });
 
+test('analyse counts a word split ("alot" to "a lot") as a change', () => {
+  const r = HH.analyse('it saved me alot of time', 'it saved me a lot of time', true, 'm');
+  assert.equal(r.unchanged, false);
+});
+
 test('quickCheck runs with no model', () => {
   const habits = HH.quickCheck('So basically the thing is in order to win we must.').moves.map((m) => m.habit);
   assert.ok(habits.includes('Filler') && habits.includes('Wordy phrases'));
