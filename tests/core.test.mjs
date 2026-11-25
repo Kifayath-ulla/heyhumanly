@@ -26,6 +26,8 @@ test('cleanRewrite strips think blocks, "Here is" preambles and wrapping quotes'
   assert.equal(HH.cleanRewrite('Here’s the final email: Hi Sam, we ship Friday.', 'Heres the final email Hi Sam we ship friday'), 'Here’s the final email: Hi Sam, we ship Friday.');
   assert.equal(HH.cleanRewrite('Here is the edited text: Here is the text: ship it.', 'Here is the text: shp it'), 'Here is the text: ship it.');
   assert.equal(HH.cleanRewrite('Here is the text: Here is the text: ship it.', 'Here is the text: shp it'), 'Here is the text: ship it.');
+  assert.equal(HH.cleanRewrite('Rewrite: Rewrite the intro.', 'Rewrite: rewite the intro'), 'Rewrite: Rewrite the intro.');
+  assert.equal(HH.cleanRewrite('Here is the email: Here is the email list.', 'Here is the email: Here is teh email list'), 'Here is the email: Here is the email list.');
   assert.equal(HH.cleanRewrite('Here is the text: Here is the text: ship it.', 'Here is the text: Here is the text: shp it'), 'Here is the text: Here is the text: ship it.');
 });
 
