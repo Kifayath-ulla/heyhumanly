@@ -452,7 +452,7 @@ open(os.path.join(OUT, 'robots.txt'), 'w').write(f"User-agent: *\nAllow: /\n\nSi
 urls = ['/', '/extension/', '/grammarly-alternative/', '/private-writing-assistant/', '/install/', '/writing-habits/', '/local-ai-writing-coach-mac/', '/privacy/']
 open(os.path.join(OUT, 'sitemap.xml'), 'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + ''.join(f'<url><loc>{SITE}{u}</loc><lastmod>{R["date"]}</lastmod></url>\n' for u in urls) + '</urlset>\n')
 # Staging hosts stay out of search; production is not affected.
-open(os.path.join(OUT, '_headers'), 'w').write("/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'self'; form-action 'none'\n\n/fonts/*\n  Cache-Control: public, max-age=31536000, immutable\n\n/*.png\n  Cache-Control: public, max-age=604800\n")
+open(os.path.join(OUT, '_headers'), 'w').write("/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'self'; form-action 'none'\n\n/\n  Cache-Control: public, max-age=0, must-revalidate, no-transform\n\n/:page/\n  Cache-Control: public, max-age=0, must-revalidate, no-transform\n\n/fonts/*\n  Cache-Control: public, max-age=31536000, immutable\n\n/*.png\n  Cache-Control: public, max-age=604800\n")
 open(os.path.join(OUT, KEY + '.txt'), 'w').write(KEY)
 open(os.path.join(OUT, 'llms.txt'), 'w').write(f"""# HeyHumanly
 
