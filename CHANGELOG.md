@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.9 — 2026-11-26
+
+- A message typed all in lowercase stays lowercase after Rephrase (Mac and Chrome).
+- Settings → "On this Mac (Ollama)" switches to a model you actually have installed, and says so if Ollama can't be reached or has no writing model.
+- Embedding models are never picked for coaching; `mistral` and `mistral:latest` count as the same model.
+- Ollama status dots turn red as soon as a coaching finds Ollama stopped, and green again once it's back.
+- Not notarized by Apple.
+
 ## 0.1.8 — 2026-11-25
 
 - Chrome extension: no longer hangs on "Tightening…" when Chrome never answers whether its built-in model is available; after 2 seconds it uses Ollama instead.

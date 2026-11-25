@@ -1,10 +1,10 @@
 {
-  "version": "0.1.8",
+  "version": "0.1.9",
   "repo": "Kifayath-ulla/heyhumanly",
-  "file": "HeyHumanly-0.1.8.dmg",
+  "file": "HeyHumanly-0.1.9.dmg",
   "sha256": "96132e8c879aa057037d80c34bbd42e9326f42611f33d4e8b97cb41f48aae9f4",
   "size_mb": 5.4,
   "notarized": false,
-  "date": "2026-11-25",
+  "date": "2026-11-26",
   "site": "https://heyhumanly.com"
 }
