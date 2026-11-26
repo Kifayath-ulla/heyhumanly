@@ -246,7 +246,9 @@ enum TextSafety {
             let from = c.from.trimmingCharacters(in: .punctuationCharacters)
             guard let right = typos[from.lowercased()], !from.contains(" ") else { continue }
             let to = c.to.trimmingCharacters(in: .punctuationCharacters)
-            if to.lowercased() != right {
+            // "do not" for "dont" is the intended word spelled out, not a wrong word ("I don't not think").
+            let spelled = right.replacingOccurrences(of: "n't", with: " not").replacingOccurrences(of: "'re", with: " are")
+            if to.lowercased() != right && !(spelled != right && count(spelled, in: to) > 0) {
                 let lead = String(c.to.prefix { $0.isPunctuation }), trail = String(c.to.reversed().prefix { $0.isPunctuation }.reversed())
                 overrides[c.id] = lead + matchCase(right, like: from) + (c.to == lead ? "" : trail)
             }
