@@ -455,3 +455,7 @@ test('review: "Sure," before an answer to a question stays a reply; a lowercase 
   assert.equal(HH.dropFiller('Is the report ready?', 'Sure, the report is ready.'), 'Sure, the report is ready.');
   assert.equal(HH.dropFiller('how do i run npm install here', 'Sure, npm install is run here.'), 'npm install is run here.');
 });
+
+test('review: "??" tidied to "?" after a "Sure," filler still counts as the same question', () => {
+  assert.equal(HH.dropFiller('hey can u send me the report??', 'Sure, could you send me the report?'), 'Could you send me the report?');
+});

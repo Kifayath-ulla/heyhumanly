@@ -211,7 +211,9 @@ enum TextSafety {
         if writerAsks.firstMatch(in: o, range: NSRange(location: 0, length: (o as NSString).length)) != nil,
            stillAsks.firstMatch(in: r, range: NSRange(location: 0, length: (r as NSString).length)) == nil { return rewrite }
         // "Is it ready?" → "Sure, it is ready." answers the question instead of rewriting it.
-        if plain(rest).filter({ $0 == "?" }).count < plain(original).filter({ $0 == "?" }).count { return rewrite }
+        let marks = try! NSRegularExpression(pattern: "\\?+")
+        func asks(_ t: String) -> Int { let p = plain(t); return marks.numberOfMatches(in: p, range: NSRange(location: 0, length: (p as NSString).length)) }
+        if asks(rest) < asks(original) { return rewrite }
         // A word the writer typed in lowercase ("npm install") keeps its case.
         let first = String(rest.prefix { $0.isLetter })
         let typed = !first.isEmpty && (try? NSRegularExpression(pattern: "(?<![\\p{L}\\p{N}_])" + NSRegularExpression.escapedPattern(for: first) + "(?![\\p{L}\\p{N}_])"))?

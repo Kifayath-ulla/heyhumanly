@@ -530,7 +530,7 @@
     // "Can you check it?" → "Certainly, the report looks good." answers the request; the rest of a rewrite still asks it.
     if (OFFER_LEAD.test(rest) || REPLY.test(rest) || (WRITER_ASKS.test(original.replace(CODE, ' ')) && !STILL_ASKS.test(rest.replace(CODE, ' ')))) return rewrite;
     // "Is it ready?" → "Sure, it is ready." answers the question instead of rewriting it.
-    const asks = (t) => (t.replace(CODE, ' ').match(/\?/g) || []).length;
+    const asks = (t) => (t.replace(CODE, ' ').match(/\?+/g) || []).length;
     if (asks(rest) < asks(original)) return rewrite;
     // A word the writer typed in lowercase ("npm install") keeps its case.
     const first = (rest.match(/^\p{L}+/u) || [''])[0];
