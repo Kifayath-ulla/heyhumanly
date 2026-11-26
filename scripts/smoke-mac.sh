@@ -37,4 +37,10 @@ check "Their is a bug, he don't know." "Their is a bug, he don't know." "There i
 check "thx, see u soon" "thx, see u soon" "thx, see u soon"
 check "I should of course check" "I should of course check" "I should of course check"
 check "He dont know" "He dont know" "He doesn't know"
+fixonly() { # original rewrite expected, with Fix only's keep-every-word check
+  local got; got="$("$BIN" --guard "$1" "$2" --fix-only)"
+  if [[ "$got" == "$3" ]]; then echo "ok   $1 -> $got"; else echo "FAIL $1 -> $got (expected: $3)"; fail=1; fi
+}
+fixonly "I should of course check, the thing I sent you was the draft." "I should of course check, the draft I sent you." "I should of course check, the thing I sent you was the draft."
+fixonly "I has went to the store." "I went to the store." "I went to the store."
 exit $fail

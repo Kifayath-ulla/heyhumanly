@@ -272,6 +272,17 @@
     for (const [re, to] of GRAMMAR) { re.lastIndex = 0; if (re.test(original)) out = out.replace(re, to); }
     return out;
   }
+  // Fix only must not cut the writer's words: if the rewrite drops two or more of them and gets two or more words shorter,
+  // only the deterministic fixes are applied to the original. Same as TextSafety.swift (cutsWords).
+  const tokens = (s) => s.toLowerCase().replace(/’/g, '\'').match(/[a-z0-9']+/g) || [];
+  function cutsWords(original, rewrite) {
+    const base = tokens(fixTypos(original, original)), left = new Map();
+    for (const w of tokens(rewrite)) left.set(w, (left.get(w) || 0) + 1);
+    let missing = 0;
+    for (const w of base) { const n = left.get(w) || 0; if (n) left.set(w, n - 1); else missing++; }
+    return missing >= 2 && base.length - tokens(rewrite).length >= 2;
+  }
+  const guardFixOnly = (original, rewrite) => (cutsWords(original, rewrite) ? fixTypos(original, original) : rewrite);
   // Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
   const SLANG_EXPANSIONS = { thx: ['thanks', 'thank you'], ty: ['thank you'], pls: ['please'], plz: ['please'], btw: ['by the way'], idk: ['i don\'t know', 'i do not know'],
     rn: ['right now'], imo: ['in my opinion'], tbh: ['to be honest'], u: ['you'], ur: ['your', 'you\'re'], gonna: ['going to'], wanna: ['want to'] };
@@ -387,8 +398,8 @@
       return raw;
     } finally { clearTimeout(t); try { session.destroy(); } catch (e) { /* already gone */ } }
   }
-  // Professional is asked to spell slang out; every other style keeps it.
-  const slangFor = (goal) => (goal === 'formal' ? (o, r) => r : keepSlang);
+  // Professional is asked to spell slang out; every other style keeps it. Fix only also keeps every word.
+  const slangFor = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
@@ -430,6 +441,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepSlang, slangFor, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepSlang, slangFor, cutsWords, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

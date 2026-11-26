@@ -30,8 +30,11 @@ enum RewriteGuard {
     static func clearDismissals() { UserDefaults.standard.removeObject(forKey: dismissedKey) }
 
     /// The rewrite with unsafe or unwanted changes reverted.
-    static func sanitize(original: String, rewrite: String, preserve: [String]) -> String {
-        TextSafety.apply(original: original, rewrite: guarded(original: original, rewrite: rewrite, preserve: preserve), preserve: preserve)
+    /// With `fixOnly`, a rewrite that cuts the writer's words is dropped: only the deterministic fixes are applied to the original.
+    static func sanitize(original: String, rewrite: String, preserve: [String], fixOnly: Bool = false) -> String {
+        let out = TextSafety.apply(original: original, rewrite: guarded(original: original, rewrite: rewrite, preserve: preserve), preserve: preserve)
+        guard fixOnly, TextSafety.cutsWords(original: original, rewrite: out, preserve: preserve) else { return out }
+        return TextSafety.apply(original: original, rewrite: original, preserve: preserve)
     }
 
     private static func guarded(original: String, rewrite: String, preserve: [String]) -> String {

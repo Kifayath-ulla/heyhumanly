@@ -245,3 +245,11 @@ test('keepSlang: slang the writer typed stays, except in Professional', () => {
   assert.equal(HH.slangFor('formal')('thx', 'Thank you'), 'Thank you');
   assert.equal(HH.slangFor('polish')('thx', 'Thanks'), 'Thx');
 });
+
+test('Fix only keeps every word: a rewrite that cuts the writer\'s words falls back to the deterministic fixes', () => {
+  const o = 'I should of course check, the thing I sent you was the draft.';
+  assert.equal(HH.cutsWords(o, 'I should of course check, the draft I sent you.'), true);
+  assert.equal(HH.slangFor('fixOnly')(o, 'I should of course check, the draft I sent you.'), o);
+  assert.equal(HH.cutsWords('I has went to the store.', 'I went to the store.'), false);
+  assert.equal(HH.slangFor('polish')(o, 'I should of course check, the draft I sent you.'), 'I should of course check, the draft I sent you.');
+});

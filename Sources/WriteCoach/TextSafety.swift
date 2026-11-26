@@ -40,6 +40,22 @@ enum TextSafety {
         return out
     }
 
+    /// Fix only must not cut the writer's words: true when the rewrite drops two or more of them and is two or more
+    /// words shorter than the original with only the deterministic fixes. Mirrored in extension/core.js (cutsWords).
+    static func cutsWords(original: String, rewrite: String, preserve: [String] = []) -> Bool {
+        let base = tokens(apply(original: original, rewrite: original, preserve: preserve)), after = tokens(rewrite)
+        var left: [String: Int] = [:]
+        for w in after { left[w, default: 0] += 1 }
+        var missing = 0
+        for w in base { if let n = left[w], n > 0 { left[w] = n - 1 } else { missing += 1 } }
+        return missing >= 2 && base.count - after.count >= 2
+    }
+
+    private static func tokens(_ s: String) -> [String] {
+        s.lowercased().replacingOccurrences(of: "’", with: "'")
+            .split(whereSeparator: { !($0.isASCII && ($0.isLetter || $0.isNumber || $0 == "'")) }).map(String.init)
+    }
+
     /// Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
     /// Mirrored in extension/core.js (keepSlang).
     static let slang: [(String, [String])] = [
