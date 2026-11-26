@@ -282,7 +282,7 @@
   function rejoinTail(original, rewrite) {
     const tail = original.match(/[\p{L}\p{N}]\s+([\p{L}]+)\W*$/u);
     if (!tail || !CHAT.has(tail[1].toLowerCase())) return rewrite;
-    const re = new RegExp('([\\p{L}\\p{N}])[.!?;,]\\s+' + tail[1] + '([.!?]*)\\s*$', 'iu');
+    const re = new RegExp('([\\p{L}\\p{N}])[.!?;]\\s+' + tail[1] + '([.!?]*)\\s*$', 'iu');
     return rewrite.replace(re, (m, last, end) => last + ' ' + tail[1] + end);
   }
   // Fix only must not cut the writer's words: if the rewrite drops two or more of them and gets two or more words shorter,

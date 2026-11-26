@@ -391,3 +391,7 @@ test('Fix only: adding the apostrophe to "didnt" or fixing "I gone" is not a fli
   assert.equal(HH.cutsWords('client says they didnt get it', "client says they didn't get it."), false);
   assert.equal(HH.cutsWords('I gone home early', 'I went home early'), false);
 });
+
+test('a trailing "tbh" set off by a comma stays as the model wrote it', () => {
+  assert.equal(HH.fixTypos('idk if gng can come tbh', 'idk if gng can come, tbh'), 'idk if gng can come, tbh');
+});

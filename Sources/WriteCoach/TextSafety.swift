@@ -51,7 +51,7 @@ enum TextSafety {
         guard let m = try! NSRegularExpression(pattern: "[\\p{L}\\p{N}]\\s+(\\p{L}+)\\W*$").firstMatch(in: original, range: NSRange(location: 0, length: o.length)) else { return rewrite }
         let word = o.substring(with: m.range(at: 1))
         guard chat.contains(word.lowercased()) else { return rewrite }
-        let re = try! NSRegularExpression(pattern: "([\\p{L}\\p{N}])[.!?;,]\\s+" + NSRegularExpression.escapedPattern(for: word) + "([.!?]*)\\s*$", options: .caseInsensitive)
+        let re = try! NSRegularExpression(pattern: "([\\p{L}\\p{N}])[.!?;]\\s+" + NSRegularExpression.escapedPattern(for: word) + "([.!?]*)\\s*$", options: .caseInsensitive)
         return re.stringByReplacingMatches(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length),
                                            withTemplate: "$1 " + NSRegularExpression.escapedTemplate(for: word) + "$2")
     }
