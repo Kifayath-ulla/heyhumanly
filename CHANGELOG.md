@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.13 — 2026-11-26
+
+- Fix only keeps every word you wrote: if the model drops part of your text, the panel shows only the safe spelling and grammar fixes instead (Mac, Chrome and online).
+- Lowercase messages stay lowercase in every style on the Mac, not just Fix only and Polish.
+- "I should of course check" is kept when the model misreads it as "I should have checked".
+- Not notarized by Apple.
+
 ## 0.1.12 — 2026-11-26
 
 - Grammar slips that small local models leave in are now always fixed: "I has", "we was", "their is", "should of", "he don't" (Mac, Chrome and online).
