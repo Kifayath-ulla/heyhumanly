@@ -51,7 +51,7 @@ check "I should of course check, the thing I sent you was the draft." "I should 
 check "I should of gone, I should of course check" "I should have gone, I should have checked" "I should have gone, I should of course check"
 styled Professional "I should of course check, the thing I sent you was the draft." "I should have checked; the item I sent you was the draft." "I should of course check; the item I sent you was the draft."
 styled Friendly "thx for the help. i has a question" "Thanks so much for the help! I have a question." "thx so much for the help! I have a question."
-styled Friendly "thx for the help. i has a question" "No problem at all! Shoot, what's your question?" "thx for the help. i have a question"
+styled Friendly "thx for the help. i has a question" "No problem at all! Shoot, what's your question?" "thx for the help. I have a question"
 styled Professional "Can you send the report today?" "Certainly, I can send the report today." "Can you send the report today?"
 styled Shorter "thx for the help. i has a question" "Thanks for the help. I have a question." "thx for the help. I have a question."
 styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "thank you for the help. I have a question."

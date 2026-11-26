@@ -270,6 +270,7 @@ test('dropReply: answering the message instead of rewriting it falls back to the
   assert.equal(HH.slangFor('polish')('Can you send teh report?', 'Of course! I will send the report.'), 'Can you send the report?');
   assert.equal(HH.slangFor('friendly')('Can you send the report today?', 'Hey, could you send the report today?'), 'Hey, could you send the report today?');
   assert.equal(HH.slangFor('friendly')('no worries, i can send it later', 'no worries, i can send it later!'), 'no worries, i can send it later!');
+  assert.equal(HH.slangFor('polish')('I should of course check', 'Of course, I should check.'), 'Of course, I should check.');
   assert.equal(HH.slangFor('friendly')('Can you check? I will send it after.', "Could you check? I'll send it after."), "Could you check? I'll send it after.");
 });
 

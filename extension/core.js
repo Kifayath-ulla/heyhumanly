@@ -437,9 +437,10 @@
   // Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send
   // it?" -> "Sure, I can send it."). Every style, Friendly too, then falls back to the deterministic fixes. Same as
   // TextSafety.swift (dropReply).
-  const REPLY = /^\W*(?:sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\b/i;
+  const REPLY = /^\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\b/i;
   const ASKS = /\b(?:can|could|would|will) you\b/i, OFFERS = /\bI(?:['’]ll| will| can| could)\b/i;
-  const replies = (original, rewrite) => (REPLY.test(rewrite) && !REPLY.test(original)) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
+  const opener = (s) => ((s.match(REPLY) || [])[1] || '').toLowerCase().replace(/’/g, "'");
+  const replies = (original, rewrite) => (opener(rewrite) !== '' && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
   const dropReply = (original, rewrite) =>
     !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
   const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
