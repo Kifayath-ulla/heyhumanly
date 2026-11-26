@@ -328,4 +328,6 @@ test('Professional may spell out the writer’s own slang reason, apology or ack
   assert.equal(HH.slangFor('formal')('Yep, I’ll send the report', 'Certainly, I’ll send the report.'), 'Certainly, I’ll send the report.');
   assert.equal(HH.slangFor('formal')('i will send the report', 'Certainly, I will send the report.'), 'i will send the report');
   assert.equal(HH.slangFor('formal')('we was late', 'We were late because of traffic.'), 'we were late');
+  assert.equal(HH.slangFor('formal')('Okay, can you check the report?', 'Certainly, the report looks good.'), 'Okay, can you check the report?');
+  assert.equal(HH.slangFor('formal')('Talked to the BC team, we was late', 'I spoke with the British Columbia team; we were late because of traffic.'), 'Talked to the BC team, we were late');
 });
