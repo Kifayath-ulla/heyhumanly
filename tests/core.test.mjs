@@ -248,6 +248,7 @@ test('keepSlang: slang the writer typed stays, except in Professional', () => {
   assert.equal(HH.keepSlang('rename `msg` in the message handler', 'Rename `message` in the message handler.'), 'Rename `message` in the message handler.');
   assert.equal(HH.keepSlang('use `msg` and send the msg', 'Use `message` and send the message.'), 'Use `message` and send the msg.');
   assert.equal(HH.slangFor('shorter')('Can you send the report today please?', 'Here is a shorter version. Can you send the report today?'), 'Can you send the report today?');
+  assert.equal(HH.slangFor('shorter')('Can you send the report today?', 'Here is a shorter version. Sure, the report was sent today.'), 'Can you send the report today?');
   assert.equal(HH.slangFor('polish')('sry, i has a question', 'Sorry to hear that! What is your question?'), 'sry, i have a question');
   assert.equal(HH.slangFor('polish')('sry i cant come cuz im sick, lmk', 'Sorry, I can\'t come because I\'m sick. Let me know.'), 'Sry, I can\'t come cuz I\'m sick. Lmk.');
   assert.equal(HH.keepSlang('thx, thank you all', 'Thanks, thank you all'), 'Thx, thank you all');

@@ -59,6 +59,7 @@ styled Professional "thx for the help. i has a question" "Thank you for the help
 styled Professional "Sry, I cant come cuz Im sick" "I apologize, but I cannot come because I am sick." "I apologize, but I cannot come because I am sick."
 styled Professional "Yep, I'll send the report" "Certainly, I'll send the report." "Certainly, I'll send the report."
 styled Polish "Sry, I has a question" "Sorry to hear that! What is your question?" "Sry, I have a question"
+styled Shorter "Can you send the report today?" "Here is a shorter version. Sure, the report was sent today." "Can you send the report today?"
 styled Professional "Thx for the help." "Thank you for the help." "Thank you for the help."
 check "I should of course check, and you should have called." "Of course, I should check, and you should have called." "Of course, I should check, and you should have called."
 check "I should of course call, and I should of course check." "I should of course call, and I should have checked." "I should of course call, and I should of course check."

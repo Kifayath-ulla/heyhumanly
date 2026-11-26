@@ -461,7 +461,8 @@
   const REPLY = /^\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\b/i;
   const ASKS = /\b(?:can|could|would|will) you\b/i, OFFERS = /\bI(?:['’]ll| will| can(?!['’]t)| could)\b/i;
   const ACK = /^\W*(?:yep|yeah|yes|yup|ok|okay|sure|np|no prob|will do|got it|sounds good|of course|absolutely|certainly)\b/i;
-  const opener = (s) => ((s.match(REPLY) || [])[1] || '').toLowerCase().replace(/’/g, "'");
+  const LEAD_INTRO = /^\W*(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b[^.!?:\n]*[.!:]?\s*/i;
+  const opener = (s) => ((s.replace(LEAD_INTRO, '').match(REPLY) || [])[1] || '').toLowerCase().replace(/’/g, "'");
   const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
   const dropReply = (original, rewrite) =>
     !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
