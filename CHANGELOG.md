@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.18 — 2026-11-26
+
+- "I don't not think" is gone: when the model spells out "do not", the spelling fix no longer adds a "don't" next to it. A "don't" the model actually dropped is still restored. Mac, Chrome and online.
+- Fix only rejects a word swapped for a different one ("Great work" → "Great job") and keeps your text with the safe fixes. Real corrections like "the files is" → "the files are" and "I seen" → "I saw" still go through.
+- "It's okay, let's try this again." is caught as a reply to your message, but your own "It's okay" stays.
+- Your request survives being reworded ("can u look?" → "Could you please assist?"). A question the model makes up ("What time works for you?") is removed.
+- The online allowance counts the per-network cap: on a shared network that used it up, the app shows 0 left instead of 10 of 10.
+- On the Mac, an all-lowercase message keeps its "i" lowercase, the same as in Chrome.
+- Not notarized by Apple.
+
 ## 0.1.17 — 2026-11-26
 
 - Professional no longer drops your own request once it spells out your slang: "sry, cant make it tmrw cuz im sick, lmk if thats ok" now keeps "Let me know if that is okay." Mac, Chrome and online.
