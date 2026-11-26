@@ -59,7 +59,6 @@ styled Shorter "Please send the draft. Can you also book the room?" "Send the dr
 styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "Thank you for the help. I have a question."
 styled Professional "hey can u send me the report asap, we was late" "Sure, could you please send me the report as soon as possible? We were late." "Could you please send me the report as soon as possible? We were late."
 styled Shorter "thx for the help. i has a question" "Thanks for the help. I have a question." "thx for the help. i have a question."
-styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "thank you for the help. i have a question."
 styled Professional "Sry, I cant come cuz Im sick" "I apologize, but I cannot come because I am sick." "I apologize, but I cannot come because I am sick."
 styled Professional "Sry, cant make it tmrw, lmk if thats ok" "I am sorry, I cannot make it tomorrow. Please let me know if that is okay." "I am sorry, I cannot make it tomorrow. Please let me know if that is okay."
 styled Professional "Tbh I dont think this will work" "To be honest, I do not think this will work." "To be honest, I do not think this will work."
