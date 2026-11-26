@@ -13,7 +13,7 @@ struct HeyHumanlyApp: App {
         if let i = args.firstIndex(of: "--guard"), i + 2 < args.count {
             let named = args.firstIndex(of: "--style").flatMap { $0 + 1 < args.count ? WritingStyle(rawValue: args[$0 + 1]) : nil }
             let style = args.contains("--fix-only") ? .fixOnly : named ?? .polish
-            let (original, rewrite) = (args[i + 1], args[i + 2])
+            let (original, rewrite) = (args[i + 1], TextSafety.dropFiller(original: args[i + 1], rewrite: args[i + 2]))
             let out = style.guarded ? RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: [], fixOnly: style == .fixOnly)
                                     : TextSafety.apply(original: original, rewrite: rewrite, keepSlang: style != .professional)
             let safe = TextSafety.dropReply(original: original, rewrite: out, keepSlang: style != .professional)

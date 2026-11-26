@@ -56,6 +56,8 @@ styled Professional "Can you send the report today?" "Certainly, I can send the 
 styled Shorter "can you check the reprot? i will send it after" "Can you check the report? I will send it after." "can you check the report? i will send it after."
 styled Professional "the build is broken again, someone pushed without running tests. pls fix asap" "the build is broken again. someone pushed without running tests." "the build is broken again, someone pushed without running tests. pls fix asap"
 styled Shorter "Please send the draft. Can you also book the room?" "Send the draft." "Please send the draft. Can you also book the room?"
+styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "Thank you for the help. I have a question."
+styled Professional "hey can u send me the report asap, we was late" "Sure, could you please send me the report as soon as possible? We were late." "Could you please send me the report as soon as possible? We were late."
 styled Shorter "thx for the help. i has a question" "Thanks for the help. I have a question." "thx for the help. i have a question."
 styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "thank you for the help. i have a question."
 styled Professional "Sry, I cant come cuz Im sick" "I apologize, but I cannot come because I am sick." "I apologize, but I cannot come because I am sick."
