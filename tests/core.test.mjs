@@ -412,3 +412,7 @@ test('review: "their going to" is only corrected where a clause starts', () => {
   assert.equal(HH.fixTypos('ok, their going to win', 'OK, their going to win.'), "OK, they're going to win.");
   assert.equal(HH.fixTypos('i think their going to win', 'I think their going to win.'), "I think they're going to win.");
 });
+
+test('review: "if their going to" is corrected', () => {
+  assert.equal(HH.fixTypos('I wonder if their going to announce it', 'I wonder if their going to announce it.'), "I wonder if they're going to announce it.");
+});
