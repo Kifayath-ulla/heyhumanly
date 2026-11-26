@@ -276,6 +276,8 @@ test('dropInvented: no made-up causes or sentences, except in Friendly', () => {
   assert.equal(HH.dropInvented('fix `x.lenght` now', 'Fix `x.lenght` now.'), 'Fix `x.lenght` now.');
   assert.equal(HH.dropInvented('It costs $12.50 before tax. Pay today.', 'It costs $12.50 excluding tax. Pay today.'), 'It costs $12.50 excluding tax. Pay today.');
   assert.equal(HH.dropInvented('She said "send it." Then go.', 'She said "send it." Then go. I apologize for any confusion.'), 'She said "send it." Then go.');
+  assert.equal(HH.dropInvented('Send teh file. Reply fast.', 'Send the file. Respond quickly.'), 'Send the file. Respond quickly.');
+  assert.equal(HH.dropInvented('Send teh file.', 'I apologize. Send the file. Ask me again if you need more info.'), 'Send the file.');
   assert.equal(HH.dropInvented('Dont go. Wait for me.', 'Don\'t go. Wait for me.'), 'Don\'t go. Wait for me.');
   assert.equal(HH.dropInvented('fix `x.lenght` now', 'Fix (x.length now.'), 'Fix (x.length now.');
   assert.equal(HH.dropInvented('...ok so send it', '...Okay, send it. I apologize for any confusion.'), '...Okay, send it.');

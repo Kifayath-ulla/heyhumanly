@@ -75,8 +75,13 @@ enum TextSafety {
         let seen = contentWords((original + " " + apply(original: original, rewrite: original, preserve: preserve)).replacingOccurrences(of: "`", with: " ")), ns = rewrite as NSString
         let parts = sentence.matches(in: rewrite, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range) }
         guard parts.joined() == rewrite else { return rewrite }
-        let kept = parts.filter { p in let w = contentWords(p); return w.isEmpty || !w.isDisjoint(with: seen) }
-        return !kept.isEmpty && kept.count < parts.count ? kept.joined().trimmingCharacters(in: .whitespacesAndNewlines) : rewrite
+        // Only sentences the model added, and only at the start or end: a rewritten sentence of the writer's always stays.
+        var extra = parts.count - max(1, sentence.numberOfMatches(in: original, range: NSRange(location: 0, length: (original as NSString).length)))
+        var (a, b) = (0, parts.count)
+        func unrelated(_ p: String) -> Bool { let w = contentWords(p); return !w.isEmpty && w.isDisjoint(with: seen) }
+        while extra > 0, b - a > 1, unrelated(parts[b - 1]) { b -= 1; extra -= 1 }
+        while extra > 0, b - a > 1, unrelated(parts[a]) { a += 1; extra -= 1 }
+        return a == 0 && b == parts.count ? rewrite : parts[a..<b].joined().trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Code spans are left out: restoreCode puts them back as written anyway.

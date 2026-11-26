@@ -424,10 +424,15 @@
   function dropInvented(original, rewrite) {
     const causes = (s) => (s.replace(CODE, ' ').match(CAUSAL) || []).length;
     if (causes(rewrite) > causes(original)) return /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
-    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' ')), parts = rewrite.match(/(?:`[^`\n]+`|[.!?]+(?=\S)|[^.!?])+(?:[.!?]+|$)\s*/g) || [rewrite];
+    const SENTENCE = /(?:`[^`\n]+`|[.!?]+(?=\S)|[^.!?])+(?:[.!?]+|$)\s*/g;
+    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' ')), parts = rewrite.match(SENTENCE) || [rewrite];
     if (parts.join('') !== rewrite) return rewrite;
-    const kept = parts.filter((p) => { const w = [...contentWords(p)]; return !w.length || w.some((x) => seen.has(x)); });
-    return kept.length && kept.length < parts.length ? kept.join('').trim() : rewrite;
+    // Only sentences the model added, and only at the start or end: a rewritten sentence of the writer's always stays.
+    let extra = parts.length - (original.match(SENTENCE) || [original]).length, a = 0, b = parts.length;
+    const unrelated = (p) => { const w = [...contentWords(p)]; return w.length > 0 && !w.some((x) => seen.has(x)); };
+    while (extra > 0 && b - a > 1 && unrelated(parts[b - 1])) { b--; extra--; }
+    while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
+    return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
   }
   const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
   const slangFor = (goal) => (goal === 'friendly' ? slangStep(goal) : (o, r) => dropInvented(o, slangStep(goal)(o, r)));
