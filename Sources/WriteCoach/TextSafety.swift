@@ -210,7 +210,13 @@ enum TextSafety {
         let o = plain(original), r = plain(rest)
         if writerAsks.firstMatch(in: o, range: NSRange(location: 0, length: (o as NSString).length)) != nil,
            stillAsks.firstMatch(in: r, range: NSRange(location: 0, length: (r as NSString).length)) == nil { return rewrite }
-        return word.first?.isUppercase == true ? rest.prefix(1).uppercased() + rest.dropFirst() : rest
+        // "Is it ready?" → "Sure, it is ready." answers the question instead of rewriting it.
+        if plain(rest).filter({ $0 == "?" }).count < plain(original).filter({ $0 == "?" }).count { return rewrite }
+        // A word the writer typed in lowercase ("npm install") keeps its case.
+        let first = String(rest.prefix { $0.isLetter })
+        let typed = !first.isEmpty && (try? NSRegularExpression(pattern: "(?<![\\p{L}\\p{N}_])" + NSRegularExpression.escapedPattern(for: first) + "(?![\\p{L}\\p{N}_])"))?
+            .firstMatch(in: original, range: NSRange(location: 0, length: (original as NSString).length)) != nil
+        return word.first?.isUppercase == true && !typed ? rest.prefix(1).uppercased() + rest.dropFirst() : rest
     }
 
     static func dropReply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {

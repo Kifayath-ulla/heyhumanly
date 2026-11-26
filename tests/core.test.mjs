@@ -450,3 +450,8 @@ test('Professional is properly capitalised even for a lowercase message; other s
   assert.equal(HH.caseFor('formal')('thx for the help. i has a question', 'Thank you for the help. I have a question.'), 'Thank you for the help. I have a question.');
   assert.equal(HH.caseFor('polish')('thx for the help. i has a question', 'Thx for the help. I have a question.'), 'thx for the help. i have a question.');
 });
+
+test('review: "Sure," before an answer to a question stays a reply; a lowercase command keeps its case', () => {
+  assert.equal(HH.dropFiller('Is the report ready?', 'Sure, the report is ready.'), 'Sure, the report is ready.');
+  assert.equal(HH.dropFiller('how do i run npm install here', 'Sure, npm install is run here.'), 'npm install is run here.');
+});

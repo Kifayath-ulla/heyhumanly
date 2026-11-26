@@ -529,7 +529,13 @@
     const rest = rewrite.slice(m[0].length);
     // "Can you check it?" → "Certainly, the report looks good." answers the request; the rest of a rewrite still asks it.
     if (OFFER_LEAD.test(rest) || REPLY.test(rest) || (WRITER_ASKS.test(original.replace(CODE, ' ')) && !STILL_ASKS.test(rest.replace(CODE, ' ')))) return rewrite;
-    return /^[A-Z]/.test(m[1]) ? rest[0].toUpperCase() + rest.slice(1) : rest;
+    // "Is it ready?" → "Sure, it is ready." answers the question instead of rewriting it.
+    const asks = (t) => (t.replace(CODE, ' ').match(/\?/g) || []).length;
+    if (asks(rest) < asks(original)) return rewrite;
+    // A word the writer typed in lowercase ("npm install") keeps its case.
+    const first = (rest.match(/^\p{L}+/u) || [''])[0];
+    const typed = first !== '' && new RegExp('(?<![\\p{L}\\p{N}_])' + first + '(?![\\p{L}\\p{N}_])', 'u').test(original);
+    return /^[A-Z]/.test(m[1]) && !typed ? rest[0].toUpperCase() + rest.slice(1) : rest;
   }
   const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
   const slangFor = (goal) => (o, r) => dropInvented(o, dropReply(o, slangStep(goal)(o, dropFiller(o, r))), goal === 'friendly');
@@ -559,8 +565,8 @@
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
-    // Fix only is asked to correct capitalization, so a case-only edit counts there; elsewhere it doesn't.
-    const norm = (s) => { s = s.trim().replace(/\s+/g, ' '); return goal === 'fixOnly' ? s : s.toLowerCase(); };
+    // Fix only and Professional are asked to correct capitalization, so a case-only edit counts there; elsewhere it doesn't.
+    const norm = (s) => { s = s.trim().replace(/\s+/g, ' '); return goal === 'fixOnly' || goal === 'formal' ? s : s.toLowerCase(); };
     const unchanged = norm(original) === norm(rewrite);
     const ra = readability(original), rb = readability(rewrite);
     const moves = unchanged ? [] : detect(original, rewrite, casual);
