@@ -58,7 +58,7 @@ enum TextSafety {
     private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
     private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
         "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
-    private static let sentence = try! NSRegularExpression(pattern: "(?:`[^`\\n]+`|[^.!?])+(?:[.!?]+|$)\\s*")
+    private static let sentence = try! NSRegularExpression(pattern: "(?:`[^`\\n]+`|[.!?]+(?=\\S)|[^.!?])+(?:[.!?]+|$)\\s*")
 
     private static func contentWords(_ s: String) -> Set<String> {
         Set(tokens(s).filter { $0.count > 3 && !stop.contains($0) }.map { String($0.prefix(4)) })

@@ -424,7 +424,7 @@
   function dropInvented(original, rewrite) {
     const causes = (s) => (s.replace(CODE, ' ').match(CAUSAL) || []).length;
     if (causes(rewrite) > causes(original)) return /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
-    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' ')), parts = rewrite.match(/(?:`[^`\n]+`|[^.!?])+(?:[.!?]+|$)\s*/g) || [rewrite];
+    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' ')), parts = rewrite.match(/(?:`[^`\n]+`|[.!?]+(?=\S)|[^.!?])+(?:[.!?]+|$)\s*/g) || [rewrite];
     if (parts.join('') !== rewrite) return rewrite;
     const kept = parts.filter((p) => { const w = [...contentWords(p)]; return !w.length || w.some((x) => seen.has(x)); });
     return kept.length && kept.length < parts.length ? kept.join('').trim() : rewrite;
