@@ -304,5 +304,7 @@ test('dropInvented: an invented apology or assistant reply never replaces the wr
   assert.equal(HH.dropInvented('i shoud of went their', 'I should have gone there'), 'I should have gone there');
   assert.equal(HH.slangFor('friendly')('Please get in touch.', 'Feel free to reach out!'), 'Feel free to reach out!');
   assert.equal(HH.slangFor('formal')('My mistake.', 'I apologize.'), 'I apologize.');
+  assert.equal(HH.slangFor('formal')("It wasn't my fault, the server was down.", 'I apologize, the server was down.'), "It wasn't my fault, the server was down.");
+  assert.equal(HH.slangFor('formal')('i did not break it', 'It was not my fault.'), 'It was not my fault.');
   assert.equal(HH.slangFor('short')('I am writing to express my gratitude.', 'Thank you.'), 'Thank you.');
 });

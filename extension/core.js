@@ -421,7 +421,7 @@
   // so it only gets the assistant and content checks. Same as TextSafety.swift (dropInvented).
   const CAUSAL = /\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\b/gi;
   const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bno problem at all\b|\bfeel free to ask\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\bsorry to hear\b|\bhope this helps\b/gi;
-  const APOLOGY = /\b(?:apologi[sz]e[sd]?|apologies|sorry|my (?:mistake|bad|fault)|oops)\b/gi;
+  const APOLOGY = /\b(?:apologi[sz]e[sd]?|apologies|sorry|my (?:mistake|bad)|oops)\b/gi;
   const STOP = new Set(['have', 'that', 'this', 'with', 'from', 'your', 'will', 'would', 'could', 'should', 'there', 'their', 'what', 'when', 'been',
     'were', 'they', 'just', 'more', 'need', 'also', 'about', 'into', 'them', 'then', 'than', 'some', 'please', 'thanks', 'thank']);
   const contentWords = (s) => new Set(tokens(s).filter((w) => w.length > 3 && !STOP.has(w)).map((w) => w.slice(0, 4)));
