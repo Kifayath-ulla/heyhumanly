@@ -158,6 +158,8 @@ enum TextSafety {
         ("thx", ["thanks", "thank you"]), ("ty", ["thank you"]), ("pls", ["please"]), ("plz", ["please"]), ("btw", ["by the way"]),
         ("idk", ["i don't know", "i do not know"]), ("rn", ["right now"]), ("imo", ["in my opinion"]), ("tbh", ["to be honest"]),
         ("u", ["you"]), ("ur", ["your", "you're"]), ("gonna", ["going to"]), ("wanna", ["want to"]),
+        ("sry", ["sorry"]), ("cuz", ["because"]), ("ppl", ["people"]), ("msg", ["message"]), ("tmrw", ["tomorrow"]), ("nvm", ["never mind"]),
+        ("lmk", ["let me know"]),
     ]
 
     static func keepSlang(original: String, rewrite: String) -> String {
