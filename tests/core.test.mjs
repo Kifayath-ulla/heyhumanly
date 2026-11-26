@@ -402,3 +402,7 @@ test('review: names, possessive "their going to the…" and a question before a 
   assert.equal(HH.fixTypos('you are coming too lol', 'You are coming too? LOL.'), 'You are coming too lol?');
   assert.equal(HH.cutsWords('theres noone to watch her', "there's no one to watch her."), false);
 });
+
+test('review: "their going to work" is still corrected', () => {
+  assert.equal(HH.fixTypos('Their going to work remotely', 'Their going to work remotely.'), "They're going to work remotely.");
+});

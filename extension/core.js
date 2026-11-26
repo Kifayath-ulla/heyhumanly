@@ -272,7 +272,7 @@
   // Grammar slips a small model often leaves in ("I has", "we was"). Fixed only when the writer's text had them. Same as TextSafety.swift.
   // Only subject-only pronouns, so "the thing I sent you was" is left alone.
   const GRAMMAR = [[/\b([Ii]) has\b/g, '$1 have'], [/\b(we|they) was\b/gi, '$1 were'], [/\b(t)heir (is|are|was|were)\b/gi, '$1here $2'],
-    [/\b(should|could|would|must|might) of\b(?! course)/gi, '$1 have'], [/\b(he|she) don(['’]?)t\b/gi, '$1 doesn$2t'], [/\b(t)heir going to\b(?! (?:the|a|an|my|your|his|her|its|our|their|this|that|these|those|work|school|bed)\b)/gi, '$1hey\'re going to']];
+    [/\b(should|could|would|must|might) of\b(?! course)/gi, '$1 have'], [/\b(he|she) don(['’]?)t\b/gi, '$1 doesn$2t'], [/\b(t)heir going to\b(?! (?:the|a|an|my|your|his|her|its|our|their|this|that|these|those)\b)/gi, '$1hey\'re going to']];
   function fixGrammar(original, rewrite) {
     let out = rejoinTail(original, keepOfCourse(original, rewrite));
     for (const [re, to] of GRAMMAR) { re.lastIndex = 0; if (re.test(original)) out = out.replace(re, to); }

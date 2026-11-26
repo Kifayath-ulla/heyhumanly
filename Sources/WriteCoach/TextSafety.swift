@@ -32,7 +32,7 @@ enum TextSafety {
         (try! NSRegularExpression(pattern: "\\b(t)heir (is|are|was|were)\\b", options: .caseInsensitive), "$1here $2"),
         (try! NSRegularExpression(pattern: "\\b(should|could|would|must|might) of\\b(?! course)", options: .caseInsensitive), "$1 have"),
         (try! NSRegularExpression(pattern: "\\b(he|she) don(['’]?)t\\b", options: .caseInsensitive), "$1 doesn$2t"),
-        (try! NSRegularExpression(pattern: "\\b(t)heir going to\\b(?! (?:the|a|an|my|your|his|her|its|our|their|this|that|these|those|work|school|bed)\\b)", options: .caseInsensitive), "$1hey're going to"),
+        (try! NSRegularExpression(pattern: "\\b(t)heir going to\\b(?! (?:the|a|an|my|your|his|her|its|our|their|this|that|these|those)\\b)", options: .caseInsensitive), "$1hey're going to"),
     ]
 
     static func fixGrammar(original: String, rewrite: String) -> String {
