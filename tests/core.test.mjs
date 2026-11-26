@@ -256,6 +256,8 @@ test('keepSlang: slang the writer typed stays, except in Professional', () => {
   assert.equal(HH.keepSlang('When ready, could u send the file?', 'When you’re ready, could you send the file?'), 'When you’re ready, could u send the file?');
   assert.equal(HH.keepSlang("she said 'thx' and left", "She said 'thanks' and left."), "She said 'thx' and left.");
   assert.equal(HH.slangFor('formal')('thx', 'Thank you'), 'Thank you');
+  assert.equal(HH.slangFor('formal')('ok, lmk rn', 'Yes, please tell me immediately.'), 'Yes, please tell me immediately.');
+  assert.equal(HH.dropInvented('check `msg` in the log', 'Check `msg` in the log. The message is confidential.'), 'Check `msg` in the log.');
   assert.equal(HH.slangFor('formal')('sry, cant make it tmrw cuz im sick, lmk if thats ok', 'I am sorry, I cannot make it tomorrow because I am sick. Please let me know if that is okay.'), 'I am sorry, I cannot make it tomorrow because I am sick. Please let me know if that is okay.');
   assert.equal(HH.slangFor('polish')('thx', 'Thanks'), 'Thx');
 });
