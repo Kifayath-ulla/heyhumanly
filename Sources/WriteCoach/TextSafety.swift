@@ -52,6 +52,38 @@ enum TextSafety {
         return missing >= 2 && base.count - after.count >= 2
     }
 
+    /// Small models invent content: a cause the writer never gave ("late due to a bug") or a whole new sentence ("I apologize for
+    /// any confusion."). A new cause falls back to the deterministic fixes; a sentence that shares no content word with the original
+    /// is dropped. Friendly may add warmth, so callers skip it. Mirrored in extension/core.js (dropInvented).
+    private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
+    private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
+        "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
+    private static let sentence = try! NSRegularExpression(pattern: "(?:`[^`\\n]+`|[.!?]+(?=\\S)|[^.!?])+(?:[.!?]+|$)\\s*")
+
+    private static func contentWords(_ s: String) -> Set<String> {
+        Set(tokens(s).filter { $0.count > 3 && !stop.contains($0) }.map { String($0.prefix(4)) })
+    }
+
+    static func dropInvented(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
+        func causes(_ s: String) -> Int {
+            let plain = codeRegex.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ")
+            return causal.numberOfMatches(in: plain, range: NSRange(location: 0, length: (plain as NSString).length))
+        }
+        if causes(rewrite) > causes(original) {
+            return codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original
+        }
+        let seen = contentWords((original + " " + apply(original: original, rewrite: original, preserve: preserve)).replacingOccurrences(of: "`", with: " ")), ns = rewrite as NSString
+        let parts = sentence.matches(in: rewrite, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range) }
+        guard parts.joined() == rewrite else { return rewrite }
+        // Only sentences the model added, and only at the start or end: a rewritten sentence of the writer's always stays.
+        var extra = parts.count - max(1, sentence.numberOfMatches(in: original, range: NSRange(location: 0, length: (original as NSString).length)))
+        var (a, b) = (0, parts.count)
+        func unrelated(_ p: String) -> Bool { let w = contentWords(p); return !w.isEmpty && w.isDisjoint(with: seen) }
+        while extra > 0, b - a > 1, unrelated(parts[b - 1]) { b -= 1; extra -= 1 }
+        while extra > 0, b - a > 1, unrelated(parts[a]) { a += 1; extra -= 1 }
+        return a == 0 && b == parts.count ? rewrite : parts[a..<b].joined().trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     /// Code spans are left out: restoreCode puts them back as written anyway.
     private static func tokens(_ s: String) -> [String] {
         codeRegex.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ")

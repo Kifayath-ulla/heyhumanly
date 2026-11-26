@@ -57,4 +57,7 @@ styled Professional "Thx for the help." "Thank you for the help." "Thank you for
 check "I should of course check, and you should have called." "Of course, I should check, and you should have called." "Of course, I should check, and you should have called."
 check "I should of course call, and I should of course check." "I should of course call, and I should have checked." "I should of course call, and I should of course check."
 check "I should of course check" "Of course I should have checked" "Of course I should have checked"
+styled Shorter "we was late, their is a bug" "We were late due to a bug." "we were late, there is a bug"
+styled Professional "Can you send the report today?" "Could you send the report today? I apologize for any confusion." "Could you send the report today?"
+styled Friendly "Can you send the report today?" "Could you send the report today? Hope you have a great day!" "Could you send the report today? Hope you have a great day!"
 exit $fail

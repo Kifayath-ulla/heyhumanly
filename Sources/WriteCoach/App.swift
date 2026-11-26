@@ -14,8 +14,9 @@ struct HeyHumanlyApp: App {
             let named = args.firstIndex(of: "--style").flatMap { $0 + 1 < args.count ? WritingStyle(rawValue: args[$0 + 1]) : nil }
             let style = args.contains("--fix-only") ? .fixOnly : named ?? .polish
             let (original, rewrite) = (args[i + 1], args[i + 2])
-            print(style.guarded ? RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: [], fixOnly: style == .fixOnly)
-                                : TextSafety.apply(original: original, rewrite: rewrite, keepSlang: style != .professional))
+            let out = style.guarded ? RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: [], fixOnly: style == .fixOnly)
+                                    : TextSafety.apply(original: original, rewrite: rewrite, keepSlang: style != .professional)
+            print(style == .friendly ? out : TextSafety.dropInvented(original: original, rewrite: out, keepSlang: style != .professional))
             exit(0)
         }
         // `HeyHumanly --teach "<text>"` runs one full check (rewrite, guard, explanations) and prints it.

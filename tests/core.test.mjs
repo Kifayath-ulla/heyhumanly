@@ -263,3 +263,23 @@ test('Fix only keeps every word: a rewrite that cuts the writer\'s words falls b
   assert.equal(HH.slangFor('fixOnly')('swap `teh` for `the`, thing I sent was teh draft', 'swap `the` for `the`, teh draft'), 'swap `teh` for `the`, thing I sent was teh draft');
   assert.equal(HH.slangFor('polish')(o, 'I should of course check, the draft I sent you.'), 'I should of course check, the draft I sent you.');
 });
+
+test('dropInvented: no made-up causes or sentences, except in Friendly', () => {
+  assert.equal(HH.dropInvented('we was late, their is a bug', 'We were late due to a bug.'), 'we were late, there is a bug');
+  assert.equal(HH.dropInvented('We were late because of traffic.', 'We were late because of the traffic.'), 'We were late because of the traffic.');
+  assert.equal(HH.dropInvented('Can you send the report today?', 'Could you send the report today? I apologize for any confusion.'), 'Could you send the report today?');
+  assert.equal(HH.dropInvented('Send the report. Check the numbers.', 'Please send the report. Check the numbers.'), 'Please send the report. Check the numbers.');
+  assert.equal(HH.dropInvented('ok', 'Okay.'), 'Okay.');
+  assert.equal(HH.slangFor('polish')('Can you send the report today?', 'Could you send the report today? Ask me again if you need more info.'), 'Could you send the report today?');
+  assert.equal(HH.slangFor('friendly')('Can you send the report today?', 'Could you send the report today? Hope you have a great day!'), 'Could you send the report today? Hope you have a great day!');
+  assert.equal(HH.slangFor('formal')('we was late, their is a bug', 'We were late due to a bug.'), 'we were late, there is a bug');
+  assert.equal(HH.dropInvented('fix `x.lenght` now', 'Fix `x.lenght` now.'), 'Fix `x.lenght` now.');
+  assert.equal(HH.dropInvented('It costs $12.50 before tax. Pay today.', 'It costs $12.50 excluding tax. Pay today.'), 'It costs $12.50 excluding tax. Pay today.');
+  assert.equal(HH.dropInvented('She said "send it." Then go.', 'She said "send it." Then go. I apologize for any confusion.'), 'She said "send it." Then go.');
+  assert.equal(HH.dropInvented('Send teh file. Reply fast.', 'Send the file. Respond quickly.'), 'Send the file. Respond quickly.');
+  assert.equal(HH.dropInvented('Send teh file.', 'I apologize. Send the file. Ask me again if you need more info.'), 'Send the file.');
+  assert.equal(HH.dropInvented('Dont go. Wait for me.', 'Don\'t go. Wait for me.'), 'Don\'t go. Wait for me.');
+  assert.equal(HH.dropInvented('fix `x.lenght` now', 'Fix (x.length now.'), 'Fix (x.length now.');
+  assert.equal(HH.dropInvented('...ok so send it', '...Okay, send it. I apologize for any confusion.'), '...Okay, send it.');
+  assert.equal(HH.dropInvented('use `a` here, it is slow', 'Use `a` here because it is slow.'), 'use `a` here, it is slow');
+});

@@ -414,7 +414,28 @@
     } finally { clearTimeout(t); try { session.destroy(); } catch (e) { /* already gone */ } }
   }
   // Professional is asked to spell slang out; every other style keeps it. Fix only also keeps every word.
-  const slangFor = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
+  // Small models invent content: a cause the writer never gave ("late due to a bug") or a whole new sentence ("I apologize for any
+  // confusion."). A new cause falls back to the deterministic fixes; a sentence that shares no content word with the original is
+  // dropped. Friendly may add warmth, so it is exempt. Same as TextSafety.swift (dropInvented).
+  const CAUSAL = /\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\b/gi;
+  const STOP = new Set(['have', 'that', 'this', 'with', 'from', 'your', 'will', 'would', 'could', 'should', 'there', 'their', 'what', 'when', 'been',
+    'were', 'they', 'just', 'more', 'need', 'also', 'about', 'into', 'them', 'then', 'than', 'some', 'please', 'thanks', 'thank']);
+  const contentWords = (s) => new Set(tokens(s).filter((w) => w.length > 3 && !STOP.has(w)).map((w) => w.slice(0, 4)));
+  function dropInvented(original, rewrite) {
+    const causes = (s) => (s.replace(CODE, ' ').match(CAUSAL) || []).length;
+    if (causes(rewrite) > causes(original)) return /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
+    const SENTENCE = /(?:`[^`\n]+`|[.!?]+(?=\S)|[^.!?])+(?:[.!?]+|$)\s*/g;
+    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' ')), parts = rewrite.match(SENTENCE) || [rewrite];
+    if (parts.join('') !== rewrite) return rewrite;
+    // Only sentences the model added, and only at the start or end: a rewritten sentence of the writer's always stays.
+    let extra = parts.length - (original.match(SENTENCE) || [original]).length, a = 0, b = parts.length;
+    const unrelated = (p) => { const w = [...contentWords(p)]; return w.length > 0 && !w.some((x) => seen.has(x)); };
+    while (extra > 0 && b - a > 1 && unrelated(parts[b - 1])) { b--; extra--; }
+    while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
+    return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
+  }
+  const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
+  const slangFor = (goal) => (goal === 'friendly' ? slangStep(goal) : (o, r) => dropInvented(o, slangStep(goal)(o, r)));
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
@@ -456,6 +477,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepOfCourse, keepSlang, slangFor, cutsWords, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepOfCourse, keepSlang, slangFor, cutsWords, dropInvented, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);
