@@ -37,5 +37,6 @@ test('the five styles match the Mac quick panel and every goal has a prompt', ()
   assert.deepEqual(HH.STYLE_LIST.map((s) => s.title), ['Fix only', 'Polish', 'Shorter', 'Friendly', 'Professional']);
   for (const s of HH.STYLE_LIST) assert.ok(HH.promptFor('hello there', s.goal, false).includes('hello there'));
   assert.equal(HH.promptFor('x', 'polish', false), HH.buildStylePrompt('x', 'polish'));
-  assert.equal(HH.promptFor('x', 'formal', false), HH.buildPrompt('x', 'formal', false));
+  assert.equal(HH.promptFor('x', 'formal', true), HH.buildStylePrompt('x', 'formal'));
+  assert.doesNotMatch(HH.promptFor('hey can u send it', 'formal', true), /keep it casual|Never make the text more formal/);
 });

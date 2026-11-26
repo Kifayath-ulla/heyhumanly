@@ -189,6 +189,7 @@
     fixOnly: 'Fix only real mistakes: spelling, grammar, verb forms, articles, punctuation and capitalization. Do not rephrase, reorder or replace words that are already correct, and do not change the tone (keep casual words like \'kinda\', \'hey\', \'asap\'). If nothing is wrong, return the text unchanged.',
     polish: 'Fix mistakes and make it read clearly and naturally, like a fluent native speaker wrote it. Keep the user\'s meaning, voice and roughly the same length. Do not add new ideas.',
     friendly: 'Rewrite it in a warm, friendly, casual tone suitable for chat. Keep the meaning and every fact. Do not add emojis or new ideas.',
+    formal: 'Rewrite it as a clear, polite, professional message. Keep the meaning and every fact. Do not add greetings, sign-offs or ideas that were not there.',
   };
   /** The five styles in the order the Mac quick panel shows them (⌘1–⌘5); values are the goals the prompts and Worker accept. */
   const STYLE_LIST = [
