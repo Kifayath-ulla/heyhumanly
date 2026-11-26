@@ -479,12 +479,15 @@
   }
   // Only when no request is left and none of the words the writer asked about survive: "Please send the draft" → "Send the draft, thanks" stays.
   function dropsRequest(original, rewrite) {
-    const m = original.replace(CODE, ' ').match(ASK_CLAUSE);
-    if (!m || STILL_ASKS.test(rewrite.replace(CODE, ' '))) return false;
-    const want = tokens(m[1]).filter((w) => w.length >= 3 && !STOP.has(w)), have = new Set(tokens(rewrite).map((w) => w.slice(0, 4)));
-    return want.length > 0 && !want.some((w) => have.has(w.slice(0, 4)));
+    const r = rewrite.replace(CODE, ' '), have = new Set(tokens(r).map((w) => w.slice(0, 4)));
+    const words = (t) => tokens(t).filter((w) => w.length >= 3 && !STOP.has(w) && !ASK_WORD.test(w));
+    const asks = [...original.replace(CODE, ' ').matchAll(ASK_CLAUSE)];
+    // Each request is checked on its own words, those after the ask or, for "retry it please", before it.
+    const lost = asks.filter((m) => { const w = words(m[2]).length ? words(m[2]) : words(m[1]); return w.length > 0 && !w.some((x) => have.has(x.slice(0, 4))); }).length;
+    return lost > 0 && r.split(/(?<=[.!?])\s+/).filter((p) => STILL_ASKS.test(p)).length < asks.length;
   }
-  const ASK_CLAUSE = /(?:\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b)([^.!?,;]*)/i;
+  const ASK_WORD = /^(?:please|pls|plz|can|could|would|will|you|u|the|and|for|but|our|its|his|her|him|she|was|are|has|had|too|also)$/;
+  const ASK_CLAUSE = /([^.!?,;]*?)(?:\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b)([^.!?,;]*)/gi;
   const STILL_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz|kindly|let me know|lmk)\b|\?/i;
   const WRITER_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b/i;
   const REQUEST = /^\W*(?:(?:can|could|would|will) (?:you|u)\b|please\b)/i;

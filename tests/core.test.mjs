@@ -429,3 +429,11 @@ test('review: a request kept without a marker, or a "can you" statement, is not 
   assert.equal(HH.slangFor('shorter')('Please send the revised draft to the team.', 'Send the revised draft to the team, thanks.'), 'Send the revised draft to the team, thanks.');
   assert.equal(HH.slangFor('polish')('Only then can you submit the form.', 'You can submit the form only after that.'), 'You can submit the form only after that.');
 });
+
+test('review: a request ending in "please", and a second request, are checked too', () => {
+  const o = 'the deploy failed, retry it please';
+  assert.equal(HH.slangFor('polish')(o, 'the deploy failed.'), o);
+  const two = 'Please send the draft. Can you also book the room?';
+  assert.equal(HH.slangFor('shorter')(two, 'Send the draft.'), two);
+  assert.equal(HH.slangFor('formal')(two, 'Please send the draft. Could you also reserve the room?'), 'Please send the draft. Could you also reserve the room?');
+});
