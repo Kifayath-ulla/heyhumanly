@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.20 — 2026-11-27
+
+- A rewrite that drops your request falls back to your text with the safe fixes: "…without running tests. pls fix asap" can't lose "pls fix asap". Mac, Chrome and online.
+- Professional uses proper capitalisation, even for an all-lowercase message. Other styles keep your lowercase.
+- A leading "Sure," the model adds no longer throws the rewrite away: "Sure, could you please send me the report…" becomes "Could you please send me the report…". A real answer to your question still falls back, and a lowercase command like "npm install" keeps its case.
+- Not notarized by Apple.
+
 ## 0.1.19 — 2026-11-26
 
 - Fix only no longer flips your meaning: "I has finished" can't come back as "I haven't finished". A rewrite that adds or drops a "not", "no" or "never" is rejected and your text gets only the safe fixes. Mac, Chrome and online.
