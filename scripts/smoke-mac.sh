@@ -7,6 +7,10 @@ check() { # original rewrite expected
   local got; got="$("$BIN" --guard "$1" "$2")"
   if [[ "$got" == "$3" ]]; then echo "ok   $1 -> $got"; else echo "FAIL $1 -> $got (expected: $3)"; fail=1; fi
 }
+styled() { # style original rewrite expected
+  local got; got="$("$BIN" --guard "$2" "$3" --style "$1")"
+  if [[ "$got" == "$4" ]]; then echo "ok   [$1] $2 -> $got"; else echo "FAIL [$1] $2 -> $got (expected: $4)"; fail=1; fi
+}
 lacks() { # original rewrite forbidden-substring
   local got; got="$("$BIN" --guard "$1" "$2")"
   if [[ "$got" != *"$3"* ]]; then echo "ok   $1 -> $got"; else echo "FAIL $1 -> $got (must not contain: $3)"; fail=1; fi
@@ -28,7 +32,7 @@ has "On 12 March, send it asap." "Send it as soon as possible on 12 March." "12 
 check "Call me at 5pm." "Call me at 5 p.m." "Call me at 5pm."
 check "send teh file" "send tbh file" "send the file"
 check "fix \`x.lenght\` now" "Fix (x.length now." "fix \`x.lenght\` now"
-check "use \`i => i*2\` here" "Use \`i => i * 2\` here." "Use \`i => i*2\` here."
+check "use \`i => i*2\` here" "Use \`i => i * 2\` here." "use \`i => i*2\` here."
 check "i shoud of went their" "i should have gone there" "I should have gone there"
 check "i.e. this, i think" "i.e. this, i think" "i.e. this, I think"
 check "Use \`foo\` instead of \`bar\`" "\`bar\` should be replaced by \`foo\`." "\`bar\` should be replaced by \`foo\`."
@@ -43,4 +47,11 @@ fixonly() { # original rewrite expected, with Fix only's keep-every-word check
 }
 fixonly "I should of course check, the thing I sent you was the draft." "I should of course check, the draft I sent you." "I should of course check, the thing I sent you was the draft."
 fixonly "I has went to the store." "I went to the store." "I went to the store."
+check "I should of course check, the thing I sent you was the draft." "I should have checked, the thing I sent you was the draft." "I should of course check, the thing I sent you was the draft."
+check "I should of gone, I should of course check" "I should have gone, I should have checked" "I should have gone, I should of course check"
+styled Professional "I should of course check, the thing I sent you was the draft." "I should have checked; the item I sent you was the draft." "I should of course check; the item I sent you was the draft."
+styled Friendly "thx for the help. i has a question" "Thanks so much for the help! I have a question." "thx so much for the help! I have a question."
+styled Shorter "thx for the help. i has a question" "Thanks for the help. I have a question." "thx for the help. I have a question."
+styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "thank you for the help. I have a question."
+styled Professional "Thx for the help." "Thank you for the help." "Thank you for the help."
 exit $fail

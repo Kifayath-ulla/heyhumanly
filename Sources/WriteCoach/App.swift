@@ -7,10 +7,15 @@ struct HeyHumanlyApp: App {
 
     init() {
         Self.registerFonts()
-        // Developer check: `HeyHumanly --guard "<original>" "<rewrite>"` prints what the meaning guard lets through.
+        // Developer check: `HeyHumanly --guard "<original>" "<rewrite>" [--style Professional | --fix-only]` prints the clean-up the
+        // quick panel applies to that style's rewrite (Polish by default, which goes through the meaning guard).
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--guard"), i + 2 < args.count {
-            print(RewriteGuard.sanitize(original: args[i + 1], rewrite: args[i + 2], preserve: [], fixOnly: args.contains("--fix-only")))
+            let named = args.firstIndex(of: "--style").flatMap { $0 + 1 < args.count ? WritingStyle(rawValue: args[$0 + 1]) : nil }
+            let style = args.contains("--fix-only") ? .fixOnly : named ?? .polish
+            let (original, rewrite) = (args[i + 1], args[i + 2])
+            print(style.guarded ? RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: [], fixOnly: style == .fixOnly)
+                                : TextSafety.apply(original: original, rewrite: rewrite, keepSlang: style != .professional))
             exit(0)
         }
         // `HeyHumanly --teach "<text>"` runs one full check (rewrite, guard, explanations) and prints it.

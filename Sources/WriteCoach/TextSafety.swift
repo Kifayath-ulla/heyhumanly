@@ -18,6 +18,7 @@ enum TextSafety {
         let keep = Set(preserve.map { $0.lowercased() })
         var fixed = fixGrammar(original: original, rewrite: fixTypos(original: original, rewrite: rewrite, preserve: keep))
         if slang { fixed = keepSlang(original: original, rewrite: fixed) }
+        fixed = keepLowercase(original: original, rewrite: fixed)
         return restoreCode(original: original, rewrite: keep.contains("i") ? fixed : capitalizeI(fixed))
     }
 
@@ -32,7 +33,7 @@ enum TextSafety {
     ]
 
     static func fixGrammar(original: String, rewrite: String) -> String {
-        var out = rewrite
+        var out = keepOfCourse(original: original, rewrite: rewrite)
         for (re, template) in grammarRules
         where re.firstMatch(in: original, range: NSRange(location: 0, length: (original as NSString).length)) != nil {
             out = re.stringByReplacingMatches(in: out, range: NSRange(location: 0, length: (out as NSString).length), withTemplate: template)
@@ -56,6 +57,29 @@ enum TextSafety {
         codeRegex.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ")
             .lowercased().replacingOccurrences(of: "’", with: "'")
             .split(whereSeparator: { !($0.isLetter || $0.isNumber || $0 == "'") }).map(String.init)
+    }
+
+    /// "I should of course check" is not a "should of" slip. If the model read it as one ("I should have checked"),
+    /// the writer's words go back. Mirrored in extension/core.js (keepOfCourse).
+    private static let ofCourse = try! NSRegularExpression(pattern: "\\b(should|could|would|must|might) of course (\\w+)", options: .caseInsensitive)
+
+    static func keepOfCourse(original: String, rewrite: String) -> String {
+        let ns = original as NSString
+        var out = rewrite
+        for m in ofCourse.matches(in: original, range: NSRange(location: 0, length: ns.length)) {
+            let modal = ns.substring(with: m.range(at: 1)), verb = ns.substring(with: m.range(at: 2))
+            guard count(modal + " of course", in: out) < count(modal + " of course", in: original) else { continue }
+            // Skip the "have"s that stand for the writer's earlier "have" or "of" ("I should of gone, I should of course check").
+            let earlier = try! NSRegularExpression(pattern: "\\b" + modal + " (have|of(?! course))\\b", options: .caseInsensitive)
+                .numberOfMatches(in: original, range: NSRange(location: 0, length: m.range.location))
+            let re = try! NSRegularExpression(pattern: "\\b(" + modal + ") have \\w+", options: .caseInsensitive)
+            let outNS = out as NSString
+            let hits = re.matches(in: out, range: NSRange(location: 0, length: outNS.length))
+            guard hits.count > earlier else { continue }
+            let hit = hits[earlier]
+            out = outNS.replacingCharacters(in: hit.range, with: outNS.substring(with: hit.range(at: 1)) + " of course " + verb)
+        }
+        return out
     }
 
     /// Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.

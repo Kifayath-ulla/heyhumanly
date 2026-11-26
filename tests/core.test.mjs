@@ -233,6 +233,10 @@ test('fixGrammar: slips a small model leaves in are fixed only when the writer m
   assert.equal(HH.fixTypos('I should of course check', 'I should of course check'), 'I should of course check');
   assert.equal(HH.fixTypos('The last thing I sent you was the draft', 'The last thing I sent you was the draft'), 'The last thing I sent you was the draft');
   assert.equal(HH.fixTypos('He dont know', 'He dont know'), 'He doesn\'t know');
+  assert.equal(HH.fixTypos('I should of course check, the thing I sent you was the draft.', 'I should have checked, the thing I sent you was the draft.'), 'I should of course check, the thing I sent you was the draft.');
+  assert.equal(HH.fixTypos('I should of gone, I should of course check', 'I should have gone, I should have checked'), 'I should have gone, I should of course check');
+  assert.equal(HH.keepOfCourse('I should of course check', 'I should of course check'), 'I should of course check');
+  assert.equal(HH.keepOfCourse('I should have checked', 'I should have checked'), 'I should have checked');
 });
 
 test('keepSlang: slang the writer typed stays, except in Professional', () => {
