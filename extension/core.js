@@ -189,6 +189,7 @@
     fixOnly: 'Fix only real mistakes: spelling, grammar, verb forms, articles, punctuation and capitalization. Do not rephrase, reorder or replace words that are already correct, and do not change the tone (keep casual words like \'kinda\', \'hey\', \'asap\'). If nothing is wrong, return the text unchanged.',
     polish: 'Fix mistakes and make it read clearly and naturally, like a fluent native speaker wrote it. Keep the user\'s meaning, voice and roughly the same length. Do not add new ideas.',
     friendly: 'Rewrite it in a warm, friendly, casual tone suitable for chat. Keep the meaning and every fact. Do not add emojis or new ideas.',
+    formal: 'Rewrite it as a clear, polite, professional message. Keep the meaning and every fact. Do not add greetings, sign-offs or ideas that were not there.',
   };
   /** The five styles in the order the Mac quick panel shows them (⌘1–⌘5); values are the goals the prompts and Worker accept. */
   const STYLE_LIST = [
@@ -419,16 +420,16 @@
   // dropped. An apology or assistant line the writer never wrote ("We apologize for the delay.", "Let me know if you need help.") or a
   // rewrite whose content words are all new (none of the writer's) falls back to the deterministic fixes. Friendly may add warmth and sentences,
   // so it only gets the assistant and content checks. Same as TextSafety.swift (dropInvented).
-  const CAUSAL = /\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\b/gi;
+  const CAUSAL = /\b(?:due to|because|cuz|coz|bcuz|b\/c|therefore|as a result|caused by|so that|hence|thus)\b/gi;
   const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bno problem at all\b|\bfeel free to ask\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\bsorry to hear\b|\bhope this helps\b/gi;
-  const APOLOGY = /\b(?:apologi[sz]e[sd]?|apologies|sorry|my (?:mistake|bad)|oops)\b/gi;
+  const APOLOGY = /\b(?:apologi[sz]e[sd]?|apologies|sorry|sry|srry|soz|my (?:mistake|bad)|oops)\b/gi;
   const STOP = new Set(['have', 'that', 'this', 'with', 'from', 'your', 'will', 'would', 'could', 'should', 'there', 'their', 'what', 'when', 'been',
     'were', 'they', 'just', 'more', 'need', 'also', 'about', 'into', 'them', 'then', 'than', 'some', 'please', 'thanks', 'thank']);
   const contentWords = (s) => new Set(tokens(s).filter((w) => w.length > 3 && !STOP.has(w)).map((w) => w.slice(0, 4)));
   function dropInvented(original, rewrite, friendly = false) {
     const hits = (re, s) => (s.replace(CODE, ' ').match(re) || []).length;
     const fallback = /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
-    if (!friendly && hits(CAUSAL, rewrite) > hits(CAUSAL, original)) return fallback;
+    if (!friendly && hits(CAUSAL, rewrite) > hits(CAUSAL, original) + hits(/\bbc\b/g, original)) return fallback;
     const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
     const out = friendly ? rewrite : dropAddedSentences(original, rewrite, seen);
     if (hits(ASSISTANT, out) > hits(ASSISTANT, original)) return fallback;
@@ -454,8 +455,9 @@
   // TextSafety.swift (dropReply).
   const REPLY = /^\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\b/i;
   const ASKS = /\b(?:can|could|would|will) you\b/i, OFFERS = /\bI(?:['’]ll| will| can(?!['’]t)| could)\b/i;
+  const ACK = /^\W*(?:yep|yeah|yes|yup|ok|okay|sure|np|no prob|will do|got it|sounds good|of course|absolutely|certainly)\b/i;
   const opener = (s) => ((s.match(REPLY) || [])[1] || '').toLowerCase().replace(/’/g, "'");
-  const replies = (original, rewrite) => (opener(rewrite) !== '' && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
+  const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
   const dropReply = (original, rewrite) =>
     !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
   const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);

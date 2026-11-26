@@ -186,7 +186,7 @@ test('style prompts match the Mac app’s WritingStyle instructions', async () =
   const { readFile } = await import('node:fs/promises');
   const swift = await readFile(new URL('../Sources/WriteCoach/Coaching.swift', import.meta.url), 'utf8');
   for (const [style, text] of Object.entries(HH.STYLES)) {
-    const m = swift.match(new RegExp('case \\.' + style + ':\\s*return "([^"]+)"', 'g')).map((s) => s.match(/return "([^"]+)"/)[1]);
+    const m = swift.match(new RegExp('case \\.' + (style === 'formal' ? 'professional' : style) + ':\\s*return "([^"]+)"', 'g')).map((s) => s.match(/return "([^"]+)"/)[1]);
     assert.ok(m.includes(text), style);
   }
   assert.match(HH.buildStylePrompt('teh plan', 'fixOnly'), /Fix only real mistakes[\s\S]*Text:\nteh plan$/);
@@ -321,4 +321,15 @@ test('dropInvented: an invented apology or assistant reply never replaces the wr
   assert.equal(HH.slangFor('formal')("It wasn't my fault, the server was down.", 'I apologize, the server was down.'), "It wasn't my fault, the server was down.");
   assert.equal(HH.slangFor('formal')('i did not break it', 'It was not my fault.'), 'It was not my fault.');
   assert.equal(HH.slangFor('short')('I am writing to express my gratitude.', 'Thank you.'), 'Thank you.');
+});
+
+test('Professional may spell out the writer’s own slang reason, apology or acknowledgment', () => {
+  assert.equal(HH.slangFor('formal')('sry i cant come cuz im sick', 'I apologize, but I cannot come because I am sick.'), 'I apologize, but I cannot come because I am sick.');
+  assert.equal(HH.slangFor('formal')('Yep, I’ll send the report', 'Certainly, I’ll send the report.'), 'Certainly, I’ll send the report.');
+  assert.equal(HH.slangFor('formal')('i will send the report', 'Certainly, I will send the report.'), 'i will send the report');
+  assert.equal(HH.slangFor('formal')('we was late', 'We were late because of traffic.'), 'we were late');
+  assert.equal(HH.slangFor('formal')('cant come bc im sick', 'I cannot come because I am sick.'), 'I cannot come because I am sick.');
+  assert.equal(HH.slangFor('polish')('met the team in vancouver, we was late', 'met the team in vancouver, bc. we were late'), 'met the team in vancouver, bc. we were late');
+  assert.equal(HH.slangFor('formal')('Okay, can you check the report?', 'Certainly, the report looks good.'), 'Okay, can you check the report?');
+  assert.equal(HH.slangFor('formal')('Talked to the BC team, we was late', 'I spoke with the British Columbia team; we were late because of traffic.'), 'Talked to the BC team, we were late');
 });

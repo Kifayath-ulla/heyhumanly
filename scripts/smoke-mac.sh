@@ -56,6 +56,8 @@ styled Professional "Can you send the report today?" "Certainly, I can send the 
 styled Shorter "can you check the reprot? i will send it after" "Can you check the report? I will send it after." "can you check the report? I will send it after."
 styled Shorter "thx for the help. i has a question" "Thanks for the help. I have a question." "thx for the help. I have a question."
 styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "thank you for the help. I have a question."
+styled Professional "Sry, I cant come cuz Im sick" "I apologize, but I cannot come because I am sick." "I apologize, but I cannot come because I am sick."
+styled Professional "Yep, I'll send the report" "Certainly, I'll send the report." "Certainly, I'll send the report."
 styled Professional "Thx for the help." "Thank you for the help." "Thank you for the help."
 check "I should of course check, and you should have called." "Of course, I should check, and you should have called." "Of course, I should check, and you should have called."
 check "I should of course call, and I should of course check." "I should of course call, and I should have checked." "I should of course call, and I should of course check."
