@@ -63,4 +63,7 @@ check "I should of course check" "Of course I should have checked" "Of course I 
 styled Shorter "we was late, their is a bug" "We were late due to a bug." "we were late, there is a bug"
 styled Professional "Can you send the report today?" "Could you send the report today? I apologize for any confusion." "Could you send the report today?"
 styled Friendly "Can you send the report today?" "Could you send the report today? Hope you have a great day!" "Could you send the report today? Hope you have a great day!"
+styled Professional "we was late, their is a bug" "we apologize for the delay." "we were late, there is a bug"
+styled Friendly "their is a problem with the login page and we was not told" "I'm sorry to hear there's an issue with the login page. Let me know if you need any help troubleshooting." "there is a problem with the login page and we were not told"
+styled Polish "send the deck to priya and the board" "Thanks for reaching out to us today." "send the deck to priya and the board"
 exit $fail

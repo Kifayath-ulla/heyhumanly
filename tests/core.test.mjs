@@ -295,3 +295,30 @@ test('dropInvented: no made-up causes or sentences, except in Friendly', () => {
   assert.equal(HH.dropInvented('...ok so send it', '...Okay, send it. I apologize for any confusion.'), '...Okay, send it.');
   assert.equal(HH.dropInvented('use `a` here, it is slow', 'Use `a` here because it is slow.'), 'use `a` here, it is slow');
 });
+
+test('dropInvented: an invented apology or assistant reply never replaces the writer', () => {
+  assert.equal(HH.dropInvented('we was late, their is a bug', 'we apologize for the delay.'), 'we were late, there is a bug');
+  assert.equal(HH.slangFor('formal')('we was late, their is a bug', 'We apologize for the delay.'), 'we were late, there is a bug');
+  assert.equal(HH.slangFor('friendly')('their is a problem with the login page and we was not told',
+    "I'm sorry to hear there's an issue with the login page. Let me know if you need any help troubleshooting."),
+    'there is a problem with the login page and we were not told');
+  assert.equal(HH.slangFor('friendly')('I should of course check the logs before the deploy, thx',
+    "Sure, I'd be happy to help you with that. Just let me know what you're deploying."),
+    'I should of course check the logs before the deploy, thx');
+  assert.equal(HH.slangFor('polish')('send the deck to priya and the board', 'Thanks for reaching out to us today.'), 'send the deck to priya and the board');
+  assert.equal(HH.slangFor('friendly')('Could you send the report today?', 'Could you send the report today? Hope you have a great day!'),
+    'Could you send the report today? Hope you have a great day!');
+  assert.equal(HH.slangFor('friendly')('sorry, i was late', "Sorry, I was late!"), 'Sorry, I was late!');
+  assert.equal(HH.slangFor('formal')('Sorry for the delay, the file is attached.', 'I apologize for the delay; the file is attached.'),
+    'I apologize for the delay; the file is attached.');
+  assert.equal(HH.slangFor('short')('I just wanted to quickly let you know that the meeting tomorrow has been moved', 'Meeting tomorrow moved.'),
+    'Meeting tomorrow moved.');
+  assert.equal(HH.dropInvented('i shoud of went their', 'I should have gone there'), 'I should have gone there');
+  assert.equal(HH.slangFor('friendly')('Please get in touch.', 'Feel free to reach out!'), 'Feel free to reach out!');
+  assert.equal(HH.slangFor('formal')('My mistake.', 'I apologize.'), 'I apologize.');
+  assert.equal(HH.slangFor('friendly')('the login page is broken and we was not told', 'Thanks for the heads-up! No problem at all, the login page is fine.'),
+    'the login page is broken and we were not told');
+  assert.equal(HH.slangFor('formal')("It wasn't my fault, the server was down.", 'I apologize, the server was down.'), "It wasn't my fault, the server was down.");
+  assert.equal(HH.slangFor('formal')('i did not break it', 'It was not my fault.'), 'It was not my fault.');
+  assert.equal(HH.slangFor('short')('I am writing to express my gratitude.', 'Thank you.'), 'Thank you.');
+});
