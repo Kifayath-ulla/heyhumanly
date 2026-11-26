@@ -272,11 +272,18 @@
   // Grammar slips a small model often leaves in ("I has", "we was"). Fixed only when the writer's text had them. Same as TextSafety.swift.
   // Only subject-only pronouns, so "the thing I sent you was" is left alone.
   const GRAMMAR = [[/\b([Ii]) has\b/g, '$1 have'], [/\b(we|they) was\b/gi, '$1 were'], [/\b(t)heir (is|are|was|were)\b/gi, '$1here $2'],
-    [/\b(should|could|would|must|might) of\b(?! course)/gi, '$1 have'], [/\b(he|she) don(['’]?)t\b/gi, '$1 doesn$2t']];
+    [/\b(should|could|would|must|might) of\b(?! course)/gi, '$1 have'], [/\b(he|she) don(['’]?)t\b/gi, '$1 doesn$2t'], [/(^|[.!?,;:]\s+|\b(?:and|but|so|because|cuz|if|that|when|whether|maybe|think|hope|guess|know|said|says|sure|bet)\s+)(t)heir going to\b(?! (?:the|a|an|my|your|his|her|its|our|their|this|that|these|those)\b)/gi, '$1$2hey\'re going to']];
   function fixGrammar(original, rewrite) {
-    let out = keepOfCourse(original, rewrite);
+    let out = rejoinTail(original, keepOfCourse(original, rewrite));
     for (const [re, to] of GRAMMAR) { re.lastIndex = 0; if (re.test(original)) out = out.replace(re, to); }
     return out;
+  }
+  // "…shipping it tbh" must not come back as "…shipping it. TBH.": a trailing word the model split off goes back on the sentence. Same as TextSafety.swift.
+  function rejoinTail(original, rewrite) {
+    const tail = original.match(/[\p{L}\p{N}]\s+([\p{L}]+)\W*$/u);
+    if (!tail || !CHAT.has(tail[1].toLowerCase())) return rewrite;
+    const re = new RegExp('([\\p{L}\\p{N}])([.!?;])\\s+' + tail[1] + '([.!?]*)\\s*$', 'iu');
+    return rewrite.replace(re, (m, last, sep, end) => last + ' ' + tail[1] + (/[?!]/.test(sep) ? sep : end));
   }
   // Fix only must not cut the writer's words: if the rewrite drops two or more of them and gets two or more words shorter,
   // only the deterministic fixes are applied to the original. Same as TextSafety.swift (cutsWords).
@@ -291,8 +298,18 @@
     // A word swapped for an unrelated one ("Great work" → "Great job") is a rewrite, not a fix; "is" → "are", "seen" → "saw" or "realy" → "really" is a fix.
     const added = [...left].flatMap(([w, n]) => Array(n).fill(w));
     const near = (a, b) => editDistance(a, b) <= 2 || a[0] === b[0] || (AUX.has(a) && AUX.has(b)) || (GO.has(a) && GO.has(b));
-    return gone.some((w) => !added.some((x) => near(w, x))) && added.some((w) => !gone.some((x) => near(w, x)));
+    // A dropped word with nothing like it added ("hey r u" → "hey, u") is a cut too; a dropped helper verb ("I has went" → "I went") is a fix.
+    const lost = gone.filter((w) => !added.some((x) => near(w, x)));
+    if (lost.some((w) => !AUX.has(w))) return true;
+    // "I have finished" → "I haven't finished" flips the meaning; so does a writer's slang turned into another word ("ngl" → "ngg").
+    if (negations(base) !== negations(tokens(rewrite)) || gone.some((w) => CHAT.has(w))) return true;
+    return lost.length > 0 && added.some((w) => !gone.some((x) => near(w, x)));
   }
+  const negations = (ws) => ws.filter((w) => /^(?:not|no|noone|never|nothing|nobody|none|nor|cannot|dont|doesnt|didnt|cant|couldnt|wont|wouldnt|shouldnt|isnt|arent|wasnt|werent|havent|hasnt|hadnt|aint|mustnt|neednt)$|n't$/.test(w)).length;
+  // Chat shorthand Fix only never changes. Same list as RewriteGuard.slang in Guard.swift.
+  const CHAT = new Set(('gng ngl tbh idk imo imho fr rn btw lol lmao brb omg ikr smh fyi asap bro bruh gonna wanna gotta kinda sorta yeah yep yup nope nah ok okay pls plz ' +
+    'thx ty np nvm tho cuz coz bc idc wdym hbu wyd ofc afaik iirc dm lmk ttyl gg gm gn dude yo hey hiya ya yall y\'all ain\'t lemme gimme dunno tldr ' +
+    'tmrw tmr msg pic pics ppl abt thru bday prolly rly srsly gtg jk wtf wth af sus lowkey highkey legit fam sis mate hmm uh um haha hehe aight ight wassup sup omw u ur r sry').split(' '));
   const GO = new Set(['go', 'goes', 'went', 'gone', 'going']);
   const AUX = new Set(['is', 'are', 'was', 'were', 'am', 'be', 'been', 'has', 'have', 'had', 'do', 'does', 'did']);
   // With code in the text, the fallback is the original untouched, so no code span can be corrected or swapped.
