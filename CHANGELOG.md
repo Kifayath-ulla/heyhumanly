@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.15 — 2026-11-26
+
+- Rewrites no longer answer your message instead of rewriting it ("thx for the help" no longer becomes "No problem at all!", "Can you send it?" no longer becomes "Sure, I can send it."). In every style, Friendly too, the panel falls back to your text with the safe spelling and grammar fixes. Mac, Chrome and online.
+- No invented apologies: "we was late" no longer becomes "We apologize for the delay." outside Friendly, and chatbot lines like "Here's a friendlier version:" or "Let me know if you need any help" are caught anywhere in the rewrite.
+- Not notarized by Apple.
+
 ## 0.1.14 — 2026-11-26
 
 - Rewrites no longer make things up: a cause you never gave ("late due to a bug") falls back to the safe spelling and grammar fixes, and a sentence the model adds that has nothing to do with your text ("I apologize for any confusion.") is removed. Friendly may still add warmth. Mac, Chrome and online.
