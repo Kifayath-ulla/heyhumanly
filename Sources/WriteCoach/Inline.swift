@@ -935,6 +935,7 @@ final class InlineSession: ObservableObject {
             var out = try? await CompanionService.rewrite(text, style: t, appName: app, preserve: words, endpoint: endpoint, model: modelName)
             guard let self else { return }
             if let raw = out { out = t.guarded ? RewriteGuard.sanitize(original: text, rewrite: raw, preserve: words, fixOnly: t == .fixOnly) : TextSafety.apply(original: text, rewrite: raw, preserve: words, keepSlang: t != .professional) }
+            if let o = out, t != .friendly { out = TextSafety.dropInvented(original: text, rewrite: o, preserve: words, keepSlang: t != .professional) }
             if resumeExplain, self.changes.contains(where: \.pending) { self.explain(text: self.checkedText, rewrite: self.rewriteForChanges) }
             guard self.tone == t else { return }
             self.toneBusy = false
