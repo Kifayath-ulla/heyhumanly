@@ -432,7 +432,9 @@
     const hits = (re, s) => (s.replace(CODE, ' ').match(re) || []).length;
     const fallback = /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
     if (!friendly && hits(CAUSAL, rewrite) > hits(CAUSAL, original) + hits(/\bbc\b/g, original)) return fallback;
-    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
+    // The writer's own slang spelled out ("lmk if thats ok" → "let me know if that is okay") is not added content.
+    const spelled = Object.entries({ ...SLANG_EXPANSIONS, ok: ['okay'] }).filter(([short]) => countWord(short, original)).map(([, longs]) => longs.join(' '));
+    const seen = contentWords((original + ' ' + fixTypos(original, original) + ' ' + spelled.join(' ')).replace(/`/g, ' '));
     const out = friendly ? rewrite : dropAddedSentences(original, rewrite, seen);
     // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
     const lead = rewrite.split(/(?<=[.!?])\s+/)[0].replace(INTRO, ' ');
