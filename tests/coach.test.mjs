@@ -60,7 +60,9 @@ test('one IP cannot mint unlimited installs', async () => {
   let blocked = 0;
   for (let i = 0; i < LIMITS.perIp + 2; i++) {
     const id = '11111111-2222-4333-8444-' + String(i).padStart(12, '0');
-    if ((await post(env, { text: TEXT, install: id })).status === 429) blocked++;
+    const r = await post(env, { text: TEXT, install: id });
+    if (r.status === 429) blocked++;
+    if (i === LIMITS.perIp - 1) assert.equal((await r.json()).remaining, 0);
   }
   assert.equal(blocked, 2);
 });
@@ -75,6 +77,9 @@ test('requests without a visitor IP share one per-IP allowance', async () => {
     if (r.status === 429) blocked++;
   }
   assert.equal(blocked, 2);
+  const left = await (await peek(env, '11111111-2222-4333-8444-999999999999')).json();
+  assert.equal(left.remaining, 0);
+  assert.equal(left.available, false);
 });
 
 test('the global budget stops requests before the free daily allocation', async () => {

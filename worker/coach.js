@@ -30,23 +30,25 @@ export class Ledger {
     const cur = await this.store.get('day');
     if (!cur || day > cur) { await this.store.deleteAll(); await this.store.put('day', day); }
   }
-  async peek(install, day) {
+  // The network's cap counts too, so a shared office IP that used it up shows 0 left, not 10.
+  async peek(install, day, ipKey) {
     await this.roll(day);
     const used = (await this.store.get('i:' + install)) || 0, spent = (await this.store.get('neurons')) || 0;
-    return { used, remaining: Math.max(0, LIMITS.perInstall - used), budgetLeft: spent < LIMITS.dailyNeurons };
+    const ipUsed = ipKey ? (await this.store.get('p:' + ipKey)) || 0 : 0;
+    return { used, remaining: Math.max(0, Math.min(LIMITS.perInstall - used, LIMITS.perIp - ipUsed)), budgetLeft: spent < LIMITS.dailyNeurons };
   }
   async reserve(install, ipKey, est, day) {
     await this.roll(day);
     const used = (await this.store.get('i:' + install)) || 0;
     if (used >= LIMITS.perInstall) return { ok: false, reason: 'allowance_used', remaining: 0 };
     const ipUsed = ipKey ? (await this.store.get('p:' + ipKey)) || 0 : 0;
-    if (ipKey && ipUsed >= LIMITS.perIp) return { ok: false, reason: 'allowance_used', remaining: LIMITS.perInstall - used };
+    if (ipKey && ipUsed >= LIMITS.perIp) return { ok: false, reason: 'allowance_used', remaining: 0 };
     const spent = (await this.store.get('neurons')) || 0;
     if (spent + est > LIMITS.dailyNeurons) return { ok: false, reason: 'budget_exhausted', remaining: LIMITS.perInstall - used };
     await this.store.put('i:' + install, used + 1);
     if (ipKey) await this.store.put('p:' + ipKey, ipUsed + 1);
     await this.store.put('neurons', spent + est);
-    return { ok: true, remaining: LIMITS.perInstall - used - 1 };
+    return { ok: true, remaining: Math.min(LIMITS.perInstall - used - 1, ipKey ? LIMITS.perIp - ipUsed - 1 : Infinity) };
   }
   // Failed, timed-out and provider-error requests are refunded; successful ones are charged their real cost.
   // A billed failure (the model answered but the output was unusable) keeps its real cost and the per-IP count.
@@ -116,7 +118,7 @@ export async function handleCoach(request, env, now = Date.now()) {
     const install = (url.searchParams.get('install') || '').toLowerCase();
     if (!INSTALL.test(install)) return json({ error: 'bad_request' }, 400);
     if (!enabled) return json({ ...base(env, 0, now), available: false, error: 'unavailable' }, 503);
-    const p = await ledgerOf(env).peek(install, day);
+    const p = await ledgerOf(env).peek(install, day, await ipKey(request, env, day));
     return json({ ...base(env, p.remaining, now), available: p.budgetLeft && p.remaining > 0 });
   }
   if (url.pathname !== '/api/v1/coach') return json({ error: 'not_found' }, 404);
