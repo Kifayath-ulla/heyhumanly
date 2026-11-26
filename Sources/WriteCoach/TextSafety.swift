@@ -55,11 +55,11 @@ enum TextSafety {
     /// Small models invent content: a cause the writer never gave ("late due to a bug") or a whole new sentence ("I apologize for
     /// any confusion."). A new cause falls back to the deterministic fixes; a sentence that shares no content word with the original
     /// is dropped. An apology or assistant line the writer never wrote ("We apologize for the delay.", "Let me know if you need help.")
-    /// or a rewrite that keeps none of the writer's content words falls back to the deterministic fixes. Friendly may add warmth and
+    /// or a rewrite whose content words are all new (none of the writer's) falls back to the deterministic fixes. Friendly may add warmth and
     /// sentences, so it only gets the assistant and content checks. Mirrored in extension/core.js (dropInvented).
     private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
-    private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bno problem at all\\b|\\bfeel free to (?:ask|reach out)\\b|\\blet me know if you (?:need|have)\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\bsorry to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
-    private static let apology = try! NSRegularExpression(pattern: "\\b(?:apologi[sz]e[sd]?|apologies|sorry)\\b", options: .caseInsensitive)
+    private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bno problem at all\\b|\\bfeel free to ask\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\bsorry to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
+    private static let apology = try! NSRegularExpression(pattern: "\\b(?:apologi[sz]e[sd]?|apologies|sorry|my (?:mistake|bad|fault)|oops)\\b", options: .caseInsensitive)
     private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
         "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
     private static let sentence = try! NSRegularExpression(pattern: "(?:`[^`\\n]+`|[.!?]+(?=\\S)|[^.!?])+(?:[.!?]+|$)\\s*")
@@ -84,8 +84,9 @@ enum TextSafety {
         if !friendly { out = dropAddedSentences(original: original, rewrite: rewrite, seen: seen) }
         if hits(assistant, out) > hits(assistant, original) { return fallback }
         if !friendly && hits(apology, out) > hits(apology, original) { return fallback }
-        // A rewrite that keeps none of the writer's content words replaced the message instead of rewriting it.
-        if seen.count >= 3 && seen.isDisjoint(with: contentWords(out.replacingOccurrences(of: "`", with: " "))) { return fallback }
+        // A rewrite whose content words are all new replaced the message instead of rewriting it.
+        let kept = contentWords(out.replacingOccurrences(of: "`", with: " "))
+        if seen.count >= 3 && !kept.isEmpty && seen.isDisjoint(with: kept) { return fallback }
         return out
     }
 
