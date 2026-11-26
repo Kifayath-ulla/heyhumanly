@@ -395,3 +395,10 @@ test('Fix only: adding the apostrophe to "didnt" or fixing "I gone" is not a fli
 test('a trailing "tbh" set off by a comma stays as the model wrote it', () => {
   assert.equal(HH.fixTypos('idk if gng can come tbh', 'idk if gng can come, tbh'), 'idk if gng can come, tbh');
 });
+
+test('review: names, possessive "their going to the…" and a question before a split-off "lol" stay right', () => {
+  assert.equal(HH.fixTypos('ask Peter Noone', 'Ask Peter Noone.'), 'Ask Peter Noone.');
+  assert.equal(HH.fixTypos('I appreciate their going to the trouble', 'I appreciate their going to the trouble.'), 'I appreciate their going to the trouble.');
+  assert.equal(HH.fixTypos('you are coming too lol', 'You are coming too? LOL.'), 'You are coming too lol?');
+  assert.equal(HH.cutsWords('theres noone to watch her', "there's no one to watch her."), false);
+});

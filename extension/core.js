@@ -221,7 +221,7 @@
     return s;
   }
   // Same clean-ups as TextSafety.swift: code in backticks stays as written, known typos get the intended word.
-  const TYPOS = { noone: 'no one', teh: 'the', hte: 'the', adn: 'and', nad: 'and', taht: 'that', thta: 'that', wiht: 'with', whit: 'with', becuase: 'because', becasue: 'because',
+  const TYPOS = { teh: 'the', hte: 'the', adn: 'and', nad: 'and', taht: 'that', thta: 'that', wiht: 'with', whit: 'with', becuase: 'because', becasue: 'because',
     recieve: 'receive', recieved: 'received', seperate: 'separate', definately: 'definitely', occured: 'occurred', untill: 'until', wich: 'which', thier: 'their',
     freind: 'friend', beleive: 'believe', tommorow: 'tomorrow', tomorow: 'tomorrow', alot: 'a lot', youre: 'you\'re', dont: 'don\'t' };
   const CODE = /`[^`\n]+`/g;
@@ -272,7 +272,7 @@
   // Grammar slips a small model often leaves in ("I has", "we was"). Fixed only when the writer's text had them. Same as TextSafety.swift.
   // Only subject-only pronouns, so "the thing I sent you was" is left alone.
   const GRAMMAR = [[/\b([Ii]) has\b/g, '$1 have'], [/\b(we|they) was\b/gi, '$1 were'], [/\b(t)heir (is|are|was|were)\b/gi, '$1here $2'],
-    [/\b(should|could|would|must|might) of\b(?! course)/gi, '$1 have'], [/\b(he|she) don(['’]?)t\b/gi, '$1 doesn$2t'], [/\b(t)heir going to\b/gi, '$1hey\'re going to']];
+    [/\b(should|could|would|must|might) of\b(?! course)/gi, '$1 have'], [/\b(he|she) don(['’]?)t\b/gi, '$1 doesn$2t'], [/\b(t)heir going to\b(?! (?:the|a|an|my|your|his|her|its|our|their|this|that|these|those|work|school|bed)\b)/gi, '$1hey\'re going to']];
   function fixGrammar(original, rewrite) {
     let out = rejoinTail(original, keepOfCourse(original, rewrite));
     for (const [re, to] of GRAMMAR) { re.lastIndex = 0; if (re.test(original)) out = out.replace(re, to); }
@@ -282,8 +282,8 @@
   function rejoinTail(original, rewrite) {
     const tail = original.match(/[\p{L}\p{N}]\s+([\p{L}]+)\W*$/u);
     if (!tail || !CHAT.has(tail[1].toLowerCase())) return rewrite;
-    const re = new RegExp('([\\p{L}\\p{N}])[.!?;]\\s+' + tail[1] + '([.!?]*)\\s*$', 'iu');
-    return rewrite.replace(re, (m, last, end) => last + ' ' + tail[1] + end);
+    const re = new RegExp('([\\p{L}\\p{N}])([.!?;])\\s+' + tail[1] + '([.!?]*)\\s*$', 'iu');
+    return rewrite.replace(re, (m, last, sep, end) => last + ' ' + tail[1] + (/[?!]/.test(sep) ? sep : end));
   }
   // Fix only must not cut the writer's words: if the rewrite drops two or more of them and gets two or more words shorter,
   // only the deterministic fixes are applied to the original. Same as TextSafety.swift (cutsWords).
@@ -305,7 +305,7 @@
     if (negations(base) !== negations(tokens(rewrite)) || gone.some((w) => CHAT.has(w))) return true;
     return lost.length > 0 && added.some((w) => !gone.some((x) => near(w, x)));
   }
-  const negations = (ws) => ws.filter((w) => /^(?:not|no|never|nothing|nobody|none|nor|cannot|dont|doesnt|didnt|cant|couldnt|wont|wouldnt|shouldnt|isnt|arent|wasnt|werent|havent|hasnt|hadnt|aint|mustnt|neednt)$|n't$/.test(w)).length;
+  const negations = (ws) => ws.filter((w) => /^(?:not|no|noone|never|nothing|nobody|none|nor|cannot|dont|doesnt|didnt|cant|couldnt|wont|wouldnt|shouldnt|isnt|arent|wasnt|werent|havent|hasnt|hadnt|aint|mustnt|neednt)$|n't$/.test(w)).length;
   // Chat shorthand Fix only never changes. Same list as RewriteGuard.slang in Guard.swift.
   const CHAT = new Set(('gng ngl tbh idk imo imho fr rn btw lol lmao brb omg ikr smh fyi asap bro bruh gonna wanna gotta kinda sorta yeah yep yup nope nah ok okay pls plz ' +
     'thx ty np nvm tho cuz coz bc idc wdym hbu wyd ofc afaik iirc dm lmk ttyl gg gm gn dude yo hey hiya ya yall y\'all ain\'t lemme gimme dunno tldr ' +

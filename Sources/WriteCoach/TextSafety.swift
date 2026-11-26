@@ -5,7 +5,7 @@ import Foundation
 enum TextSafety {
     /// Misspellings a small model sometimes "fixes" into the wrong word ("teh" → "tbh").
     static let commonTypos: [String: String] = [
-        "noone": "no one", "teh": "the", "hte": "the", "adn": "and", "nad": "and", "taht": "that", "thta": "that", "wiht": "with", "whit": "with",
+        "teh": "the", "hte": "the", "adn": "and", "nad": "and", "taht": "that", "thta": "that", "wiht": "with", "whit": "with",
         "becuase": "because", "becasue": "because", "recieve": "receive", "recieved": "received", "seperate": "separate",
         "definately": "definitely", "occured": "occurred", "untill": "until", "wich": "which", "thier": "their", "freind": "friend",
         "beleive": "believe", "tommorow": "tomorrow", "tomorow": "tomorrow", "alot": "a lot", "youre": "you're", "dont": "don't",
@@ -32,7 +32,7 @@ enum TextSafety {
         (try! NSRegularExpression(pattern: "\\b(t)heir (is|are|was|were)\\b", options: .caseInsensitive), "$1here $2"),
         (try! NSRegularExpression(pattern: "\\b(should|could|would|must|might) of\\b(?! course)", options: .caseInsensitive), "$1 have"),
         (try! NSRegularExpression(pattern: "\\b(he|she) don(['’]?)t\\b", options: .caseInsensitive), "$1 doesn$2t"),
-        (try! NSRegularExpression(pattern: "\\b(t)heir going to\\b", options: .caseInsensitive), "$1hey're going to"),
+        (try! NSRegularExpression(pattern: "\\b(t)heir going to\\b(?! (?:the|a|an|my|your|his|her|its|our|their|this|that|these|those|work|school|bed)\\b)", options: .caseInsensitive), "$1hey're going to"),
     ]
 
     static func fixGrammar(original: String, rewrite: String) -> String {
@@ -51,9 +51,11 @@ enum TextSafety {
         guard let m = try! NSRegularExpression(pattern: "[\\p{L}\\p{N}]\\s+(\\p{L}+)\\W*$").firstMatch(in: original, range: NSRange(location: 0, length: o.length)) else { return rewrite }
         let word = o.substring(with: m.range(at: 1))
         guard chat.contains(word.lowercased()) else { return rewrite }
-        let re = try! NSRegularExpression(pattern: "([\\p{L}\\p{N}])[.!?;]\\s+" + NSRegularExpression.escapedPattern(for: word) + "([.!?]*)\\s*$", options: .caseInsensitive)
-        return re.stringByReplacingMatches(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length),
-                                           withTemplate: "$1 " + NSRegularExpression.escapedTemplate(for: word) + "$2")
+        let re = try! NSRegularExpression(pattern: "([\\p{L}\\p{N}])([.!?;])\\s+" + NSRegularExpression.escapedPattern(for: word) + "([.!?]*)\\s*$", options: .caseInsensitive)
+        let r = rewrite as NSString
+        guard let hit = re.firstMatch(in: rewrite, range: NSRange(location: 0, length: r.length)) else { return rewrite }
+        let sep = r.substring(with: hit.range(at: 2)), end = "?!".contains(sep) ? sep : r.substring(with: hit.range(at: 3))
+        return r.replacingCharacters(in: hit.range, with: r.substring(with: hit.range(at: 1)) + " " + word + end)
     }
 
     /// Fix only must not cut the writer's words: true when the rewrite drops two or more of them and is two or more
@@ -78,7 +80,7 @@ enum TextSafety {
     private static func negations(_ ws: [String]) -> Int {
         ws.filter { negationWords.contains($0) || $0.hasSuffix("n't") }.count
     }
-    private static let negationWords: Set<String> = Set("not no never nothing nobody none nor cannot dont doesnt didnt cant couldnt wont wouldnt shouldnt isnt arent wasnt werent havent hasnt hadnt aint mustnt neednt".split(separator: " ").map(String.init))
+    private static let negationWords: Set<String> = Set("not no noone never nothing nobody none nor cannot dont doesnt didnt cant couldnt wont wouldnt shouldnt isnt arent wasnt werent havent hasnt hadnt aint mustnt neednt".split(separator: " ").map(String.init))
     /// Chat shorthand Fix only never changes. Same list as RewriteGuard.slang in Guard.swift, plus omw, u, ur, r and sry.
     static let chat: Set<String> = Set(("gng ngl tbh idk imo imho fr rn btw lol lmao brb omg ikr smh fyi asap bro bruh gonna wanna gotta kinda sorta yeah yep yup nope nah ok okay pls plz " +
         "thx ty np nvm tho cuz coz bc idc wdym hbu wyd ofc afaik iirc dm lmk ttyl gg gm gn dude yo hey hiya ya yall y'all ain't lemme gimme dunno tldr " +
