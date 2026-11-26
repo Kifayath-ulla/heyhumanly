@@ -58,6 +58,7 @@ styled Shorter "thx for the help. i has a question" "Thanks for the help. I have
 styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "thank you for the help. I have a question."
 styled Professional "Sry, I cant come cuz Im sick" "I apologize, but I cannot come because I am sick." "I apologize, but I cannot come because I am sick."
 styled Professional "Sry, cant make it tmrw, lmk if thats ok" "I am sorry, I cannot make it tomorrow. Please let me know if that is okay." "I am sorry, I cannot make it tomorrow. Please let me know if that is okay."
+styled Professional "Tbh I dont think this will work" "To be honest, I do not think this will work." "To be honest, I do not think this will work."
 styled Professional "Yep, I'll send the report" "Certainly, I'll send the report." "Certainly, I'll send the report."
 styled Polish "Sry, I has a question" "Sorry to hear that! What is your question?" "Sry, I have a question"
 styled Shorter "Can you send the report today?" "Here is a shorter version. Sure, the report was sent today." "Can you send the report today?"

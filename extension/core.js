@@ -253,7 +253,9 @@
       if (re.test(out)) { out = out.replace(re, (m) => matchCase(right, m)); continue; }
       // The model swapped the typo for a different near word ("teh" → "tbh"): use the intended one.
       // Only a new word with the same first letter, once per typo, so unrelated new words are left alone.
-      if (!new RegExp('\\b' + right + '\\b', 'i').test(out)) {
+      // "do not" for "dont" is the intended word spelled out, not a near word to swap ("I don't not think").
+      const spelled = right.replace(/n't$/, ' not').replace(/'re$/, ' are');
+      if (!new RegExp('\\b' + right + '\\b', 'i').test(out) && !(spelled !== right && countWord(spelled, out))) {
         let left = hits.length;
         out = out.replace(/[A-Za-z']+/g, (w) => {
           const l = w.toLowerCase();

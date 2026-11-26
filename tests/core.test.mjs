@@ -145,6 +145,9 @@ test('fixTypos: "teh" becomes "the", never a different near word like "tbh"', ()
   assert.equal(HH.fixTypos('Teh end', 'The end'), 'The end');
   assert.equal(HH.fixTypos('tbh it is fine', 'tbh it is fine'), 'tbh it is fine');
   assert.equal(HH.fixTypos('send teh file', 'send tbh new file'), 'send the new file');
+  assert.equal(HH.fixTypos('tbh i dont think this will work', 'To be honest, I do not think this will work.'), 'To be honest, I do not think this will work.');
+  assert.equal(HH.fixTypos('youre late', 'You are late.'), 'You are late.');
+  assert.equal(HH.fixTypos('i dont know', 'I dno know'), 'I don\'t know');
 });
 
 function fakeLM(status, reply, log = []) {
