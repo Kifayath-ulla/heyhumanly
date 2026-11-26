@@ -50,11 +50,12 @@ enum TextSafety {
         var gone: [String] = []
         for w in base { if let n = left[w], n > 0 { left[w] = n - 1 } else { gone.append(w) } }
         if gone.count >= 2 && base.count - after.count >= 2 { return true }
-        // A word swapped for an unrelated one ("Great work" → "Great job") is a rewrite, not a fix; "is" → "are" or "realy" → "really" is a fix.
+        // A word swapped for an unrelated one ("Great work" → "Great job") is a rewrite, not a fix; "is" → "are", "seen" → "saw" or "realy" → "really" is a fix.
         let added = left.flatMap { Array(repeating: $0.key, count: $0.value) }
-        func near(_ a: String, _ b: String) -> Bool { distance(a, b) <= 2 || a.prefix(3) == b.prefix(3) || (aux.contains(a) && aux.contains(b)) }
+        func near(_ a: String, _ b: String) -> Bool { distance(a, b) <= 2 || a.first == b.first || (aux.contains(a) && aux.contains(b)) || (go.contains(a) && go.contains(b)) }
         return gone.contains { w in !added.contains { near(w, $0) } } && added.contains { w in !gone.contains { near(w, $0) } }
     }
+    private static let go: Set<String> = ["go", "goes", "went", "gone", "going"]
     private static let aux: Set<String> = ["is", "are", "was", "were", "am", "be", "been", "has", "have", "had", "do", "does", "did"]
 
     /// Small models invent content: a cause the writer never gave ("late due to a bug") or a whole new sentence ("I apologize for
@@ -105,6 +106,8 @@ enum TextSafety {
         return out
     }
 
+    private static let writerAsks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz)\\b", options: .caseInsensitive)
+    private static let request = try! NSRegularExpression(pattern: "^\\W*(?:(?:can|could|would|will) (?:you|u)\\b|please\\b)", options: .caseInsensitive)
     private static func dropAddedSentences(original: String, rewrite: String, seen: Set<String>) -> String {
         let ns = rewrite as NSString
         let parts = sentence.matches(in: rewrite, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range) }
@@ -116,10 +119,13 @@ enum TextSafety {
         func asks(_ t: String) -> Int {
             codeRegex.stringByReplacingMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length), withTemplate: " ").filter { $0 == "?" }.count
         }
-        let ownQuestion = asks(rewrite) <= asks(original)
+        // Only a request the writer made ("can u…", "pls…") reworded as one ("Could you…?"); any other new question still goes.
+        func has(_ re: NSRegularExpression, _ t: String) -> Bool { re.firstMatch(in: t, range: NSRange(location: 0, length: (t as NSString).length)) != nil }
+        let plainOriginal = codeRegex.stringByReplacingMatches(in: original, range: NSRange(location: 0, length: (original as NSString).length), withTemplate: " ")
+        let ownRequest = asks(rewrite) <= asks(original) && has(writerAsks, plainOriginal)
         func unrelated(_ p: String) -> Bool {
             let w = contentWords(p)
-            return !w.isEmpty && w.isDisjoint(with: seen) && !(ownQuestion && p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?"))
+            return !w.isEmpty && w.isDisjoint(with: seen) && !(ownRequest && has(request, p) && p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?"))
         }
         while extra > 0, b - a > 1, unrelated(parts[b - 1]) { b -= 1; extra -= 1 }
         while extra > 0, b - a > 1, unrelated(parts[a]) { a += 1; extra -= 1 }

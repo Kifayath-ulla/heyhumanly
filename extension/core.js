@@ -288,11 +288,12 @@
     const gone = [];
     for (const w of base) { const n = left.get(w) || 0; if (n) left.set(w, n - 1); else gone.push(w); }
     if (gone.length >= 2 && base.length - tokens(rewrite).length >= 2) return true;
-    // A word swapped for an unrelated one ("Great work" → "Great job") is a rewrite, not a fix; "is" → "are" or "realy" → "really" is a fix.
+    // A word swapped for an unrelated one ("Great work" → "Great job") is a rewrite, not a fix; "is" → "are", "seen" → "saw" or "realy" → "really" is a fix.
     const added = [...left].flatMap(([w, n]) => Array(n).fill(w));
-    const near = (a, b) => editDistance(a, b) <= 2 || a.slice(0, 3) === b.slice(0, 3) || (AUX.has(a) && AUX.has(b));
+    const near = (a, b) => editDistance(a, b) <= 2 || a[0] === b[0] || (AUX.has(a) && AUX.has(b)) || (GO.has(a) && GO.has(b));
     return gone.some((w) => !added.some((x) => near(w, x))) && added.some((w) => !gone.some((x) => near(w, x)));
   }
+  const GO = new Set(['go', 'goes', 'went', 'gone', 'going']);
   const AUX = new Set(['is', 'are', 'was', 'were', 'am', 'be', 'been', 'has', 'have', 'had', 'do', 'does', 'did']);
   // With code in the text, the fallback is the original untouched, so no code span can be corrected or swapped.
   const guardFixOnly = (original, rewrite) => (!cutsWords(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixTypos(original, original));
@@ -457,6 +458,8 @@
     if (written.size >= 3 && kept.size > 0 && ![...seen].some((w) => kept.has(w))) return fallback;
     return out;
   }
+  const WRITER_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b/i;
+  const REQUEST = /^\W*(?:(?:can|could|would|will) (?:you|u)\b|please\b)/i;
   function dropAddedSentences(original, rewrite, seen) {
     const SENTENCE = /(?:`[^`\n]+`|[.!?]+(?=\S)|[^.!?])+(?:[.!?]+|$)\s*/g;
     const parts = rewrite.match(SENTENCE) || [rewrite];
@@ -464,8 +467,10 @@
     // Only sentences the model added, and only at the start or end: a rewritten sentence of the writer's always stays.
     let extra = parts.length - (original.match(SENTENCE) || [original]).length, a = 0, b = parts.length;
     // The writer's own question reworded ("can u look?" → "Could you please assist?") stays, unless the model added a question.
-    const asks = (t) => (t.replace(CODE, ' ').match(/\?/g) || []).length, ownQuestion = asks(rewrite) <= asks(original);
-    const unrelated = (p) => { const w = [...contentWords(p)]; return w.length > 0 && !w.some((x) => seen.has(x)) && !(ownQuestion && /\?\s*$/.test(p)); };
+    // Only a request the writer made ("can u…", "pls…") reworded as one ("Could you…?"); any other new question still goes.
+    const asks = (t) => (t.replace(CODE, ' ').match(/\?/g) || []).length;
+    const ownRequest = asks(rewrite) <= asks(original) && WRITER_ASKS.test(original.replace(CODE, ' '));
+    const unrelated = (p) => { const w = [...contentWords(p)]; return w.length > 0 && !w.some((x) => seen.has(x)) && !(ownRequest && REQUEST.test(p) && /\?\s*$/.test(p)); };
     while (extra > 0 && b - a > 1 && unrelated(parts[b - 1])) { b--; extra--; }
     while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();

@@ -356,6 +356,8 @@ test('Fix only: a word swapped for an unrelated one is not a fix; verb agreement
   assert.equal(HH.cutsWords('the files is ready', 'The files are ready.'), false);
   assert.equal(HH.cutsWords('their going home', "They're going home."), false);
   assert.equal(HH.cutsWords('it realy helped', 'It really helped.'), false);
+  assert.equal(HH.cutsWords('I seen it yesterday', 'I saw it yesterday.'), false);
+  assert.equal(HH.cutsWords('I gone home early', 'I went home early.'), false);
 });
 
 test('"It\'s okay, let\'s try again" answers the message; the writer\'s own "It\'s okay" does not', () => {
@@ -367,4 +369,5 @@ test('the writer\'s question survives being reworded; an added question does not
   assert.equal(HH.slangFor('formal')('the api returns 500 when `user_id` is null, can u look?', 'The API returns a 500 error when `user_id` is null. Could you please assist?'),
     'The API returns a 500 error when `user_id` is null. Could you please assist?');
   assert.equal(HH.dropInvented('send the file', 'Send the file. What format do you want?'), 'Send the file.');
+  assert.equal(HH.dropInvented('the api returns 500, can u look?', 'The API returns a 500. What time works for you?'), 'The API returns a 500.');
 });
