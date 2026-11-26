@@ -58,8 +58,9 @@ enum TextSafety {
     /// or a rewrite whose content words are all new (none of the writer's) falls back to the deterministic fixes. Friendly may add warmth and
     /// sentences, so it only gets the assistant and content checks. Mirrored in extension/core.js (dropInvented).
     private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|cuz|coz|bcuz|b/c|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
-    private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bno problem at all\\b|\\bfeel free to ask\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\bsorry to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
+    private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bno problem at all\\b|\\bfeel free to ask\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\b(?:sorry|sry) to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
     private static let lowercaseBc = try! NSRegularExpression(pattern: "\\bbc\\b")
+    private static let intro = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b", options: .caseInsensitive)
     private static let apology = try! NSRegularExpression(pattern: "\\b(?:apologi[sz]e[sd]?|apologies|sorry|sry|srry|soz|my (?:mistake|bad)|oops)\\b", options: .caseInsensitive)
     private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
         "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
@@ -84,6 +85,10 @@ enum TextSafety {
         let seen = contentWords((original + " " + fixed).replacingOccurrences(of: "`", with: " "))
         var out = rewrite
         if !friendly { out = dropAddedSentences(original: original, rewrite: rewrite, seen: seen) }
+        // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
+        let lead = sentence.firstMatch(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length)).map { (rewrite as NSString).substring(with: $0.range) } ?? rewrite
+        let opener = intro.stringByReplacingMatches(in: lead, range: NSRange(location: 0, length: (lead as NSString).length), withTemplate: " ")
+        if hits(assistant, opener) > hits(assistant, original) { return fallback }
         if hits(assistant, out) > hits(assistant, original) { return fallback }
         if !friendly && hits(apology, out) > hits(apology, original) { return fallback }
         // A rewrite whose content words are all new replaced the message instead of rewriting it.
@@ -110,13 +115,15 @@ enum TextSafety {
     /// extension/core.js (dropReply).
     private static let reply = try! NSRegularExpression(pattern: "^\\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\\b", options: .caseInsensitive)
     private static let ack = try! NSRegularExpression(pattern: "^\\W*(?:yep|yeah|yes|yup|ok|okay|sure|np|no prob|will do|got it|sounds good|of course|absolutely|certainly)\\b", options: .caseInsensitive)
+    private static let leadIntro = try! NSRegularExpression(pattern: "^\\W*(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b[^.!?:\\n]*[.!:]?\\s*", options: .caseInsensitive)
     private static let asks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) you\\b", options: .caseInsensitive)
     private static let offers = try! NSRegularExpression(pattern: "\\bI(?:['’]ll| will| can(?!['’]t)| could)\\b", options: .caseInsensitive)
 
     static func dropReply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
         func has(_ re: NSRegularExpression, _ s: String) -> Bool { re.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil }
-        let lead = reply.firstMatch(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length))
-            .map { (rewrite as NSString).substring(with: $0.range(at: 1)).lowercased().replacingOccurrences(of: "’", with: "'") }
+        let body = leadIntro.stringByReplacingMatches(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length), withTemplate: "")
+        let lead = reply.firstMatch(in: body, range: NSRange(location: 0, length: (body as NSString).length))
+            .map { (body as NSString).substring(with: $0.range(at: 1)).lowercased().replacingOccurrences(of: "’", with: "'") }
         let quoted = original.lowercased().replacingOccurrences(of: "’", with: "'")
         let acked = has(ack, original) && (!original.contains("?") || rewrite.contains("?"))
         let answers = (lead.map { !acked && !quoted.contains($0) } ?? false) || (has(asks, original) && has(offers, rewrite) && !has(offers, original))
@@ -158,14 +165,19 @@ enum TextSafety {
         ("thx", ["thanks", "thank you"]), ("ty", ["thank you"]), ("pls", ["please"]), ("plz", ["please"]), ("btw", ["by the way"]),
         ("idk", ["i don't know", "i do not know"]), ("rn", ["right now"]), ("imo", ["in my opinion"]), ("tbh", ["to be honest"]),
         ("u", ["you"]), ("ur", ["your", "you're"]), ("gonna", ["going to"]), ("wanna", ["want to"]),
+        ("sry", ["sorry"]), ("cuz", ["because"]), ("ppl", ["people"]), ("msg", ["message"]), ("tmrw", ["tomorrow"]), ("nvm", ["never mind"]),
+        ("lmk", ["let me know"]),
     ]
 
     static func keepSlang(original: String, rewrite: String) -> String {
         var out = rewrite
         for (short, longs) in slang {
-            var missing = count(short, in: original) - count(short, in: out)
+            let prose = { (s: String) in codeRegex.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ") }
+            var missing = count(short, in: prose(original)) - count(short, in: prose(out))
             for long in longs where missing > 0 && count(long, in: original) == 0 {
+                let code = codeRanges(out as NSString)
                 let matches = wordRegex(long).matches(in: out, range: NSRange(location: 0, length: (out as NSString).length))
+                    .filter { m in !code.contains { NSIntersectionRange($0, m.range).length > 0 } }
                 for m in matches.prefix(missing).reversed() {
                     let ns = out as NSString
                     out = ns.replacingCharacters(in: m.range, with: matchCase(short, like: ns.substring(with: m.range)))
