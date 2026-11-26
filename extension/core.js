@@ -429,7 +429,8 @@
   function dropInvented(original, rewrite, friendly = false) {
     const hits = (re, s) => (s.replace(CODE, ' ').match(re) || []).length;
     const fallback = /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
-    if (!friendly && hits(CAUSAL, rewrite) > hits(CAUSAL, original)) return fallback;
+    const causes = (x) => hits(CAUSAL, x) + hits(/\bbc\b/g, x);
+    if (!friendly && causes(rewrite) > causes(original)) return fallback;
     const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
     const out = friendly ? rewrite : dropAddedSentences(original, rewrite, seen);
     if (hits(ASSISTANT, out) > hits(ASSISTANT, original)) return fallback;

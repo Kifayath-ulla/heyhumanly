@@ -59,6 +59,7 @@ enum TextSafety {
     /// sentences, so it only gets the assistant and content checks. Mirrored in extension/core.js (dropInvented).
     private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|cuz|coz|bcuz|b/c|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
     private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bno problem at all\\b|\\bfeel free to ask\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\bsorry to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
+    private static let lowercaseBc = try! NSRegularExpression(pattern: "\\bbc\\b")
     private static let apology = try! NSRegularExpression(pattern: "\\b(?:apologi[sz]e[sd]?|apologies|sorry|sry|srry|soz|my (?:mistake|bad)|oops)\\b", options: .caseInsensitive)
     private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
         "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
@@ -77,7 +78,8 @@ enum TextSafety {
             return re.numberOfMatches(in: p, range: NSRange(location: 0, length: (p as NSString).length))
         }
         let fallback = codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original
-        if !friendly && hits(causal, rewrite) > hits(causal, original) { return fallback }
+        func causes(_ s: String) -> Int { hits(causal, s) + hits(lowercaseBc, s) }
+        if !friendly && causes(rewrite) > causes(original) { return fallback }
         let fixed = apply(original: original, rewrite: original, preserve: preserve)
         let seen = contentWords((original + " " + fixed).replacingOccurrences(of: "`", with: " "))
         var out = rewrite
