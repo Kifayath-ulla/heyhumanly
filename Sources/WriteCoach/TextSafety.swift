@@ -134,10 +134,20 @@ enum TextSafety {
         let kept = contentWords(out.replacingOccurrences(of: "`", with: " "))
         if written.count >= 3 && !kept.isEmpty && seen.isDisjoint(with: kept) { return fallback }
         // A rewrite that drops the writer's request ("…tests. pls fix asap" → "…tests.") loses what they asked for.
-        if !friendly, hits(writerAsks, original) > 0, hits(stillAsks, out) == 0 { return fallback }
+        if !friendly, dropsRequest(original: plain(original), rewrite: plain(out)) { return fallback }
         return out
     }
 
+    /// Only when no request is left and none of the words the writer asked about survive. Mirrored in extension/core.js (dropsRequest).
+    private static func dropsRequest(original: String, rewrite: String) -> Bool {
+        let o = original as NSString
+        guard let m = askClause.firstMatch(in: original, range: NSRange(location: 0, length: o.length)),
+              stillAsks.firstMatch(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length)) == nil else { return false }
+        let want = tokens(o.substring(with: m.range(at: 1))).filter { $0.count >= 3 && !stop.contains($0) }
+        let have = Set(tokens(rewrite).map { String($0.prefix(4)) })
+        return !want.isEmpty && !want.contains { have.contains(String($0.prefix(4))) }
+    }
+    private static let askClause = try! NSRegularExpression(pattern: "(?:\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz)\\b)([^.!?,;]*)", options: .caseInsensitive)
     private static let stillAsks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz|kindly|let me know|lmk)\\b|\\?", options: .caseInsensitive)
 
     private static let writerAsks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz)\\b", options: .caseInsensitive)

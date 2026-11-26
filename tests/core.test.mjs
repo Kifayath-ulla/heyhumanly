@@ -424,3 +424,8 @@ test('a rewrite that drops the writer\'s request falls back to the safe fixes', 
   assert.equal(HH.slangFor('formal')(o, 'The build is broken again. Could you please fix it as soon as possible?'), 'The build is broken again. Could you please fix it as soon as possible?');
   assert.equal(HH.slangFor('shorter')('can you send me the link again? i lost it', 'can you resend the link? i lost it.'), 'can you resend the link? i lost it.');
 });
+
+test('review: a request kept without a marker, or a "can you" statement, is not a dropped request', () => {
+  assert.equal(HH.slangFor('shorter')('Please send the revised draft to the team.', 'Send the revised draft to the team, thanks.'), 'Send the revised draft to the team, thanks.');
+  assert.equal(HH.slangFor('polish')('Only then can you submit the form.', 'You can submit the form only after that.'), 'You can submit the form only after that.');
+});

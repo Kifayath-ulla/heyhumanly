@@ -474,9 +474,17 @@
     const kept = contentWords(out.replace(/`/g, ' '));
     if (written.size >= 3 && kept.size > 0 && ![...seen].some((w) => kept.has(w))) return fallback;
     // A rewrite that drops the writer's request ("…tests. pls fix asap" → "…tests.") loses what they asked for.
-    if (!friendly && WRITER_ASKS.test(original.replace(CODE, ' ')) && !STILL_ASKS.test(out.replace(CODE, ' '))) return fallback;
+    if (!friendly && dropsRequest(original, out)) return fallback;
     return out;
   }
+  // Only when no request is left and none of the words the writer asked about survive: "Please send the draft" → "Send the draft, thanks" stays.
+  function dropsRequest(original, rewrite) {
+    const m = original.replace(CODE, ' ').match(ASK_CLAUSE);
+    if (!m || STILL_ASKS.test(rewrite.replace(CODE, ' '))) return false;
+    const want = tokens(m[1]).filter((w) => w.length >= 3 && !STOP.has(w)), have = new Set(tokens(rewrite).map((w) => w.slice(0, 4)));
+    return want.length > 0 && !want.some((w) => have.has(w.slice(0, 4)));
+  }
+  const ASK_CLAUSE = /(?:\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b)([^.!?,;]*)/i;
   const STILL_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz|kindly|let me know|lmk)\b|\?/i;
   const WRITER_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b/i;
   const REQUEST = /^\W*(?:(?:can|could|would|will) (?:you|u)\b|please\b)/i;
