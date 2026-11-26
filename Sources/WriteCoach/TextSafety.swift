@@ -58,7 +58,7 @@ enum TextSafety {
     private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
     private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
         "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
-    private static let sentence = try! NSRegularExpression(pattern: "[^.!?]+(?:[.!?]+|$)\\s*")
+    private static let sentence = try! NSRegularExpression(pattern: "(?:`[^`\\n]+`|[^.!?])+(?:[.!?]+|$)\\s*")
 
     private static func contentWords(_ s: String) -> Set<String> {
         Set(tokens(s).filter { $0.count > 3 && !stop.contains($0) }.map { String($0.prefix(4)) })
@@ -72,8 +72,9 @@ enum TextSafety {
         if causes(rewrite) > causes(original) {
             return codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original
         }
-        let seen = contentWords(original), ns = rewrite as NSString
+        let seen = contentWords(original.replacingOccurrences(of: "`", with: " ")), ns = rewrite as NSString
         let parts = sentence.matches(in: rewrite, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range) }
+        guard parts.joined() == rewrite else { return rewrite }
         let kept = parts.filter { p in let w = contentWords(p); return w.isEmpty || !w.isDisjoint(with: seen) }
         return !kept.isEmpty && kept.count < parts.count ? kept.joined().trimmingCharacters(in: .whitespacesAndNewlines) : rewrite
     }
