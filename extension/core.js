@@ -274,7 +274,8 @@
   }
   // Fix only must not cut the writer's words: if the rewrite drops two or more of them and gets two or more words shorter,
   // only the deterministic fixes are applied to the original. Same as TextSafety.swift (cutsWords).
-  const tokens = (s) => s.toLowerCase().replace(/’/g, '\'').match(/[a-z0-9']+/g) || [];
+  // Code spans are left out: restoreCode puts them back as written anyway.
+  const tokens = (s) => s.replace(CODE, ' ').toLowerCase().replace(/’/g, '\'').match(/[\p{L}\p{N}']+/gu) || [];
   function cutsWords(original, rewrite) {
     const base = tokens(fixTypos(original, original)), left = new Map();
     for (const w of tokens(rewrite)) left.set(w, (left.get(w) || 0) + 1);
@@ -282,7 +283,8 @@
     for (const w of base) { const n = left.get(w) || 0; if (n) left.set(w, n - 1); else missing++; }
     return missing >= 2 && base.length - tokens(rewrite).length >= 2;
   }
-  const guardFixOnly = (original, rewrite) => (cutsWords(original, rewrite) ? fixTypos(original, original) : rewrite);
+  // With code in the text, the fallback is the original untouched, so no code span can be corrected or swapped.
+  const guardFixOnly = (original, rewrite) => (!cutsWords(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixTypos(original, original));
   // Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
   const SLANG_EXPANSIONS = { thx: ['thanks', 'thank you'], ty: ['thank you'], pls: ['please'], plz: ['please'], btw: ['by the way'], idk: ['i don\'t know', 'i do not know'],
     rn: ['right now'], imo: ['in my opinion'], tbh: ['to be honest'], u: ['you'], ur: ['your', 'you\'re'], gonna: ['going to'], wanna: ['want to'] };

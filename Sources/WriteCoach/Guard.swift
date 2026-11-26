@@ -34,6 +34,8 @@ enum RewriteGuard {
     static func sanitize(original: String, rewrite: String, preserve: [String], fixOnly: Bool = false) -> String {
         let out = TextSafety.apply(original: original, rewrite: guarded(original: original, rewrite: rewrite, preserve: preserve), preserve: preserve)
         guard fixOnly, TextSafety.cutsWords(original: original, rewrite: out, preserve: preserve) else { return out }
+        // With code in the text, the original is kept untouched, so no code span can be corrected or swapped.
+        if !TextSafety.codeRanges(original as NSString).isEmpty { return original }
         return TextSafety.apply(original: original, rewrite: original, preserve: preserve)
     }
 

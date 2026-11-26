@@ -51,9 +51,11 @@ enum TextSafety {
         return missing >= 2 && base.count - after.count >= 2
     }
 
+    /// Code spans are left out: restoreCode puts them back as written anyway.
     private static func tokens(_ s: String) -> [String] {
-        s.lowercased().replacingOccurrences(of: "’", with: "'")
-            .split(whereSeparator: { !($0.isASCII && ($0.isLetter || $0.isNumber || $0 == "'")) }).map(String.init)
+        codeRegex.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ")
+            .lowercased().replacingOccurrences(of: "’", with: "'")
+            .split(whereSeparator: { !($0.isLetter || $0.isNumber || $0 == "'") }).map(String.init)
     }
 
     /// Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
