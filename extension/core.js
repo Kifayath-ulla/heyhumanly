@@ -420,7 +420,7 @@
   // rewrite whose content words are all new (none of the writer's) falls back to the deterministic fixes. Friendly may add warmth and sentences,
   // so it only gets the assistant and content checks. Same as TextSafety.swift (dropInvented).
   const CAUSAL = /\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\b/gi;
-  const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bno problem at all\b|\bfeel free to ask\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\bsorry to hear\b|\bhope this helps\b/gi;
+  const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bfeel free to ask\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\bsorry to hear\b|\bhope this helps\b/gi;
   const APOLOGY = /\b(?:apologi[sz]e[sd]?|apologies|sorry|my (?:mistake|bad)|oops)\b/gi;
   const STOP = new Set(['have', 'that', 'this', 'with', 'from', 'your', 'will', 'would', 'could', 'should', 'there', 'their', 'what', 'when', 'been',
     'were', 'they', 'just', 'more', 'need', 'also', 'about', 'into', 'them', 'then', 'than', 'some', 'please', 'thanks', 'thank']);
@@ -449,8 +449,17 @@
     while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
   }
+  // Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send
+  // it?" -> "Sure, I can send it."). Every style, Friendly too, then falls back to the deterministic fixes. Same as
+  // TextSafety.swift (dropReply).
+  const REPLY = /^\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\b/i;
+  const ASKS = /\b(?:can|could|would|will) you\b/i, OFFERS = /\bI(?:['’]ll| will| can(?!['’]t)| could)\b/i;
+  const opener = (s) => ((s.match(REPLY) || [])[1] || '').toLowerCase().replace(/’/g, "'");
+  const replies = (original, rewrite) => (opener(rewrite) !== '' && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
+  const dropReply = (original, rewrite) =>
+    !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
   const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
-  const slangFor = (goal) => (o, r) => dropInvented(o, slangStep(goal)(o, r), goal === 'friendly');
+  const slangFor = (goal) => (o, r) => dropInvented(o, dropReply(o, slangStep(goal)(o, r)), goal === 'friendly');
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
@@ -492,6 +501,7 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepOfCourse, keepSlang, slangFor, cutsWords, dropInvented, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepOfCourse, keepSlang, slangFor, cutsWords, dropInvented,
+    dropReply, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

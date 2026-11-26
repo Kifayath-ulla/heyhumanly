@@ -16,7 +16,8 @@ struct HeyHumanlyApp: App {
             let (original, rewrite) = (args[i + 1], args[i + 2])
             let out = style.guarded ? RewriteGuard.sanitize(original: original, rewrite: rewrite, preserve: [], fixOnly: style == .fixOnly)
                                     : TextSafety.apply(original: original, rewrite: rewrite, keepSlang: style != .professional)
-            print(TextSafety.dropInvented(original: original, rewrite: out, keepSlang: style != .professional, friendly: style == .friendly))
+            let safe = TextSafety.dropReply(original: original, rewrite: out, keepSlang: style != .professional)
+            print(TextSafety.dropInvented(original: original, rewrite: safe, keepSlang: style != .professional, friendly: style == .friendly))
             exit(0)
         }
         // `HeyHumanly --teach "<text>"` runs one full check (rewrite, guard, explanations) and prints it.

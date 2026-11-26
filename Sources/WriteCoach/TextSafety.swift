@@ -58,7 +58,7 @@ enum TextSafety {
     /// or a rewrite whose content words are all new (none of the writer's) falls back to the deterministic fixes. Friendly may add warmth and
     /// sentences, so it only gets the assistant and content checks. Mirrored in extension/core.js (dropInvented).
     private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
-    private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bno problem at all\\b|\\bfeel free to ask\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\bsorry to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
+    private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bfeel free to ask\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\bsorry to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
     private static let apology = try! NSRegularExpression(pattern: "\\b(?:apologi[sz]e[sd]?|apologies|sorry|my (?:mistake|bad)|oops)\\b", options: .caseInsensitive)
     private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
         "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
@@ -101,6 +101,23 @@ enum TextSafety {
         while extra > 0, b - a > 1, unrelated(parts[b - 1]) { b -= 1; extra -= 1 }
         while extra > 0, b - a > 1, unrelated(parts[a]) { a += 1; extra -= 1 }
         return a == 0 && b == parts.count ? rewrite : parts[a..<b].joined().trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send
+    /// it?" -> "Sure, I can send it."). Every style, Friendly too, then falls back to the deterministic fixes. Mirrored in
+    /// extension/core.js (dropReply).
+    private static let reply = try! NSRegularExpression(pattern: "^\\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\\b", options: .caseInsensitive)
+    private static let asks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) you\\b", options: .caseInsensitive)
+    private static let offers = try! NSRegularExpression(pattern: "\\bI(?:['’]ll| will| can(?!['’]t)| could)\\b", options: .caseInsensitive)
+
+    static func dropReply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
+        func has(_ re: NSRegularExpression, _ s: String) -> Bool { re.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil }
+        let lead = reply.firstMatch(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length))
+            .map { (rewrite as NSString).substring(with: $0.range(at: 1)).lowercased().replacingOccurrences(of: "’", with: "'") }
+        let quoted = original.lowercased().replacingOccurrences(of: "’", with: "'")
+        let answers = (lead.map { !quoted.contains($0) } ?? false) || (has(asks, original) && has(offers, rewrite) && !has(offers, original))
+        guard answers else { return rewrite }
+        return codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original
     }
 
     /// Code spans are left out: restoreCode puts them back as written anyway.
