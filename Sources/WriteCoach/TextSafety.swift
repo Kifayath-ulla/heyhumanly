@@ -89,7 +89,7 @@ enum TextSafety {
     /// extension/core.js (dropReply).
     private static let reply = try! NSRegularExpression(pattern: "^\\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\\b", options: .caseInsensitive)
     private static let asks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) you\\b", options: .caseInsensitive)
-    private static let offers = try! NSRegularExpression(pattern: "\\bI(?:['’]ll| will| can| could)\\b")
+    private static let offers = try! NSRegularExpression(pattern: "\\bI(?:['’]ll| will| can| could)\\b", options: .caseInsensitive)
 
     static func dropReply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
         func has(_ re: NSRegularExpression, _ s: String) -> Bool { re.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil }
