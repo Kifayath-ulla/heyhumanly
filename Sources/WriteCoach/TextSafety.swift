@@ -18,6 +18,7 @@ enum TextSafety {
         let keep = Set(preserve.map { $0.lowercased() })
         var fixed = fixGrammar(original: original, rewrite: fixTypos(original: original, rewrite: rewrite, preserve: keep))
         if slang { fixed = keepSlang(original: original, rewrite: fixed) }
+        fixed = keepLowercase(original: original, rewrite: fixed)
         return restoreCode(original: original, rewrite: keep.contains("i") ? fixed : capitalizeI(fixed))
     }
 
@@ -32,7 +33,7 @@ enum TextSafety {
     ]
 
     static func fixGrammar(original: String, rewrite: String) -> String {
-        var out = rewrite
+        var out = keepOfCourse(original: original, rewrite: rewrite)
         for (re, template) in grammarRules
         where re.firstMatch(in: original, range: NSRange(location: 0, length: (original as NSString).length)) != nil {
             out = re.stringByReplacingMatches(in: out, range: NSRange(location: 0, length: (out as NSString).length), withTemplate: template)
@@ -56,6 +57,27 @@ enum TextSafety {
         codeRegex.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ")
             .lowercased().replacingOccurrences(of: "’", with: "'")
             .split(whereSeparator: { !($0.isLetter || $0.isNumber || $0 == "'") }).map(String.init)
+    }
+
+    /// "I should of course check" is not a "should of" slip. If the model read it as one ("I should have checked"),
+    /// the writer's words go back. Mirrored in extension/core.js (keepOfCourse).
+    private static let modalPhrase = try! NSRegularExpression(pattern: "\\b(should|could|would|must|might) (have|of course|of)\\b(?: (\\w+))?", options: .caseInsensitive)
+
+    static func keepOfCourse(original: String, rewrite: String) -> String {
+        guard count("of course", in: rewrite) < count("of course", in: original) else { return rewrite }
+        let ns = original as NSString, out = rewrite as NSString
+        let before = modalPhrase.matches(in: original, range: NSRange(location: 0, length: ns.length))
+        let after = modalPhrase.matches(in: rewrite, range: NSRange(location: 0, length: out.length))
+        // Paired in order; if the model added or dropped one, the pairing is unclear and nothing changes.
+        guard before.count == after.count else { return rewrite }
+        var result = out
+        for (b, a) in zip(before, after).reversed() {
+            let modal = out.substring(with: a.range(at: 1))
+            guard ns.substring(with: b.range(at: 2)).lowercased() == "of course", out.substring(with: a.range(at: 2)).lowercased() == "have",
+                  ns.substring(with: b.range(at: 1)).lowercased() == modal.lowercased(), b.range(at: 3).location != NSNotFound else { continue }
+            result = result.replacingCharacters(in: a.range, with: modal + " of course " + ns.substring(with: b.range(at: 3))) as NSString
+        }
+        return result as String
     }
 
     /// Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.

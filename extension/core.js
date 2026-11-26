@@ -268,7 +268,7 @@
   const GRAMMAR = [[/\b([Ii]) has\b/g, '$1 have'], [/\b(we|they) was\b/gi, '$1 were'], [/\b(t)heir (is|are|was|were)\b/gi, '$1here $2'],
     [/\b(should|could|would|must|might) of\b(?! course)/gi, '$1 have'], [/\b(he|she) don(['’]?)t\b/gi, '$1 doesn$2t']];
   function fixGrammar(original, rewrite) {
-    let out = rewrite;
+    let out = keepOfCourse(original, rewrite);
     for (const [re, to] of GRAMMAR) { re.lastIndex = 0; if (re.test(original)) out = out.replace(re, to); }
     return out;
   }
@@ -285,6 +285,19 @@
   }
   // With code in the text, the fallback is the original untouched, so no code span can be corrected or swapped.
   const guardFixOnly = (original, rewrite) => (!cutsWords(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixTypos(original, original));
+  // "I should of course check" is not a "should of" slip: if the model read it as one ("I should have checked"), the writer's words go back. Same as TextSafety.swift.
+  const MODAL_PHRASE = /\b(should|could|would|must|might) (have|of course|of)\b(?: (\w+))?/gi;
+  function keepOfCourse(original, rewrite) {
+    if (countWord('of course', rewrite) >= countWord('of course', original)) return rewrite;
+    const before = [...original.matchAll(MODAL_PHRASE)];
+    // Paired in order; if the model added or dropped one, the pairing is unclear and nothing changes.
+    if (before.length !== [...rewrite.matchAll(MODAL_PHRASE)].length) return rewrite;
+    let i = 0;
+    return rewrite.replace(MODAL_PHRASE, (s, modal, word) => {
+      const b = before[i++];
+      return b[2].toLowerCase() === 'of course' && word.toLowerCase() === 'have' && b[1].toLowerCase() === modal.toLowerCase() && b[3] ? modal + ' of course ' + b[3] : s;
+    });
+  }
   // Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
   const SLANG_EXPANSIONS = { thx: ['thanks', 'thank you'], ty: ['thank you'], pls: ['please'], plz: ['please'], btw: ['by the way'], idk: ['i don\'t know', 'i do not know'],
     rn: ['right now'], imo: ['in my opinion'], tbh: ['to be honest'], u: ['you'], ur: ['your', 'you\'re'], gonna: ['going to'], wanna: ['want to'] };
@@ -443,6 +456,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepSlang, slangFor, cutsWords, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepOfCourse, keepSlang, slangFor, cutsWords, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);
