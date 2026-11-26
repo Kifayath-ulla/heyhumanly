@@ -48,7 +48,7 @@ export class Ledger {
     await this.store.put('i:' + install, used + 1);
     if (ipKey) await this.store.put('p:' + ipKey, ipUsed + 1);
     await this.store.put('neurons', spent + est);
-    return { ok: true, remaining: LIMITS.perInstall - used - 1 };
+    return { ok: true, remaining: Math.min(LIMITS.perInstall - used - 1, ipKey ? LIMITS.perIp - ipUsed - 1 : Infinity) };
   }
   // Failed, timed-out and provider-error requests are refunded; successful ones are charged their real cost.
   // A billed failure (the model answered but the output was unusable) keeps its real cost and the per-IP count.

@@ -60,7 +60,9 @@ test('one IP cannot mint unlimited installs', async () => {
   let blocked = 0;
   for (let i = 0; i < LIMITS.perIp + 2; i++) {
     const id = '11111111-2222-4333-8444-' + String(i).padStart(12, '0');
-    if ((await post(env, { text: TEXT, install: id })).status === 429) blocked++;
+    const r = await post(env, { text: TEXT, install: id });
+    if (r.status === 429) blocked++;
+    if (i === LIMITS.perIp - 1) assert.equal((await r.json()).remaining, 0);
   }
   assert.equal(blocked, 2);
 });
