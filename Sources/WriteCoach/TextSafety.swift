@@ -83,7 +83,7 @@ enum TextSafety {
         if !friendly && hits(causal, rewrite) > hits(causal, original) + hits(lowercaseBc, original) { return fallback }
         let fixed = apply(original: original, rewrite: original, preserve: preserve)
         // The writer's own slang spelled out ("lmk if thats ok" → "let me know if that is okay") is not added content.
-        let spelled = (slang + [("ok", ["okay"])]).filter { count($0.0, in: original) > 0 }.map { $0.1.joined(separator: " ") }
+        let spelled = (TextSafety.slang + [("ok", ["okay"])]).filter { count($0.0, in: original) > 0 }.map { $0.1.joined(separator: " ") }
         let seen = contentWords((original + " " + fixed + " " + spelled.joined(separator: " ")).replacingOccurrences(of: "`", with: " "))
         var out = rewrite
         if !friendly { out = dropAddedSentences(original: original, rewrite: rewrite, seen: seen) }
