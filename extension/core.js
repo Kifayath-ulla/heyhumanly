@@ -473,8 +473,11 @@
     // A rewrite whose content words are all new replaced the message instead of rewriting it.
     const kept = contentWords(out.replace(/`/g, ' '));
     if (written.size >= 3 && kept.size > 0 && ![...seen].some((w) => kept.has(w))) return fallback;
+    // A rewrite that drops the writer's request ("…tests. pls fix asap" → "…tests.") loses what they asked for.
+    if (!friendly && WRITER_ASKS.test(original.replace(CODE, ' ')) && !STILL_ASKS.test(out.replace(CODE, ' '))) return fallback;
     return out;
   }
+  const STILL_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz|kindly|let me know|lmk)\b|\?/i;
   const WRITER_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b/i;
   const REQUEST = /^\W*(?:(?:can|could|would|will) (?:you|u)\b|please\b)/i;
   function dropAddedSentences(original, rewrite, seen) {

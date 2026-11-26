@@ -133,8 +133,12 @@ enum TextSafety {
         // A rewrite whose content words are all new replaced the message instead of rewriting it.
         let kept = contentWords(out.replacingOccurrences(of: "`", with: " "))
         if written.count >= 3 && !kept.isEmpty && seen.isDisjoint(with: kept) { return fallback }
+        // A rewrite that drops the writer's request ("…tests. pls fix asap" → "…tests.") loses what they asked for.
+        if !friendly, hits(writerAsks, original) > 0, hits(stillAsks, out) == 0 { return fallback }
         return out
     }
+
+    private static let stillAsks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz|kindly|let me know|lmk)\\b|\\?", options: .caseInsensitive)
 
     private static let writerAsks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz)\\b", options: .caseInsensitive)
     private static let request = try! NSRegularExpression(pattern: "^\\W*(?:(?:can|could|would|will) (?:you|u)\\b|please\\b)", options: .caseInsensitive)

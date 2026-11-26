@@ -369,7 +369,7 @@ test('the writer\'s question survives being reworded; an added question does not
   assert.equal(HH.slangFor('formal')('the api returns 500 when `user_id` is null, can u look?', 'The API returns a 500 error when `user_id` is null. Could you please assist?'),
     'The API returns a 500 error when `user_id` is null. Could you please assist?');
   assert.equal(HH.dropInvented('send the file', 'Send the file. What format do you want?'), 'Send the file.');
-  assert.equal(HH.dropInvented('the api returns 500, can u look?', 'The API returns a 500. What time works for you?'), 'The API returns a 500.');
+  assert.equal(HH.dropInvented('the api returns 500, can u look?', 'The API returns a 500. What time works for you?'), 'the api returns 500, can u look?');
 });
 
 test('Fix only: a dropped word, a flipped negation or a changed slang word is not a fix', () => {
@@ -415,4 +415,12 @@ test('review: "their going to" is only corrected where a clause starts', () => {
 
 test('review: "if their going to" is corrected', () => {
   assert.equal(HH.fixTypos('I wonder if their going to announce it', 'I wonder if their going to announce it.'), "I wonder if they're going to announce it.");
+});
+
+test('a rewrite that drops the writer\'s request falls back to the safe fixes', () => {
+  const o = 'the build is broken again, someone pushed without running tests. pls fix asap';
+  assert.equal(HH.slangFor('formal')(o, 'the build is broken again. someone pushed without running tests.'), o);
+  assert.equal(HH.slangFor('polish')(o, 'the build is broken again. someone pushed without running tests.'), o);
+  assert.equal(HH.slangFor('formal')(o, 'The build is broken again. Could you please fix it as soon as possible?'), 'The build is broken again. Could you please fix it as soon as possible?');
+  assert.equal(HH.slangFor('shorter')('can you send me the link again? i lost it', 'can you resend the link? i lost it.'), 'can you resend the link? i lost it.');
 });
