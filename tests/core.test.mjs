@@ -264,6 +264,18 @@ test('Fix only keeps every word: a rewrite that cuts the writer\'s words falls b
   assert.equal(HH.slangFor('polish')(o, 'I should of course check, the draft I sent you.'), 'I should of course check, the draft I sent you.');
 });
 
+test('dropReply: answering the message instead of rewriting it falls back to the safe fixes, in every style', () => {
+  assert.equal(HH.slangFor('friendly')('thx for the help. i has a question', "No problem at all! Shoot, what's your question?"), 'thx for the help. i have a question');
+  assert.equal(HH.slangFor('friendly')('Can you send the report today? we was late, their is a bug', 'Sure, I can send the report today, no worries!'), 'Can you send the report today? we were late, there is a bug');
+  assert.equal(HH.slangFor('polish')('Can you send teh report?', 'Of course! I will send the report.'), 'Can you send the report?');
+  assert.equal(HH.slangFor('friendly')('Can you send the report today?', 'Hey, could you send the report today?'), 'Hey, could you send the report today?');
+  assert.equal(HH.slangFor('friendly')('no worries, i can send it later', 'no worries, i can send it later!'), 'no worries, i can send it later!');
+  assert.equal(HH.slangFor('polish')('I should of course check', 'Of course, I should check.'), 'Of course, I should check.');
+  assert.equal(HH.slangFor('friendly')('can you check teh reprot? i will send it after', 'can you check the report? i will send it after!'), 'can you check the report? i will send it after!');
+  assert.equal(HH.slangFor('polish')("can you help? i can't log in", 'I can help you log in.'), "can you help? i can't log in");
+  assert.equal(HH.slangFor('friendly')('Can you check? I will send it after.', "Could you check? I'll send it after."), "Could you check? I'll send it after.");
+});
+
 test('dropInvented: no made-up causes or sentences, except in Friendly', () => {
   assert.equal(HH.dropInvented('we was late, their is a bug', 'We were late due to a bug.'), 'we were late, there is a bug');
   assert.equal(HH.dropInvented('We were late because of traffic.', 'We were late because of the traffic.'), 'We were late because of the traffic.');

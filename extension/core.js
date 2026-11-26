@@ -434,8 +434,20 @@
     while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
   }
+  // Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send
+  // it?" -> "Sure, I can send it."). Every style, Friendly too, then falls back to the deterministic fixes. Same as
+  // TextSafety.swift (dropReply).
+  const REPLY = /^\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\b/i;
+  const ASKS = /\b(?:can|could|would|will) you\b/i, OFFERS = /\bI(?:['’]ll| will| can(?!['’]t)| could)\b/i;
+  const opener = (s) => ((s.match(REPLY) || [])[1] || '').toLowerCase().replace(/’/g, "'");
+  const replies = (original, rewrite) => (opener(rewrite) !== '' && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
+  const dropReply = (original, rewrite) =>
+    !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
   const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
-  const slangFor = (goal) => (goal === 'friendly' ? slangStep(goal) : (o, r) => dropInvented(o, slangStep(goal)(o, r)));
+  const slangFor = (goal) => (o, r) => {
+    const out = dropReply(o, slangStep(goal)(o, r));
+    return goal === 'friendly' ? out : dropInvented(o, out);
+  };
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
@@ -477,6 +489,7 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepOfCourse, keepSlang, slangFor, cutsWords, dropInvented, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepOfCourse, keepSlang, slangFor, cutsWords, dropInvented,
+    dropReply, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

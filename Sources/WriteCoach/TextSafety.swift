@@ -84,6 +84,23 @@ enum TextSafety {
         return a == 0 && b == parts.count ? rewrite : parts[a..<b].joined().trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send
+    /// it?" -> "Sure, I can send it."). Every style, Friendly too, then falls back to the deterministic fixes. Mirrored in
+    /// extension/core.js (dropReply).
+    private static let reply = try! NSRegularExpression(pattern: "^\\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\\b", options: .caseInsensitive)
+    private static let asks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) you\\b", options: .caseInsensitive)
+    private static let offers = try! NSRegularExpression(pattern: "\\bI(?:['’]ll| will| can(?!['’]t)| could)\\b", options: .caseInsensitive)
+
+    static func dropReply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
+        func has(_ re: NSRegularExpression, _ s: String) -> Bool { re.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil }
+        let lead = reply.firstMatch(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length))
+            .map { (rewrite as NSString).substring(with: $0.range(at: 1)).lowercased().replacingOccurrences(of: "’", with: "'") }
+        let quoted = original.lowercased().replacingOccurrences(of: "’", with: "'")
+        let answers = (lead.map { !quoted.contains($0) } ?? false) || (has(asks, original) && has(offers, rewrite) && !has(offers, original))
+        guard answers else { return rewrite }
+        return codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original
+    }
+
     /// Code spans are left out: restoreCode puts them back as written anyway.
     private static func tokens(_ s: String) -> [String] {
         codeRegex.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ")
