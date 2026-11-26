@@ -416,16 +416,31 @@
   // Professional is asked to spell slang out; every other style keeps it. Fix only also keeps every word.
   // Small models invent content: a cause the writer never gave ("late due to a bug") or a whole new sentence ("I apologize for any
   // confusion."). A new cause falls back to the deterministic fixes; a sentence that shares no content word with the original is
-  // dropped. Friendly may add warmth, so it is exempt. Same as TextSafety.swift (dropInvented).
+  // dropped. An apology or assistant line the writer never wrote ("We apologize for the delay.", "Let me know if you need help.") or a
+  // rewrite that keeps none of the writer's content words falls back to the deterministic fixes. Friendly may add warmth and sentences,
+  // so it only gets the assistant and content checks. Same as TextSafety.swift (dropInvented).
   const CAUSAL = /\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\b/gi;
+  const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bno problem at all\b|\bfeel free to (?:ask|reach out)\b|\blet me know if you (?:need|have)\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\bsorry to hear\b|\bhope this helps\b/gi;
+  const APOLOGY = /\b(?:apologi[sz]e[sd]?|apologies|sorry)\b/gi;
   const STOP = new Set(['have', 'that', 'this', 'with', 'from', 'your', 'will', 'would', 'could', 'should', 'there', 'their', 'what', 'when', 'been',
     'were', 'they', 'just', 'more', 'need', 'also', 'about', 'into', 'them', 'then', 'than', 'some', 'please', 'thanks', 'thank']);
   const contentWords = (s) => new Set(tokens(s).filter((w) => w.length > 3 && !STOP.has(w)).map((w) => w.slice(0, 4)));
-  function dropInvented(original, rewrite) {
-    const causes = (s) => (s.replace(CODE, ' ').match(CAUSAL) || []).length;
-    if (causes(rewrite) > causes(original)) return /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
+  function dropInvented(original, rewrite, friendly = false) {
+    const hits = (re, s) => (s.replace(CODE, ' ').match(re) || []).length;
+    const fallback = /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
+    if (!friendly && hits(CAUSAL, rewrite) > hits(CAUSAL, original)) return fallback;
+    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
+    const out = friendly ? rewrite : dropAddedSentences(original, rewrite, seen);
+    if (hits(ASSISTANT, out) > hits(ASSISTANT, original)) return fallback;
+    if (!friendly && hits(APOLOGY, out) > hits(APOLOGY, original)) return fallback;
+    // A rewrite that keeps none of the writer's content words replaced the message instead of rewriting it.
+    const kept = contentWords(out.replace(/`/g, ' '));
+    if (seen.size >= 3 && ![...seen].some((w) => kept.has(w))) return fallback;
+    return out;
+  }
+  function dropAddedSentences(original, rewrite, seen) {
     const SENTENCE = /(?:`[^`\n]+`|[.!?]+(?=\S)|[^.!?])+(?:[.!?]+|$)\s*/g;
-    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' ')), parts = rewrite.match(SENTENCE) || [rewrite];
+    const parts = rewrite.match(SENTENCE) || [rewrite];
     if (parts.join('') !== rewrite) return rewrite;
     // Only sentences the model added, and only at the start or end: a rewritten sentence of the writer's always stays.
     let extra = parts.length - (original.match(SENTENCE) || [original]).length, a = 0, b = parts.length;
@@ -435,7 +450,7 @@
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
   }
   const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
-  const slangFor = (goal) => (goal === 'friendly' ? slangStep(goal) : (o, r) => dropInvented(o, slangStep(goal)(o, r)));
+  const slangFor = (goal) => (o, r) => dropInvented(o, slangStep(goal)(o, r), goal === 'friendly');
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
