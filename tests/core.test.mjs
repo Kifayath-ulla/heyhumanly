@@ -371,3 +371,23 @@ test('the writer\'s question survives being reworded; an added question does not
   assert.equal(HH.dropInvented('send the file', 'Send the file. What format do you want?'), 'Send the file.');
   assert.equal(HH.dropInvented('the api returns 500, can u look?', 'The API returns a 500. What time works for you?'), 'The API returns a 500.');
 });
+
+test('Fix only: a dropped word, a flipped negation or a changed slang word is not a fix', () => {
+  assert.equal(HH.cutsWords('hey r u coming to the standup tmrw?', 'hey, u coming to the standup tmrw?'), true);
+  assert.equal(HH.slangFor('fixOnly')('I has finished the slides', HH.fixTypos('I has finished the slides', "I haven't finished the slides")), 'I have finished the slides');
+  assert.equal(HH.cutsWords("ngl i'm kinda nervous", "ngg i'm kinda nervous"), true);
+  assert.equal(HH.cutsWords('I has went to the store.', 'I went to the store.'), false);
+  assert.equal(HH.cutsWords('theres noone to watch her', "there's no one to watch her."), false);
+});
+
+test('"their going to" becomes "they\'re going to"; a split-off trailing "tbh" goes back on the sentence', () => {
+  assert.equal(HH.fixTypos('Their going to announce it', 'Their going to announce it'), "They're going to announce it");
+  assert.equal(HH.fixTypos('we should of tested it tbh', 'We should have tested it. TBH.'), 'We should have tested it tbh.');
+  assert.equal(HH.fixTypos('its broken rn', "It's broken. Rn."), "It's broken rn.");
+  assert.equal(HH.fixTypos('see you then', 'See you then. Bye.'), 'See you then. Bye.');
+});
+
+test('Fix only: adding the apostrophe to "didnt" or fixing "I gone" is not a flipped negation', () => {
+  assert.equal(HH.cutsWords('client says they didnt get it', "client says they didn't get it."), false);
+  assert.equal(HH.cutsWords('I gone home early', 'I went home early'), false);
+});

@@ -5,7 +5,7 @@ import Foundation
 enum TextSafety {
     /// Misspellings a small model sometimes "fixes" into the wrong word ("teh" → "tbh").
     static let commonTypos: [String: String] = [
-        "teh": "the", "hte": "the", "adn": "and", "nad": "and", "taht": "that", "thta": "that", "wiht": "with", "whit": "with",
+        "noone": "no one", "teh": "the", "hte": "the", "adn": "and", "nad": "and", "taht": "that", "thta": "that", "wiht": "with", "whit": "with",
         "becuase": "because", "becasue": "because", "recieve": "receive", "recieved": "received", "seperate": "separate",
         "definately": "definitely", "occured": "occurred", "untill": "until", "wich": "which", "thier": "their", "freind": "friend",
         "beleive": "believe", "tommorow": "tomorrow", "tomorow": "tomorrow", "alot": "a lot", "youre": "you're", "dont": "don't",
@@ -32,15 +32,28 @@ enum TextSafety {
         (try! NSRegularExpression(pattern: "\\b(t)heir (is|are|was|were)\\b", options: .caseInsensitive), "$1here $2"),
         (try! NSRegularExpression(pattern: "\\b(should|could|would|must|might) of\\b(?! course)", options: .caseInsensitive), "$1 have"),
         (try! NSRegularExpression(pattern: "\\b(he|she) don(['’]?)t\\b", options: .caseInsensitive), "$1 doesn$2t"),
+        (try! NSRegularExpression(pattern: "\\b(t)heir going to\\b", options: .caseInsensitive), "$1hey're going to"),
     ]
 
     static func fixGrammar(original: String, rewrite: String) -> String {
-        var out = keepOfCourse(original: original, rewrite: rewrite)
+        var out = rejoinTail(original: original, rewrite: keepOfCourse(original: original, rewrite: rewrite))
         for (re, template) in grammarRules
         where re.firstMatch(in: original, range: NSRange(location: 0, length: (original as NSString).length)) != nil {
             out = re.stringByReplacingMatches(in: out, range: NSRange(location: 0, length: (out as NSString).length), withTemplate: template)
         }
         return out
+    }
+
+    /// "…shipping it tbh" must not come back as "…shipping it. TBH.": a trailing word the model split off goes back on the sentence.
+    /// Mirrored in extension/core.js (rejoinTail).
+    static func rejoinTail(original: String, rewrite: String) -> String {
+        let o = original as NSString
+        guard let m = try! NSRegularExpression(pattern: "[\\p{L}\\p{N}]\\s+(\\p{L}+)\\W*$").firstMatch(in: original, range: NSRange(location: 0, length: o.length)) else { return rewrite }
+        let word = o.substring(with: m.range(at: 1))
+        guard chat.contains(word.lowercased()) else { return rewrite }
+        let re = try! NSRegularExpression(pattern: "([\\p{L}\\p{N}])[.!?;,]\\s+" + NSRegularExpression.escapedPattern(for: word) + "([.!?]*)\\s*$", options: .caseInsensitive)
+        return re.stringByReplacingMatches(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length),
+                                           withTemplate: "$1 " + NSRegularExpression.escapedTemplate(for: word) + "$2")
     }
 
     /// Fix only must not cut the writer's words: true when the rewrite drops two or more of them and is two or more
@@ -55,8 +68,21 @@ enum TextSafety {
         // A word swapped for an unrelated one ("Great work" → "Great job") is a rewrite, not a fix; "is" → "are", "seen" → "saw" or "realy" → "really" is a fix.
         let added = left.flatMap { Array(repeating: $0.key, count: $0.value) }
         func near(_ a: String, _ b: String) -> Bool { distance(a, b) <= 2 || a.first == b.first || (aux.contains(a) && aux.contains(b)) || (go.contains(a) && go.contains(b)) }
-        return gone.contains { w in !added.contains { near(w, $0) } } && added.contains { w in !gone.contains { near(w, $0) } }
+        // A dropped word with nothing like it added ("hey r u" → "hey, u") is a cut too; a dropped helper verb ("I has went" → "I went") is a fix.
+        let lost = gone.filter { w in !added.contains { near(w, $0) } }
+        if lost.contains(where: { !aux.contains($0) }) { return true }
+        // "I have finished" → "I haven't finished" flips the meaning; so does a writer's slang turned into another word ("ngl" → "ngg").
+        if negations(base) != negations(after) || gone.contains(where: { chat.contains($0) }) { return true }
+        return !lost.isEmpty && added.contains { w in !gone.contains { near(w, $0) } }
     }
+    private static func negations(_ ws: [String]) -> Int {
+        ws.filter { negationWords.contains($0) || $0.hasSuffix("n't") }.count
+    }
+    private static let negationWords: Set<String> = Set("not no never nothing nobody none nor cannot dont doesnt didnt cant couldnt wont wouldnt shouldnt isnt arent wasnt werent havent hasnt hadnt aint mustnt neednt".split(separator: " ").map(String.init))
+    /// Chat shorthand Fix only never changes. Same list as RewriteGuard.slang in Guard.swift, plus omw, u, ur, r and sry.
+    static let chat: Set<String> = Set(("gng ngl tbh idk imo imho fr rn btw lol lmao brb omg ikr smh fyi asap bro bruh gonna wanna gotta kinda sorta yeah yep yup nope nah ok okay pls plz " +
+        "thx ty np nvm tho cuz coz bc idc wdym hbu wyd ofc afaik iirc dm lmk ttyl gg gm gn dude yo hey hiya ya yall y'all ain't lemme gimme dunno tldr " +
+        "tmrw tmr msg pic pics ppl abt thru bday prolly rly srsly gtg jk wtf wth af sus lowkey highkey legit fam sis mate hmm uh um haha hehe aight ight wassup sup omw u ur r sry").split(separator: " ").map(String.init))
     private static let go: Set<String> = ["go", "goes", "went", "gone", "going"]
     private static let aux: Set<String> = ["is", "are", "was", "were", "am", "be", "been", "has", "have", "had", "do", "does", "did"]
 

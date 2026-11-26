@@ -73,6 +73,8 @@ styled Professional "we was late, their is a bug" "we apologize for the delay." 
 styled Friendly "their is a problem with the login page and we was not told" "I'm sorry to hear there's an issue with the login page. Let me know if you need any help troubleshooting." "there is a problem with the login page and we were not told"
 styled Polish "send the deck to priya and the board" "Thanks for reaching out to us today." "send the deck to priya and the board"
 fixonly "Great work on the launch everyone" "Great job on the launch, everyone!" "Great work on the launch everyone"
+fixonly "hey r u coming to the standup tmrw?" "hey, u coming to the standup tmrw?" "hey r u coming to the standup tmrw?"
+fixonly "I has finished the slides" "I haven't finished the slides" "I have finished the slides"
 fixonly "The files is ready" "The files are ready." "The files are ready."
 styled Friendly "the login page is broken for me" "It's okay, let's try this again." "the login page is broken for me"
 styled Professional 'The api returns 500 when `user_id` is null, can you look?' 'The API returns a 500 error when `user_id` is null. Could you please assist?' 'The API returns a 500 error when `user_id` is null. Could you please assist?'
