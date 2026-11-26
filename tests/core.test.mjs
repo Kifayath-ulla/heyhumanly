@@ -230,6 +230,9 @@ test('fixGrammar: slips a small model leaves in are fixed only when the writer m
   assert.equal(HH.fixTypos('i should of gone', 'i should of gone'), 'i should have gone');
   assert.equal(HH.fixTypos('Their car is red.', 'Their car is red.'), 'Their car is red.');
   assert.equal(HH.fixGrammar('Fine.', 'I has it'), 'I has it');
+  assert.equal(HH.fixTypos('I should of course check', 'I should of course check'), 'I should of course check');
+  assert.equal(HH.fixTypos('The last thing I sent you was the draft', 'The last thing I sent you was the draft'), 'The last thing I sent you was the draft');
+  assert.equal(HH.fixTypos('He dont know', 'He dont know'), 'He doesn\'t know');
 });
 
 test('keepSlang: slang the writer typed stays, except in Professional', () => {
@@ -237,6 +240,7 @@ test('keepSlang: slang the writer typed stays, except in Professional', () => {
   assert.equal(HH.keepSlang('idk if it works tbh', 'I don\'t know if it works, to be honest'), 'Idk if it works, tbh');
   assert.equal(HH.keepSlang('thx, thank you all', 'Thanks, thank you all'), 'Thx, thank you all');
   assert.equal(HH.keepSlang('Thanks, see you', 'Thanks, see you'), 'Thanks, see you');
+  assert.equal(HH.keepSlang('When ready, could u send the file?', 'When you’re ready, could you send the file?'), 'When you’re ready, could u send the file?');
   assert.equal(HH.slangFor('formal')('thx', 'Thank you'), 'Thank you');
   assert.equal(HH.slangFor('polish')('thx', 'Thanks'), 'Thx');
 });

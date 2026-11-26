@@ -22,13 +22,13 @@ enum TextSafety {
     }
 
     /// Grammar slips a small model often leaves in ("I has", "we was"). Fixed only when the writer's text had them.
-    /// Mirrored in extension/core.js (fixGrammar).
+    /// Only subject-only pronouns, so "the thing I sent you was" is left alone. Mirrored in extension/core.js (fixGrammar).
     private static let grammarRules: [(NSRegularExpression, String)] = [
         (try! NSRegularExpression(pattern: "\\b([Ii]) has\\b"), "$1 have"),
-        (try! NSRegularExpression(pattern: "\\b(we|you|they) was\\b", options: .caseInsensitive), "$1 were"),
+        (try! NSRegularExpression(pattern: "\\b(we|they) was\\b", options: .caseInsensitive), "$1 were"),
         (try! NSRegularExpression(pattern: "\\b(t)heir (is|are|was|were)\\b", options: .caseInsensitive), "$1here $2"),
-        (try! NSRegularExpression(pattern: "\\b(should|could|would|must|might) of\\b", options: .caseInsensitive), "$1 have"),
-        (try! NSRegularExpression(pattern: "\\b(he|she|it) don(['’])t\\b", options: .caseInsensitive), "$1 doesn$2t"),
+        (try! NSRegularExpression(pattern: "\\b(should|could|would|must|might) of\\b(?! course)", options: .caseInsensitive), "$1 have"),
+        (try! NSRegularExpression(pattern: "\\b(he|she) don(['’]?)t\\b", options: .caseInsensitive), "$1 doesn$2t"),
     ]
 
     static func fixGrammar(original: String, rewrite: String) -> String {
@@ -66,7 +66,7 @@ enum TextSafety {
 
     private static func wordRegex(_ word: String) -> NSRegularExpression {
         let pattern = NSRegularExpression.escapedPattern(for: word).replacingOccurrences(of: "'", with: "['’]")
-        return try! NSRegularExpression(pattern: "\\b" + pattern + "\\b", options: .caseInsensitive)
+        return try! NSRegularExpression(pattern: "(?<!['’])\\b" + pattern + "\\b(?!['’])", options: .caseInsensitive)
     }
 
     private static func count(_ word: String, in text: String) -> Int {
