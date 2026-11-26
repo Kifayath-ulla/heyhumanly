@@ -54,4 +54,7 @@ styled Friendly "thx for the help. i has a question" "Thanks so much for the hel
 styled Shorter "thx for the help. i has a question" "Thanks for the help. I have a question." "thx for the help. I have a question."
 styled Professional "thx for the help. i has a question" "Thank you for the help. I have a question." "thank you for the help. I have a question."
 styled Professional "Thx for the help." "Thank you for the help." "Thank you for the help."
+check "I should of course check, and you should have called." "Of course, I should check, and you should have called." "Of course, I should check, and you should have called."
+check "I should of course call, and I should of course check." "I should of course call, and I should have checked." "I should of course call, and I should of course check."
+check "I should of course check" "Of course I should have checked" "Of course I should have checked"
 exit $fail

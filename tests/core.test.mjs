@@ -237,6 +237,9 @@ test('fixGrammar: slips a small model leaves in are fixed only when the writer m
   assert.equal(HH.fixTypos('I should of gone, I should of course check', 'I should have gone, I should have checked'), 'I should have gone, I should of course check');
   assert.equal(HH.keepOfCourse('I should of course check', 'I should of course check'), 'I should of course check');
   assert.equal(HH.keepOfCourse('I should have checked', 'I should have checked'), 'I should have checked');
+  assert.equal(HH.keepOfCourse('I should of course check, and you should have called.', 'Of course, I should check, and you should have called.'), 'Of course, I should check, and you should have called.');
+  assert.equal(HH.keepOfCourse('I should of course call, and I should of course check.', 'I should of course call, and I should have checked.'), 'I should of course call, and I should of course check.');
+  assert.equal(HH.keepOfCourse('I should of course check', 'Of course I should have checked'), 'Of course I should have checked');
 });
 
 test('keepSlang: slang the writer typed stays, except in Professional', () => {

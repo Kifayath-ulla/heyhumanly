@@ -286,17 +286,17 @@
   // With code in the text, the fallback is the original untouched, so no code span can be corrected or swapped.
   const guardFixOnly = (original, rewrite) => (!cutsWords(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixTypos(original, original));
   // "I should of course check" is not a "should of" slip: if the model read it as one ("I should have checked"), the writer's words go back. Same as TextSafety.swift.
+  const MODAL_PHRASE = /\b(should|could|would|must|might) (have|of course|of)\b(?: (\w+))?/gi;
   function keepOfCourse(original, rewrite) {
-    let out = rewrite;
-    for (const m of original.matchAll(/\b(should|could|would|must|might) of course (\w+)/gi)) {
-      const [, modal, verb] = m;
-      if (countWord(modal + ' of course', out) >= countWord(modal + ' of course', original)) continue;
-      // Skip the "have"s that stand for the writer's earlier "have" or "of" ("I should of gone, I should of course check").
-      const earlier = (original.slice(0, m.index).match(new RegExp('\\b' + modal + ' (have|of(?! course))\\b', 'gi')) || []).length;
-      let seen = 0;
-      out = out.replace(new RegExp('\\b(' + modal + ') have \\w+', 'gi'), (s, found) => (seen++ === earlier ? found + ' of course ' + verb : s));
-    }
-    return out;
+    if (countWord('of course', rewrite) >= countWord('of course', original)) return rewrite;
+    const before = [...original.matchAll(MODAL_PHRASE)];
+    // Paired in order; if the model added or dropped one, the pairing is unclear and nothing changes.
+    if (before.length !== [...rewrite.matchAll(MODAL_PHRASE)].length) return rewrite;
+    let i = 0;
+    return rewrite.replace(MODAL_PHRASE, (s, modal, word) => {
+      const b = before[i++];
+      return b[2].toLowerCase() === 'of course' && word.toLowerCase() === 'have' && b[1].toLowerCase() === modal.toLowerCase() && b[3] ? modal + ' of course ' + b[3] : s;
+    });
   }
   // Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
   const SLANG_EXPANSIONS = { thx: ['thanks', 'thank you'], ty: ['thank you'], pls: ['please'], plz: ['please'], btw: ['by the way'], idk: ['i don\'t know', 'i do not know'],
