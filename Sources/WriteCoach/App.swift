@@ -10,7 +10,7 @@ struct HeyHumanlyApp: App {
         // Developer check: `HeyHumanly --guard "<original>" "<rewrite>"` prints what the meaning guard lets through.
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--guard"), i + 2 < args.count {
-            print(RewriteGuard.sanitize(original: args[i + 1], rewrite: args[i + 2], preserve: []))
+            print(RewriteGuard.sanitize(original: args[i + 1], rewrite: args[i + 2], preserve: [], fixOnly: args.contains("--fix-only")))
             exit(0)
         }
         // `HeyHumanly --teach "<text>"` runs one full check (rewrite, guard, explanations) and prints it.
@@ -20,7 +20,7 @@ struct HeyHumanlyApp: App {
             Task { @MainActor in
                 do {
                     let raw = try await CompanionService.rewrite(text, style: fixOnly ? .fixOnly : .polish, appName: "Slack", preserve: [], endpoint: s.endpoint, model: s.model)
-                    let clean = RewriteGuard.sanitize(original: text, rewrite: raw, preserve: [])
+                    let clean = RewriteGuard.sanitize(original: text, rewrite: raw, preserve: [], fixOnly: fixOnly)
                     print("REWRITE: \(clean)")
                     let changes = ChangeSet(original: text, rewrite: clean).changes.map { c -> Change in var c = c; c.teach(original: text, location: c.location); return c }
                     for c in changes {

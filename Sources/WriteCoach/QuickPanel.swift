@@ -241,7 +241,7 @@ final class QuickSession: ObservableObject {
                 }
                 guard let self, gen == self.generation, !Task.isCancelled else { return }
                 // Light styles must not change meaning, slang or harmless wording.
-                out = chosen.guarded ? RewriteGuard.sanitize(original: text, rewrite: out, preserve: words)
+                out = chosen.guarded ? RewriteGuard.sanitize(original: text, rewrite: out, preserve: words, fixOnly: chosen == .fixOnly)
                                      : TextSafety.apply(original: text, rewrite: out, preserve: words, keepSlang: chosen != .professional)
                 self.cache[chosen] = out
                 self.finish(out)
