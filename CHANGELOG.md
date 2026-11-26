@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.16 — 2026-11-26
+
+- Professional now rewrites casual text professionally online and in Chrome: "hey can u send me the report asap, we was late" becomes "Could you please send me the report as soon as possible? We were late." It used to keep the casual wording.
+- Slang you typed (sry, cuz, ppl, msg, tmrw, nvm, lmk) stays as written outside Professional, and Professional may spell out your own "cuz", "sry" or "Yep" without the rewrite being thrown away.
+- More replies caught: "Sorry to hear that! What's your question?" and replies hidden behind "Here is a shorter version." fall back to your text with the safe fixes.
+- Not notarized by Apple.
+
 ## 0.1.15 — 2026-11-26
 
 - Rewrites no longer answer your message instead of rewriting it ("thx for the help" no longer becomes "No problem at all!", "Can you send it?" no longer becomes "Sure, I can send it."). In every style, Friendly too, the panel falls back to your text with the safe spelling and grammar fixes. Mac, Chrome and online.
