@@ -78,8 +78,8 @@ enum TextSafety {
             return re.numberOfMatches(in: p, range: NSRange(location: 0, length: (p as NSString).length))
         }
         let fallback = codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original
-        func causes(_ s: String) -> Int { hits(causal, s) + hits(lowercaseBc, s) }
-        if !friendly && causes(rewrite) > causes(original) { return fallback }
+        // A lowercase "bc" the writer typed is a reason; one in the rewrite may be a lowercased place name (BC).
+        if !friendly && hits(causal, rewrite) > hits(causal, original) + hits(lowercaseBc, original) { return fallback }
         let fixed = apply(original: original, rewrite: original, preserve: preserve)
         let seen = contentWords((original + " " + fixed).replacingOccurrences(of: "`", with: " "))
         var out = rewrite
