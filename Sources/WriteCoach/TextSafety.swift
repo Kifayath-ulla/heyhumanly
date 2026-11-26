@@ -57,9 +57,9 @@ enum TextSafety {
     /// is dropped. An apology or assistant line the writer never wrote ("We apologize for the delay.", "Let me know if you need help.")
     /// or a rewrite whose content words are all new (none of the writer's) falls back to the deterministic fixes. Friendly may add warmth and
     /// sentences, so it only gets the assistant and content checks. Mirrored in extension/core.js (dropInvented).
-    private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
+    private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|cuz|coz|bc|bcuz|b/c|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
     private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bno problem at all\\b|\\bfeel free to ask\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\bsorry to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
-    private static let apology = try! NSRegularExpression(pattern: "\\b(?:apologi[sz]e[sd]?|apologies|sorry|my (?:mistake|bad)|oops)\\b", options: .caseInsensitive)
+    private static let apology = try! NSRegularExpression(pattern: "\\b(?:apologi[sz]e[sd]?|apologies|sorry|sry|srry|soz|my (?:mistake|bad)|oops)\\b", options: .caseInsensitive)
     private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
         "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
     private static let sentence = try! NSRegularExpression(pattern: "(?:`[^`\\n]+`|[.!?]+(?=\\S)|[^.!?])+(?:[.!?]+|$)\\s*")
@@ -107,6 +107,7 @@ enum TextSafety {
     /// it?" -> "Sure, I can send it."). Every style, Friendly too, then falls back to the deterministic fixes. Mirrored in
     /// extension/core.js (dropReply).
     private static let reply = try! NSRegularExpression(pattern: "^\\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\\b", options: .caseInsensitive)
+    private static let ack = try! NSRegularExpression(pattern: "^\\W*(?:yep|yeah|yes|yup|ok|okay|sure|np|no prob|will do|got it|sounds good|of course|absolutely|certainly)\\b", options: .caseInsensitive)
     private static let asks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) you\\b", options: .caseInsensitive)
     private static let offers = try! NSRegularExpression(pattern: "\\bI(?:['’]ll| will| can(?!['’]t)| could)\\b", options: .caseInsensitive)
 
@@ -115,7 +116,7 @@ enum TextSafety {
         let lead = reply.firstMatch(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length))
             .map { (rewrite as NSString).substring(with: $0.range(at: 1)).lowercased().replacingOccurrences(of: "’", with: "'") }
         let quoted = original.lowercased().replacingOccurrences(of: "’", with: "'")
-        let answers = (lead.map { !quoted.contains($0) } ?? false) || (has(asks, original) && has(offers, rewrite) && !has(offers, original))
+        let answers = (lead.map { !has(ack, original) && !quoted.contains($0) } ?? false) || (has(asks, original) && has(offers, rewrite) && !has(offers, original))
         guard answers else { return rewrite }
         return codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original
     }

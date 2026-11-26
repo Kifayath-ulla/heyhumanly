@@ -322,3 +322,10 @@ test('dropInvented: an invented apology or assistant reply never replaces the wr
   assert.equal(HH.slangFor('formal')('i did not break it', 'It was not my fault.'), 'It was not my fault.');
   assert.equal(HH.slangFor('short')('I am writing to express my gratitude.', 'Thank you.'), 'Thank you.');
 });
+
+test('Professional may spell out the writer’s own slang reason, apology or acknowledgment', () => {
+  assert.equal(HH.slangFor('formal')('sry i cant come cuz im sick', 'I apologize, but I cannot come because I am sick.'), 'I apologize, but I cannot come because I am sick.');
+  assert.equal(HH.slangFor('formal')('Yep, I’ll send the report', 'Certainly, I’ll send the report.'), 'Certainly, I’ll send the report.');
+  assert.equal(HH.slangFor('formal')('i will send the report', 'Certainly, I will send the report.'), 'i will send the report');
+  assert.equal(HH.slangFor('formal')('we was late', 'We were late because of traffic.'), 'we were late');
+});
