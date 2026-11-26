@@ -237,6 +237,8 @@
     });
   }
   // A message typed all in lowercase stays lowercase, even if the model capitalised it (same as TextSafety.swift).
+  // Professional is asked for proper capitalisation, so a lowercase message doesn't stay lowercase there.
+  const caseFor = (goal) => (goal === 'formal' ? (original, rewrite) => rewrite : keepLowercase);
   function keepLowercase(original, rewrite) { return original === original.toLowerCase() && original !== original.toUpperCase() ? rewrite.toLowerCase() : rewrite; }
   function matchCase(word, like) { return like[0] && like[0] !== like[0].toLowerCase() ? (like.length > 1 && like === like.toUpperCase() ? word.toUpperCase() : word[0].toUpperCase() + word.slice(1)) : word; }
   function editDistance(a, b) {
@@ -517,8 +519,26 @@
   const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
   const dropReply = (original, rewrite) =>
     !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
+  // A leading "Sure," the writer didn't type is filler when a rewrite follows it ("Sure, could you send…"), not a reply.
+  // Same as TextSafety.swift (dropFiller).
+  const FILLER = /^\s*(sure|of course|absolutely|certainly)\s*[,!.]\s+(?=\S)/i;
+  const OFFER_LEAD = /^\W*(?:I|we)(?:['’]ll| will| can(?!['’]t)| could| would)\b|^\W*(?:here|let me)\b/i;
+  function dropFiller(original, rewrite) {
+    const m = rewrite.match(FILLER);
+    if (!m || original.toLowerCase().includes(m[1].toLowerCase())) return rewrite;
+    const rest = rewrite.slice(m[0].length);
+    // "Can you check it?" → "Certainly, the report looks good." answers the request; the rest of a rewrite still asks it.
+    if (OFFER_LEAD.test(rest) || REPLY.test(rest) || (WRITER_ASKS.test(original.replace(CODE, ' ')) && !STILL_ASKS.test(rest.replace(CODE, ' ')))) return rewrite;
+    // "Is it ready?" → "Sure, it is ready." answers the question instead of rewriting it.
+    const asks = (t) => (t.replace(CODE, ' ').match(/\?+/g) || []).length;
+    if (asks(rest) < asks(original)) return rewrite;
+    // A word the writer typed in lowercase ("npm install") keeps its case.
+    const first = (rest.match(/^\p{L}+/u) || [''])[0];
+    const typed = first !== '' && new RegExp('(?<![\\p{L}\\p{N}_])' + first + '(?![\\p{L}\\p{N}_])', 'u').test(original);
+    return /^[A-Z]/.test(m[1]) && !typed ? rest[0].toUpperCase() + rest.slice(1) : rest;
+  }
   const slangStep = (goal) => (goal === 'formal' ? (o, r) => r : goal === 'fixOnly' ? (o, r) => guardFixOnly(o, keepSlang(o, r)) : keepSlang);
-  const slangFor = (goal) => (o, r) => dropInvented(o, dropReply(o, slangStep(goal)(o, r)), goal === 'friendly');
+  const slangFor = (goal) => (o, r) => dropInvented(o, dropReply(o, slangStep(goal)(o, dropFiller(o, r))), goal === 'friendly');
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
@@ -527,7 +547,7 @@
     if (o.engine === 'builtin' || (o.engine === 'auto' && await builtinStatus() === 'available')) {
       const cleaned = cleanRewrite(await builtinTighten(text, o.goal, casual), text);
       if (!cleaned) throw fail('empty', 'Chrome’s built-in model returned nothing. Try again.');
-      return analyse(text, restoreCode(text, keepLowercase(text, slangFor(o.goal)(text, fixTypos(text, cleaned)))), casual, 'Chrome built-in model', o.goal);
+      return analyse(text, restoreCode(text, caseFor(o.goal)(text, slangFor(o.goal)(text, fixTypos(text, cleaned)))), casual, 'Chrome built-in model', o.goal);
     }
     let model; try { model = await pickModel(o.endpoint, o.model); } catch (e) { if (e.code && e.code !== 'timeout') throw e; throw fail('offline', OFFLINE(o.endpoint)); }
     let res; try {
@@ -541,12 +561,12 @@
     const j = await res.json(); if (j.error) throw fail('model', /not found/i.test(j.error) ? 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.' : 'Ollama said: ' + j.error);
     if (j.done_reason === 'length') throw fail('cutoff', 'The rewrite stopped before the end of your text, so it isn’t shown. Select a shorter part and try again.');
     const cleaned = cleanRewrite(j.response, text); if (!cleaned) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
-    const rewrite = restoreCode(text, keepLowercase(text, slangFor(o.goal)(text, fixTypos(text, cleaned))));
+    const rewrite = restoreCode(text, caseFor(o.goal)(text, slangFor(o.goal)(text, fixTypos(text, cleaned))));
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
-    // Fix only is asked to correct capitalization, so a case-only edit counts there; elsewhere it doesn't.
-    const norm = (s) => { s = s.trim().replace(/\s+/g, ' '); return goal === 'fixOnly' ? s : s.toLowerCase(); };
+    // Fix only and Professional are asked to correct capitalization, so a case-only edit counts there; elsewhere it doesn't.
+    const norm = (s) => { s = s.trim().replace(/\s+/g, ' '); return goal === 'fixOnly' || goal === 'formal' ? s : s.toLowerCase(); };
     const unchanged = norm(original) === norm(rewrite);
     const ra = readability(original), rb = readability(rewrite);
     const moves = unchanged ? [] : detect(original, rewrite, casual);
@@ -561,6 +581,6 @@
   }
 
   root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepOfCourse, keepSlang, slangFor, cutsWords, dropInvented,
-    dropReply, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+    dropReply, dropFiller, caseFor, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

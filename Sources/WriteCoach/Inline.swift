@@ -934,7 +934,7 @@ final class InlineSession: ObservableObject {
         Task { [weak self] in
             var out = try? await CompanionService.rewrite(text, style: t, appName: app, preserve: words, endpoint: endpoint, model: modelName)
             guard let self else { return }
-            if let raw = out { out = t.guarded ? RewriteGuard.sanitize(original: text, rewrite: raw, preserve: words, fixOnly: t == .fixOnly) : TextSafety.apply(original: text, rewrite: raw, preserve: words, keepSlang: t != .professional) }
+            if let raw = out.map({ TextSafety.dropFiller(original: text, rewrite: $0) }) { out = t.guarded ? RewriteGuard.sanitize(original: text, rewrite: raw, preserve: words, fixOnly: t == .fixOnly) : TextSafety.apply(original: text, rewrite: raw, preserve: words, keepSlang: t != .professional) }
             if let o = out { out = TextSafety.dropReply(original: text, rewrite: o, preserve: words, keepSlang: t != .professional) }
             if let o = out { out = TextSafety.dropInvented(original: text, rewrite: o, preserve: words, keepSlang: t != .professional, friendly: t == .friendly) }
             if resumeExplain, self.changes.contains(where: \.pending) { self.explain(text: self.checkedText, rewrite: self.rewriteForChanges) }

@@ -18,9 +18,9 @@ enum TextSafety {
         let keep = Set(preserve.map { $0.lowercased() })
         var fixed = fixGrammar(original: original, rewrite: fixTypos(original: original, rewrite: rewrite, preserve: keep))
         if slang { fixed = keepSlang(original: original, rewrite: fixed) }
-        fixed = keepLowercase(original: original, rewrite: fixed)
-        // An all-lowercase message keeps its lowercase "i" too.
-        let lower = original == original.lowercased() && original != original.uppercased()
+        // An all-lowercase message keeps its lowercase "i" too, except in Professional, which is asked for proper capitalisation.
+        if slang { fixed = keepLowercase(original: original, rewrite: fixed) }
+        let lower = slang && original == original.lowercased() && original != original.uppercased()
         return restoreCode(original: original, rewrite: keep.contains("i") || lower ? fixed : capitalizeI(fixed))
     }
 
@@ -193,6 +193,33 @@ enum TextSafety {
     private static let leadIntro = try! NSRegularExpression(pattern: "^\\W*(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b[^.!?:\\n]*[.!:]?\\s*", options: .caseInsensitive)
     private static let asks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) you\\b", options: .caseInsensitive)
     private static let offers = try! NSRegularExpression(pattern: "\\bI(?:['’]ll| will| can(?!['’]t)| could)\\b", options: .caseInsensitive)
+
+    /// A leading "Sure," the writer didn't type is filler when a rewrite follows it ("Sure, could you send…"), not a reply.
+    /// Mirrored in extension/core.js (dropFiller).
+    private static let filler = try! NSRegularExpression(pattern: "^\\s*(sure|of course|absolutely|certainly)\\s*[,!.]\\s+(?=\\S)", options: .caseInsensitive)
+    private static let offerLead = try! NSRegularExpression(pattern: "^\\W*(?:I|we)(?:['’]ll| will| can(?!['’]t)| could| would)\\b|^\\W*(?:here|let me)\\b", options: .caseInsensitive)
+    static func dropFiller(original: String, rewrite: String) -> String {
+        let ns = rewrite as NSString
+        guard let m = filler.firstMatch(in: rewrite, range: NSRange(location: 0, length: ns.length)) else { return rewrite }
+        let word = ns.substring(with: m.range(at: 1))
+        guard !original.lowercased().contains(word.lowercased()) else { return rewrite }
+        let rest = ns.substring(from: m.range.upperBound), whole = NSRange(location: 0, length: (rest as NSString).length)
+        if offerLead.firstMatch(in: rest, range: whole) != nil || reply.firstMatch(in: rest, range: whole) != nil { return rewrite }
+        // "Can you check it?" → "Certainly, the report looks good." answers the request; the rest of a rewrite still asks it.
+        func plain(_ t: String) -> String { codeRegex.stringByReplacingMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length), withTemplate: " ") }
+        let o = plain(original), r = plain(rest)
+        if writerAsks.firstMatch(in: o, range: NSRange(location: 0, length: (o as NSString).length)) != nil,
+           stillAsks.firstMatch(in: r, range: NSRange(location: 0, length: (r as NSString).length)) == nil { return rewrite }
+        // "Is it ready?" → "Sure, it is ready." answers the question instead of rewriting it.
+        let marks = try! NSRegularExpression(pattern: "\\?+")
+        func asks(_ t: String) -> Int { let p = plain(t); return marks.numberOfMatches(in: p, range: NSRange(location: 0, length: (p as NSString).length)) }
+        if asks(rest) < asks(original) { return rewrite }
+        // A word the writer typed in lowercase ("npm install") keeps its case.
+        let first = String(rest.prefix { $0.isLetter })
+        let typed = !first.isEmpty && (try? NSRegularExpression(pattern: "(?<![\\p{L}\\p{N}_])" + NSRegularExpression.escapedPattern(for: first) + "(?![\\p{L}\\p{N}_])"))?
+            .firstMatch(in: original, range: NSRange(location: 0, length: (original as NSString).length)) != nil
+        return word.first?.isUppercase == true && !typed ? rest.prefix(1).uppercased() + rest.dropFirst() : rest
+    }
 
     static func dropReply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
         func has(_ re: NSRegularExpression, _ s: String) -> Bool { re.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil }

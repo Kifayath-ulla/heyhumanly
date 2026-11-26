@@ -437,3 +437,25 @@ test('review: a request ending in "please", and a second request, are checked to
   assert.equal(HH.slangFor('shorter')(two, 'Send the draft.'), two);
   assert.equal(HH.slangFor('formal')(two, 'Please send the draft. Could you also reserve the room?'), 'Please send the draft. Could you also reserve the room?');
 });
+
+test('a leading "Sure," is filler when a rewrite follows it; a real reply still falls back', () => {
+  assert.equal(HH.slangFor('formal')('hey can u send me the report asap, we was late', 'Sure, could you please send me the report as soon as possible? We were late.'),
+    'Could you please send me the report as soon as possible? We were late.');
+  assert.equal(HH.dropFiller("sry, cant make it tmrw cuz im sick", "Sure, I can't make it tomorrow because I'm sick."), "I can't make it tomorrow because I'm sick.");
+  assert.equal(HH.dropFiller('the api returns 500, can u look?', 'Sure, I can help with that. The API returns a 500.'), 'Sure, I can help with that. The API returns a 500.');
+  assert.equal(HH.dropFiller('Sure, see you then', 'Sure, see you then.'), 'Sure, see you then.');
+});
+
+test('Professional is properly capitalised even for a lowercase message; other styles stay lowercase', () => {
+  assert.equal(HH.caseFor('formal')('thx for the help. i has a question', 'Thank you for the help. I have a question.'), 'Thank you for the help. I have a question.');
+  assert.equal(HH.caseFor('polish')('thx for the help. i has a question', 'Thx for the help. I have a question.'), 'thx for the help. i have a question.');
+});
+
+test('review: "Sure," before an answer to a question stays a reply; a lowercase command keeps its case', () => {
+  assert.equal(HH.dropFiller('Is the report ready?', 'Sure, the report is ready.'), 'Sure, the report is ready.');
+  assert.equal(HH.dropFiller('how do i run npm install here', 'Sure, npm install is run here.'), 'npm install is run here.');
+});
+
+test('review: "??" tidied to "?" after a "Sure," filler still counts as the same question', () => {
+  assert.equal(HH.dropFiller('hey can u send me the report??', 'Sure, could you send me the report?'), 'Could you send me the report?');
+});
