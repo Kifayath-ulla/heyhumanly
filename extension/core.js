@@ -309,7 +309,7 @@
   function keepSlang(original, rewrite) {
     let out = rewrite;
     for (const [short, longs] of Object.entries(SLANG_EXPANSIONS)) {
-      let missing = countWord(short, original) - countWord(short, out);
+      let missing = countWord(short, original.replace(CODE, ' ')) - countWord(short, out.replace(CODE, ' '));
       for (const long of longs) {
         if (missing <= 0) break;
         if (countWord(long, original)) continue;
@@ -422,7 +422,7 @@
   // rewrite whose content words are all new (none of the writer's) falls back to the deterministic fixes. Friendly may add warmth and sentences,
   // so it only gets the assistant and content checks. Same as TextSafety.swift (dropInvented).
   const CAUSAL = /\b(?:due to|because|cuz|coz|bcuz|b\/c|therefore|as a result|caused by|so that|hence|thus)\b/gi;
-  const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bno problem at all\b|\bfeel free to ask\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\bsorry to hear\b|\bhope this helps\b/gi;
+  const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bno problem at all\b|\bfeel free to ask\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\b(?:sorry|sry) to hear\b|\bhope this helps\b/gi;
   const APOLOGY = /\b(?:apologi[sz]e[sd]?|apologies|sorry|sry|srry|soz|my (?:mistake|bad)|oops)\b/gi;
   const STOP = new Set(['have', 'that', 'this', 'with', 'from', 'your', 'will', 'would', 'could', 'should', 'there', 'their', 'what', 'when', 'been',
     'were', 'they', 'just', 'more', 'need', 'also', 'about', 'into', 'them', 'then', 'than', 'some', 'please', 'thanks', 'thank']);
@@ -433,6 +433,8 @@
     if (!friendly && hits(CAUSAL, rewrite) > hits(CAUSAL, original) + hits(/\bbc\b/g, original)) return fallback;
     const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
     const out = friendly ? rewrite : dropAddedSentences(original, rewrite, seen);
+    // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
+    if (hits(ASSISTANT, rewrite.split(/(?<=[.!?])\s+/)[0]) > hits(ASSISTANT, original)) return fallback;
     if (hits(ASSISTANT, out) > hits(ASSISTANT, original)) return fallback;
     if (!friendly && hits(APOLOGY, out) > hits(APOLOGY, original)) return fallback;
     // A rewrite whose content words are all new replaced the message instead of rewriting it.

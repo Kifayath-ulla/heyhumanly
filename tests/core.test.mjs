@@ -245,6 +245,8 @@ test('fixGrammar: slips a small model leaves in are fixed only when the writer m
 test('keepSlang: slang the writer typed stays, except in Professional', () => {
   assert.equal(HH.keepSlang('thx, see u soon', 'Thanks, see you soon'), 'Thx, see u soon');
   assert.equal(HH.keepSlang('idk if it works tbh', 'I don\'t know if it works, to be honest'), 'Idk if it works, tbh');
+  assert.equal(HH.keepSlang('rename `msg` in the message handler', 'Rename `message` in the message handler.'), 'Rename `message` in the message handler.');
+  assert.equal(HH.slangFor('polish')('sry, i has a question', 'Sorry to hear that! What is your question?'), 'sry, i have a question');
   assert.equal(HH.slangFor('polish')('sry i cant come cuz im sick, lmk', 'Sorry, I can\'t come because I\'m sick. Let me know.'), 'Sry, I can\'t come cuz I\'m sick. Lmk.');
   assert.equal(HH.keepSlang('thx, thank you all', 'Thanks, thank you all'), 'Thx, thank you all');
   assert.equal(HH.keepSlang('Thanks, see you', 'Thanks, see you'), 'Thanks, see you');
