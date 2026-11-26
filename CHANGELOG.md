@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.14 — 2026-11-26
+
+- Rewrites no longer make things up: a cause you never gave ("late due to a bug") falls back to the safe spelling and grammar fixes, and a sentence the model adds that has nothing to do with your text ("I apologize for any confusion.") is removed. Friendly may still add warmth. Mac, Chrome and online.
+- Not notarized by Apple.
+
 ## 0.1.13 — 2026-11-26
 
 - Fix only keeps every word you wrote: if the model drops part of your text, the panel shows only the safe spelling and grammar fixes instead (Mac, Chrome and online).
