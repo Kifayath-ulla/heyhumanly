@@ -261,6 +261,33 @@
         });
       }
     }
+    return fixGrammar(original, out);
+  }
+  // Grammar slips a small model often leaves in ("I has", "we was"). Fixed only when the writer's text had them. Same as TextSafety.swift.
+  // Only subject-only pronouns, so "the thing I sent you was" is left alone.
+  const GRAMMAR = [[/\b([Ii]) has\b/g, '$1 have'], [/\b(we|they) was\b/gi, '$1 were'], [/\b(t)heir (is|are|was|were)\b/gi, '$1here $2'],
+    [/\b(should|could|would|must|might) of\b(?! course)/gi, '$1 have'], [/\b(he|she) don(['’]?)t\b/gi, '$1 doesn$2t']];
+  function fixGrammar(original, rewrite) {
+    let out = rewrite;
+    for (const [re, to] of GRAMMAR) { re.lastIndex = 0; if (re.test(original)) out = out.replace(re, to); }
+    return out;
+  }
+  // Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
+  const SLANG_EXPANSIONS = { thx: ['thanks', 'thank you'], ty: ['thank you'], pls: ['please'], plz: ['please'], btw: ['by the way'], idk: ['i don\'t know', 'i do not know'],
+    rn: ['right now'], imo: ['in my opinion'], tbh: ['to be honest'], u: ['you'], ur: ['your', 'you\'re'], gonna: ['going to'], wanna: ['want to'] };
+  // Not part of a contraction ("you" in "you’re"); quoted words still count.
+  const wordRe = (w) => new RegExp('(?<![A-Za-z][\'’])\\b' + w.replace(/'/g, '[\'’]') + '\\b(?![\'’][A-Za-z])', 'gi');
+  const countWord = (w, s) => (s.match(wordRe(w)) || []).length;
+  function keepSlang(original, rewrite) {
+    let out = rewrite;
+    for (const [short, longs] of Object.entries(SLANG_EXPANSIONS)) {
+      let missing = countWord(short, original) - countWord(short, out);
+      for (const long of longs) {
+        if (missing <= 0) break;
+        if (countWord(long, original)) continue;
+        out = out.replace(wordRe(long), (m) => (missing-- > 0 ? matchCase(short, m) : m));
+      }
+    }
     return out;
   }
   // ---------- talking to Ollama ----------
@@ -360,6 +387,8 @@
       return raw;
     } finally { clearTimeout(t); try { session.destroy(); } catch (e) { /* already gone */ } }
   }
+  // Professional is asked to spell slang out; every other style keeps it.
+  const slangFor = (goal) => (goal === 'formal' ? (o, r) => r : keepSlang);
   async function tighten(text, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     text = text.trim(); if (!text) throw fail('empty', 'Select some text first.');
@@ -368,7 +397,7 @@
     if (o.engine === 'builtin' || (o.engine === 'auto' && await builtinStatus() === 'available')) {
       const cleaned = cleanRewrite(await builtinTighten(text, o.goal, casual), text);
       if (!cleaned) throw fail('empty', 'Chrome’s built-in model returned nothing. Try again.');
-      return analyse(text, restoreCode(text, keepLowercase(text, fixTypos(text, cleaned))), casual, 'Chrome built-in model', o.goal);
+      return analyse(text, restoreCode(text, keepLowercase(text, slangFor(o.goal)(text, fixTypos(text, cleaned)))), casual, 'Chrome built-in model', o.goal);
     }
     let model; try { model = await pickModel(o.endpoint, o.model); } catch (e) { if (e.code && e.code !== 'timeout') throw e; throw fail('offline', OFFLINE(o.endpoint)); }
     let res; try {
@@ -382,7 +411,7 @@
     const j = await res.json(); if (j.error) throw fail('model', /not found/i.test(j.error) ? 'Model “' + model + '” isn’t installed. Run: ollama pull ' + model + ', or choose another model in Settings.' : 'Ollama said: ' + j.error);
     if (j.done_reason === 'length') throw fail('cutoff', 'The rewrite stopped before the end of your text, so it isn’t shown. Select a shorter part and try again.');
     const cleaned = cleanRewrite(j.response, text); if (!cleaned) throw fail('empty', 'The model returned nothing. Try again, or choose another model in Settings.');
-    const rewrite = restoreCode(text, keepLowercase(text, fixTypos(text, cleaned)));
+    const rewrite = restoreCode(text, keepLowercase(text, slangFor(o.goal)(text, fixTypos(text, cleaned))));
     return analyse(text, rewrite, casual, model, o.goal);
   }
   function analyse(original, rewrite, casual, model, goal) {
@@ -401,6 +430,6 @@
     return { original: text, casual, moves: detect(text, text, casual), stats: readability(text) };
   }
 
-  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
+  root.HH = { DEFAULTS, MAX_CHARS, builtinStatus, builtinSession, isCasual, detect, tighten, analyse, quickCheck, restoreCode, fixTypos, fixGrammar, keepSlang, slangFor, keepLowercase, listModels, diagnose, pullModel, originFix, extensionOrigin, platform, isLocalEndpoint, isWritingModel, readability, buildPrompt, buildStylePrompt, promptFor, STYLES, STYLE_LIST, cleanRewrite, wordyHits, passiveHits, repeatedOpener, clock };
   if (typeof module !== 'undefined') module.exports = root.HH;
 })(typeof self !== 'undefined' ? self : globalThis);

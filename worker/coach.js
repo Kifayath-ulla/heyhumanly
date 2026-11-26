@@ -146,7 +146,7 @@ export async function handleCoach(request, env, now = Date.now()) {
     if (out?.choices?.[0]?.finish_reason === 'length') throw new Error('truncated');
     const raw = out?.choices?.[0]?.message?.content ?? out?.response ?? '';
     const cleaned = HH.cleanRewrite(raw, text);
-    const rewrite = cleaned && HH.restoreCode(text, HH.fixTypos(text, cleaned));
+    const rewrite = cleaned && HH.restoreCode(text, HH.slangFor(goal)(text, HH.fixTypos(text, cleaned)));
     if (!rewrite) throw new Error('empty');
     const u = out?.usage || {};
     const actual = neurons(model, u.prompt_tokens || Math.ceil(prompt.length / 3), u.completion_tokens || Math.ceil(rewrite.length / 3));

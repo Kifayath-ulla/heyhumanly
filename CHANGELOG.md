@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.12 — 2026-11-26
+
+- Grammar slips that small local models leave in are now always fixed: "I has", "we was", "their is", "should of", "he don't" (Mac, Chrome and online).
+- Slang you typed stays as you wrote it: "thx", "u", "idk", "btw" and similar are no longer spelled out, except in Professional.
+- Not notarized by Apple.
+
 ## 0.1.11 — 2026-11-26
 
 Redesign: one shortcut, one small panel.

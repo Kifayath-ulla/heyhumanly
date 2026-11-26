@@ -13,10 +13,64 @@ enum TextSafety {
 
     /// All clean-ups for a coaching rewrite (Quick Fix, Teach Me, inline).
     /// Words in `preserve` (the user's dictionary) are never corrected.
-    static func apply(original: String, rewrite: String, preserve: [String] = []) -> String {
+    /// `keepSlang` is false only for Professional, which is asked to spell slang out.
+    static func apply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
         let keep = Set(preserve.map { $0.lowercased() })
-        let fixed = fixTypos(original: original, rewrite: rewrite, preserve: keep)
+        var fixed = fixGrammar(original: original, rewrite: fixTypos(original: original, rewrite: rewrite, preserve: keep))
+        if slang { fixed = keepSlang(original: original, rewrite: fixed) }
         return restoreCode(original: original, rewrite: keep.contains("i") ? fixed : capitalizeI(fixed))
+    }
+
+    /// Grammar slips a small model often leaves in ("I has", "we was"). Fixed only when the writer's text had them.
+    /// Only subject-only pronouns, so "the thing I sent you was" is left alone. Mirrored in extension/core.js (fixGrammar).
+    private static let grammarRules: [(NSRegularExpression, String)] = [
+        (try! NSRegularExpression(pattern: "\\b([Ii]) has\\b"), "$1 have"),
+        (try! NSRegularExpression(pattern: "\\b(we|they) was\\b", options: .caseInsensitive), "$1 were"),
+        (try! NSRegularExpression(pattern: "\\b(t)heir (is|are|was|were)\\b", options: .caseInsensitive), "$1here $2"),
+        (try! NSRegularExpression(pattern: "\\b(should|could|would|must|might) of\\b(?! course)", options: .caseInsensitive), "$1 have"),
+        (try! NSRegularExpression(pattern: "\\b(he|she) don(['’]?)t\\b", options: .caseInsensitive), "$1 doesn$2t"),
+    ]
+
+    static func fixGrammar(original: String, rewrite: String) -> String {
+        var out = rewrite
+        for (re, template) in grammarRules
+        where re.firstMatch(in: original, range: NSRange(location: 0, length: (original as NSString).length)) != nil {
+            out = re.stringByReplacingMatches(in: out, range: NSRange(location: 0, length: (out as NSString).length), withTemplate: template)
+        }
+        return out
+    }
+
+    /// Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
+    /// Mirrored in extension/core.js (keepSlang).
+    static let slang: [(String, [String])] = [
+        ("thx", ["thanks", "thank you"]), ("ty", ["thank you"]), ("pls", ["please"]), ("plz", ["please"]), ("btw", ["by the way"]),
+        ("idk", ["i don't know", "i do not know"]), ("rn", ["right now"]), ("imo", ["in my opinion"]), ("tbh", ["to be honest"]),
+        ("u", ["you"]), ("ur", ["your", "you're"]), ("gonna", ["going to"]), ("wanna", ["want to"]),
+    ]
+
+    static func keepSlang(original: String, rewrite: String) -> String {
+        var out = rewrite
+        for (short, longs) in slang {
+            var missing = count(short, in: original) - count(short, in: out)
+            for long in longs where missing > 0 && count(long, in: original) == 0 {
+                let matches = wordRegex(long).matches(in: out, range: NSRange(location: 0, length: (out as NSString).length))
+                for m in matches.prefix(missing).reversed() {
+                    let ns = out as NSString
+                    out = ns.replacingCharacters(in: m.range, with: matchCase(short, like: ns.substring(with: m.range)))
+                }
+                missing -= min(missing, matches.count)
+            }
+        }
+        return out
+    }
+
+    private static func wordRegex(_ word: String) -> NSRegularExpression {
+        let pattern = NSRegularExpression.escapedPattern(for: word).replacingOccurrences(of: "'", with: "['’]")
+        return try! NSRegularExpression(pattern: "(?<![A-Za-z]['’])\\b" + pattern + "\\b(?!['’][A-Za-z])", options: .caseInsensitive)
+    }
+
+    private static func count(_ word: String, in text: String) -> Int {
+        wordRegex(word).numberOfMatches(in: text, range: NSRange(location: 0, length: (text as NSString).length))
     }
 
     /// Inline code spans: text between single backticks on one line.

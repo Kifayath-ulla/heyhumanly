@@ -223,3 +223,25 @@ test('analyse counts a capitalization-only fix as a change for Fix only', () => 
   assert.equal(HH.analyse('i met john in paris.', 'I met John in Paris.', true, 'm', 'fixOnly').unchanged, false);
   assert.equal(HH.analyse('i met john in paris.', 'I met John in Paris.', true, 'm', 'polish').unchanged, true);
 });
+
+test('fixGrammar: slips a small model leaves in are fixed only when the writer made them', () => {
+  assert.equal(HH.fixTypos('I has a question and we was late.', 'I has a question and we was late.'), 'I have a question and we were late.');
+  assert.equal(HH.fixTypos('Their is a bug, he don\'t know.', 'Their is a bug, he don\'t know.'), 'There is a bug, he doesn\'t know.');
+  assert.equal(HH.fixTypos('i should of gone', 'i should of gone'), 'i should have gone');
+  assert.equal(HH.fixTypos('Their car is red.', 'Their car is red.'), 'Their car is red.');
+  assert.equal(HH.fixGrammar('Fine.', 'I has it'), 'I has it');
+  assert.equal(HH.fixTypos('I should of course check', 'I should of course check'), 'I should of course check');
+  assert.equal(HH.fixTypos('The last thing I sent you was the draft', 'The last thing I sent you was the draft'), 'The last thing I sent you was the draft');
+  assert.equal(HH.fixTypos('He dont know', 'He dont know'), 'He doesn\'t know');
+});
+
+test('keepSlang: slang the writer typed stays, except in Professional', () => {
+  assert.equal(HH.keepSlang('thx, see u soon', 'Thanks, see you soon'), 'Thx, see u soon');
+  assert.equal(HH.keepSlang('idk if it works tbh', 'I don\'t know if it works, to be honest'), 'Idk if it works, tbh');
+  assert.equal(HH.keepSlang('thx, thank you all', 'Thanks, thank you all'), 'Thx, thank you all');
+  assert.equal(HH.keepSlang('Thanks, see you', 'Thanks, see you'), 'Thanks, see you');
+  assert.equal(HH.keepSlang('When ready, could u send the file?', 'When you’re ready, could you send the file?'), 'When you’re ready, could u send the file?');
+  assert.equal(HH.keepSlang("she said 'thx' and left", "She said 'thanks' and left."), "She said 'thx' and left.");
+  assert.equal(HH.slangFor('formal')('thx', 'Thank you'), 'Thank you');
+  assert.equal(HH.slangFor('polish')('thx', 'Thanks'), 'Thx');
+});

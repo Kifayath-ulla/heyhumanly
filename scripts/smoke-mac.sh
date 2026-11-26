@@ -32,4 +32,9 @@ check "use \`i => i*2\` here" "Use \`i => i * 2\` here." "Use \`i => i*2\` here.
 check "i shoud of went their" "i should have gone there" "I should have gone there"
 check "i.e. this, i think" "i.e. this, i think" "i.e. this, I think"
 check "Use \`foo\` instead of \`bar\`" "\`bar\` should be replaced by \`foo\`." "\`bar\` should be replaced by \`foo\`."
+check "I has a question and we was late." "I has a question and we was late." "I have a question and we were late."
+check "Their is a bug, he don't know." "Their is a bug, he don't know." "There is a bug, he doesn't know."
+check "thx, see u soon" "thx, see u soon" "thx, see u soon"
+check "I should of course check" "I should of course check" "I should of course check"
+check "He dont know" "He dont know" "He doesn't know"
 exit $fail
