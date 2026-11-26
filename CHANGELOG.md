@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.17 — 2026-11-26
+
+- Professional no longer drops your own request once it spells out your slang: "sry, cant make it tmrw cuz im sick, lmk if thats ok" now keeps "Let me know if that is okay." Mac, Chrome and online.
+- Not notarized by Apple.
+
 ## 0.1.16 — 2026-11-26
 
 - Professional now rewrites casual text professionally online and in Chrome: "hey can u send me the report asap, we was late" becomes "Could you please send me the report as soon as possible? We were late." It used to keep the casual wording.
