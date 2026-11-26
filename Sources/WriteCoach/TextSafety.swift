@@ -133,8 +133,31 @@ enum TextSafety {
         // A rewrite whose content words are all new replaced the message instead of rewriting it.
         let kept = contentWords(out.replacingOccurrences(of: "`", with: " "))
         if written.count >= 3 && !kept.isEmpty && seen.isDisjoint(with: kept) { return fallback }
+        // A rewrite that drops the writer's request ("…tests. pls fix asap" → "…tests.") loses what they asked for.
+        if !friendly, dropsRequest(original: plain(original), rewrite: plain(out)) { return fallback }
         return out
     }
+
+    /// Only when no request is left and none of the words the writer asked about survive. Mirrored in extension/core.js (dropsRequest).
+    private static func dropsRequest(original: String, rewrite: String) -> Bool {
+        let o = original as NSString
+        let have = Set(tokens(rewrite).map { String($0.prefix(4)) })
+        func words(_ t: String) -> [String] { tokens(t).filter { $0.count >= 3 && !stop.contains($0) && !askWords.contains($0) } }
+        let asks = askClause.matches(in: original, range: NSRange(location: 0, length: o.length))
+        // Each request is checked on its own words, those after the ask or, for "retry it please", before it.
+        let lost = asks.filter { m in
+            let after = words(o.substring(with: m.range(at: 2)))
+            let w = after.isEmpty ? words(o.substring(with: m.range(at: 1))) : after
+            return !w.isEmpty && !w.contains { have.contains(String($0.prefix(4))) }
+        }.count
+        let parts = sentenceBreak.stringByReplacingMatches(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length), withTemplate: "\n").components(separatedBy: "\n")
+        let still = parts.filter { stillAsks.firstMatch(in: $0, range: NSRange(location: 0, length: ($0 as NSString).length)) != nil }.count
+        return lost > 0 && still < asks.count
+    }
+    private static let askWords: Set<String> = ["please", "pls", "plz", "can", "could", "would", "will", "you", "u", "the", "and", "for", "but", "our", "its", "his", "her", "him", "she", "was", "are", "has", "had", "too", "also"]
+    private static let sentenceBreak = try! NSRegularExpression(pattern: "(?<=[.!?])\\s+")
+    private static let askClause = try! NSRegularExpression(pattern: "([^.!?,;]*?)(?:\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz)\\b)([^.!?,;]*)", options: .caseInsensitive)
+    private static let stillAsks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz|kindly|let me know|lmk)\\b|\\?", options: .caseInsensitive)
 
     private static let writerAsks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz)\\b", options: .caseInsensitive)
     private static let request = try! NSRegularExpression(pattern: "^\\W*(?:(?:can|could|would|will) (?:you|u)\\b|please\\b)", options: .caseInsensitive)
