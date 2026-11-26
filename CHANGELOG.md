@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.19 — 2026-11-26
+
+- Fix only no longer flips your meaning: "I has finished" can't come back as "I haven't finished". A rewrite that adds or drops a "not", "no" or "never" is rejected and your text gets only the safe fixes. Mac, Chrome and online.
+- Fix only keeps every word and every bit of slang: "hey r u coming" no longer loses "r", and "ngl" can't turn into "ngg".
+- "Their going to announce it" becomes "They're going to announce it". "I worry about their going to work sick" stays as written.
+- A trailing "tbh", "lol" or "rn" the model split into its own sentence goes back where you put it: "…shipping it tbh." instead of "…shipping it. tbh." A question mark before it is kept.
+- Not notarized by Apple.
+
 ## 0.1.18 — 2026-11-26
 
 - "I don't not think" is gone: when the model spells out "do not", the spelling fix no longer adds a "don't" next to it. A "don't" the model actually dropped is still restored. Mac, Chrome and online.
