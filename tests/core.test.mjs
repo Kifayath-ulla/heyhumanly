@@ -274,6 +274,7 @@ test('dropInvented: no made-up causes or sentences, except in Friendly', () => {
   assert.equal(HH.slangFor('friendly')('Can you send the report today?', 'Could you send the report today? Hope you have a great day!'), 'Could you send the report today? Hope you have a great day!');
   assert.equal(HH.slangFor('formal')('we was late, their is a bug', 'We were late due to a bug.'), 'we were late, there is a bug');
   assert.equal(HH.dropInvented('fix `x.lenght` now', 'Fix `x.lenght` now.'), 'Fix `x.lenght` now.');
+  assert.equal(HH.dropInvented('Dont go. Wait for me.', 'Don\'t go. Wait for me.'), 'Don\'t go. Wait for me.');
   assert.equal(HH.dropInvented('fix `x.lenght` now', 'Fix (x.length now.'), 'Fix (x.length now.');
   assert.equal(HH.dropInvented('...ok so send it', '...Okay, send it. I apologize for any confusion.'), '...Okay, send it. I apologize for any confusion.');
   assert.equal(HH.dropInvented('use `a` here, it is slow', 'Use `a` here because it is slow.'), 'use `a` here, it is slow');

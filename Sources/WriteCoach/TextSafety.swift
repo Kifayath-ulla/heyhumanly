@@ -72,7 +72,7 @@ enum TextSafety {
         if causes(rewrite) > causes(original) {
             return codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original
         }
-        let seen = contentWords(original.replacingOccurrences(of: "`", with: " ")), ns = rewrite as NSString
+        let seen = contentWords((original + " " + apply(original: original, rewrite: original, preserve: preserve)).replacingOccurrences(of: "`", with: " ")), ns = rewrite as NSString
         let parts = sentence.matches(in: rewrite, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range) }
         guard parts.joined() == rewrite else { return rewrite }
         let kept = parts.filter { p in let w = contentWords(p); return w.isEmpty || !w.isDisjoint(with: seen) }
