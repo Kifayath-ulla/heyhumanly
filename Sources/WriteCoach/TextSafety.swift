@@ -19,7 +19,9 @@ enum TextSafety {
         var fixed = fixGrammar(original: original, rewrite: fixTypos(original: original, rewrite: rewrite, preserve: keep))
         if slang { fixed = keepSlang(original: original, rewrite: fixed) }
         fixed = keepLowercase(original: original, rewrite: fixed)
-        return restoreCode(original: original, rewrite: keep.contains("i") ? fixed : capitalizeI(fixed))
+        // An all-lowercase message keeps its lowercase "i" too.
+        let lower = original == original.lowercased() && original != original.uppercased()
+        return restoreCode(original: original, rewrite: keep.contains("i") || lower ? fixed : capitalizeI(fixed))
     }
 
     /// Grammar slips a small model often leaves in ("I has", "we was"). Fixed only when the writer's text had them.

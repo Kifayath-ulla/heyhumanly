@@ -75,6 +75,9 @@ test('requests without a visitor IP share one per-IP allowance', async () => {
     if (r.status === 429) blocked++;
   }
   assert.equal(blocked, 2);
+  const left = await (await peek(env, '11111111-2222-4333-8444-999999999999')).json();
+  assert.equal(left.remaining, 0);
+  assert.equal(left.available, false);
 });
 
 test('the global budget stops requests before the free daily allocation', async () => {
