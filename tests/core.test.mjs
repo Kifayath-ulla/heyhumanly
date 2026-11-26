@@ -406,3 +406,9 @@ test('review: names, possessive "their going to the…" and a question before a 
 test('review: "their going to work" is still corrected', () => {
   assert.equal(HH.fixTypos('Their going to work remotely', 'Their going to work remotely.'), "They're going to work remotely.");
 });
+
+test('review: "their going to" is only corrected where a clause starts', () => {
+  assert.equal(HH.fixTypos('I worry about their going to work sick', 'I worry about their going to work sick.'), 'I worry about their going to work sick.');
+  assert.equal(HH.fixTypos('ok, their going to win', 'OK, their going to win.'), "OK, they're going to win.");
+  assert.equal(HH.fixTypos('i think their going to win', 'I think their going to win.'), "I think they're going to win.");
+});
