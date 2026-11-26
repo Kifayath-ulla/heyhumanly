@@ -60,6 +60,7 @@ enum TextSafety {
     private static let causal = try! NSRegularExpression(pattern: "\\b(?:due to|because|cuz|coz|bcuz|b/c|therefore|as a result|caused by|so that|hence|thus)\\b", options: .caseInsensitive)
     private static let assistant = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b|\\bI(?:'|’)?d be (?:happy|glad) to help\\b|\\bI(?:'|’)?m (?:happy|glad) to help\\b|\\bno problem at all\\b|\\bfeel free to ask\\b|\\bask me again\\b|\\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\\b|\\b(?:sorry|sry) to hear\\b|\\bhope this helps\\b", options: .caseInsensitive)
     private static let lowercaseBc = try! NSRegularExpression(pattern: "\\bbc\\b")
+    private static let intro = try! NSRegularExpression(pattern: "\\b(?:here(?:'|’)?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b", options: .caseInsensitive)
     private static let apology = try! NSRegularExpression(pattern: "\\b(?:apologi[sz]e[sd]?|apologies|sorry|sry|srry|soz|my (?:mistake|bad)|oops)\\b", options: .caseInsensitive)
     private static let stop: Set<String> = ["have", "that", "this", "with", "from", "your", "will", "would", "could", "should", "there", "their", "what", "when",
         "been", "were", "they", "just", "more", "need", "also", "about", "into", "them", "then", "than", "some", "please", "thanks", "thank"]
@@ -86,7 +87,8 @@ enum TextSafety {
         if !friendly { out = dropAddedSentences(original: original, rewrite: rewrite, seen: seen) }
         // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
         let lead = sentence.firstMatch(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length)).map { (rewrite as NSString).substring(with: $0.range) } ?? rewrite
-        if hits(assistant, lead) > hits(assistant, original) { return fallback }
+        let opener = intro.stringByReplacingMatches(in: lead, range: NSRange(location: 0, length: (lead as NSString).length), withTemplate: " ")
+        if hits(assistant, opener) > hits(assistant, original) { return fallback }
         if hits(assistant, out) > hits(assistant, original) { return fallback }
         if !friendly && hits(apology, out) > hits(apology, original) { return fallback }
         // A rewrite whose content words are all new replaced the message instead of rewriting it.
@@ -171,7 +173,9 @@ enum TextSafety {
             let prose = { (s: String) in codeRegex.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: " ") }
             var missing = count(short, in: prose(original)) - count(short, in: prose(out))
             for long in longs where missing > 0 && count(long, in: original) == 0 {
+                let code = codeRanges(out as NSString)
                 let matches = wordRegex(long).matches(in: out, range: NSRange(location: 0, length: (out as NSString).length))
+                    .filter { m in !code.contains { NSIntersectionRange($0, m.range).length > 0 } }
                 for m in matches.prefix(missing).reversed() {
                     let ns = out as NSString
                     out = ns.replacingCharacters(in: m.range, with: matchCase(short, like: ns.substring(with: m.range)))
