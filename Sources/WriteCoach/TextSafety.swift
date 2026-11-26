@@ -82,7 +82,10 @@ enum TextSafety {
         // A lowercase "bc" the writer typed is a reason; one in the rewrite may be a lowercased place name (BC).
         if !friendly && hits(causal, rewrite) > hits(causal, original) + hits(lowercaseBc, original) { return fallback }
         let fixed = apply(original: original, rewrite: original, preserve: preserve)
-        let seen = contentWords((original + " " + fixed).replacingOccurrences(of: "`", with: " "))
+        // The writer's own slang spelled out ("lmk if thats ok" → "let me know if that is okay") is not added content.
+        let written = contentWords((original + " " + fixed).replacingOccurrences(of: "`", with: " "))
+        let spelled = (TextSafety.slang + [("ok", ["okay"])]).filter { count($0.0, in: plain(original)) > 0 }.map { $0.1.joined(separator: " ") }
+        let seen = written.union(contentWords(spelled.joined(separator: " ")))
         var out = rewrite
         if !friendly { out = dropAddedSentences(original: original, rewrite: rewrite, seen: seen) }
         // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
@@ -93,7 +96,7 @@ enum TextSafety {
         if !friendly && hits(apology, out) > hits(apology, original) { return fallback }
         // A rewrite whose content words are all new replaced the message instead of rewriting it.
         let kept = contentWords(out.replacingOccurrences(of: "`", with: " "))
-        if seen.count >= 3 && !kept.isEmpty && seen.isDisjoint(with: kept) { return fallback }
+        if written.count >= 3 && !kept.isEmpty && seen.isDisjoint(with: kept) { return fallback }
         return out
     }
 

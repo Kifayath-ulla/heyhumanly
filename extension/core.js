@@ -432,7 +432,10 @@
     const hits = (re, s) => (s.replace(CODE, ' ').match(re) || []).length;
     const fallback = /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
     if (!friendly && hits(CAUSAL, rewrite) > hits(CAUSAL, original) + hits(/\bbc\b/g, original)) return fallback;
-    const seen = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
+    // The writer's own slang spelled out ("lmk if thats ok" → "let me know if that is okay") is not added content.
+    const written = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
+    const spelled = Object.entries({ ...SLANG_EXPANSIONS, ok: ['okay'] }).filter(([short]) => countWord(short, original.replace(CODE, ' '))).map(([, longs]) => longs.join(' '));
+    const seen = new Set([...written, ...contentWords(spelled.join(' '))]);
     const out = friendly ? rewrite : dropAddedSentences(original, rewrite, seen);
     // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
     const lead = rewrite.split(/(?<=[.!?])\s+/)[0].replace(INTRO, ' ');
@@ -441,7 +444,7 @@
     if (!friendly && hits(APOLOGY, out) > hits(APOLOGY, original)) return fallback;
     // A rewrite whose content words are all new replaced the message instead of rewriting it.
     const kept = contentWords(out.replace(/`/g, ' '));
-    if (seen.size >= 3 && kept.size > 0 && ![...seen].some((w) => kept.has(w))) return fallback;
+    if (written.size >= 3 && kept.size > 0 && ![...seen].some((w) => kept.has(w))) return fallback;
     return out;
   }
   function dropAddedSentences(original, rewrite, seen) {
