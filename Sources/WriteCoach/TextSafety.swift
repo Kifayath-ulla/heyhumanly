@@ -47,10 +47,15 @@ enum TextSafety {
         let base = tokens(apply(original: original, rewrite: original, preserve: preserve)), after = tokens(rewrite)
         var left: [String: Int] = [:]
         for w in after { left[w, default: 0] += 1 }
-        var missing = 0
-        for w in base { if let n = left[w], n > 0 { left[w] = n - 1 } else { missing += 1 } }
-        return missing >= 2 && base.count - after.count >= 2
+        var gone: [String] = []
+        for w in base { if let n = left[w], n > 0 { left[w] = n - 1 } else { gone.append(w) } }
+        if gone.count >= 2 && base.count - after.count >= 2 { return true }
+        // A word swapped for an unrelated one ("Great work" → "Great job") is a rewrite, not a fix; "is" → "are" or "realy" → "really" is a fix.
+        let added = left.flatMap { Array(repeating: $0.key, count: $0.value) }
+        func near(_ a: String, _ b: String) -> Bool { distance(a, b) <= 2 || a.prefix(3) == b.prefix(3) || (aux.contains(a) && aux.contains(b)) }
+        return gone.contains { w in !added.contains { near(w, $0) } } && added.contains { w in !gone.contains { near(w, $0) } }
     }
+    private static let aux: Set<String> = ["is", "are", "was", "were", "am", "be", "been", "has", "have", "had", "do", "does", "did"]
 
     /// Small models invent content: a cause the writer never gave ("late due to a bug") or a whole new sentence ("I apologize for
     /// any confusion."). A new cause falls back to the deterministic fixes; a sentence that shares no content word with the original
@@ -107,7 +112,15 @@ enum TextSafety {
         // Only sentences the model added, and only at the start or end: a rewritten sentence of the writer's always stays.
         var extra = parts.count - max(1, sentence.numberOfMatches(in: original, range: NSRange(location: 0, length: (original as NSString).length)))
         var (a, b) = (0, parts.count)
-        func unrelated(_ p: String) -> Bool { let w = contentWords(p); return !w.isEmpty && w.isDisjoint(with: seen) }
+        // The writer's own question reworded ("can u look?" → "Could you please assist?") stays, unless the model added a question.
+        func asks(_ t: String) -> Int {
+            codeRegex.stringByReplacingMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length), withTemplate: " ").filter { $0 == "?" }.count
+        }
+        let ownQuestion = asks(rewrite) <= asks(original)
+        func unrelated(_ p: String) -> Bool {
+            let w = contentWords(p)
+            return !w.isEmpty && w.isDisjoint(with: seen) && !(ownQuestion && p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?"))
+        }
         while extra > 0, b - a > 1, unrelated(parts[b - 1]) { b -= 1; extra -= 1 }
         while extra > 0, b - a > 1, unrelated(parts[a]) { a += 1; extra -= 1 }
         return a == 0 && b == parts.count ? rewrite : parts[a..<b].joined().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -116,7 +129,7 @@ enum TextSafety {
     /// Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send
     /// it?" -> "Sure, I can send it."). Every style, Friendly too, then falls back to the deterministic fixes. Mirrored in
     /// extension/core.js (dropReply).
-    private static let reply = try! NSRegularExpression(pattern: "^\\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\\b", options: .caseInsensitive)
+    private static let reply = try! NSRegularExpression(pattern: "^\\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot|it['’]?s (?:okay|ok|fine|alright|all right)|that['’]?s (?:okay|ok|fine)|don['’]?t worry)\\b", options: .caseInsensitive)
     private static let ack = try! NSRegularExpression(pattern: "^\\W*(?:yep|yeah|yes|yup|ok|okay|sure|np|no prob|will do|got it|sounds good|of course|absolutely|certainly)\\b", options: .caseInsensitive)
     private static let leadIntro = try! NSRegularExpression(pattern: "^\\W*(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\\n]*\\b(?:version|rewrite|message)\\b[^.!?:\\n]*[.!:]?\\s*", options: .caseInsensitive)
     private static let asks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) you\\b", options: .caseInsensitive)

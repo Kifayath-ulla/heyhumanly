@@ -147,6 +147,8 @@ test('fixTypos: "teh" becomes "the", never a different near word like "tbh"', ()
   assert.equal(HH.fixTypos('send teh file', 'send tbh new file'), 'send the new file');
   assert.equal(HH.fixTypos('tbh i dont think this will work', 'To be honest, I do not think this will work.'), 'To be honest, I do not think this will work.');
   assert.equal(HH.fixTypos('youre late', 'You are late.'), 'You are late.');
+  assert.equal(HH.fixTypos('I dont know if youre free', 'I don\'t know, I should have met you earlier.'), 'I don\'t know, I should have met you earlier.');
+  assert.equal(HH.fixTypos('youre late', 'Yuore late.'), 'You\'re late.');
   assert.equal(HH.fixTypos('i dont want it. we do not care', 'I dnt want it. We do not care.'), 'I don\'t want it. We do not care.');
   assert.equal(HH.fixTypos('i dont want it, dont worry', 'I dno want it, do not worry.'), 'I don\'t want it, do not worry.');
   assert.equal(HH.fixTypos('i dont know', 'I dno know'), 'I don\'t know');
@@ -346,4 +348,23 @@ test('Professional may spell out the writer’s own slang reason, apology or ack
   assert.equal(HH.slangFor('polish')('met the team in vancouver, we was late', 'met the team in vancouver, bc. we were late'), 'met the team in vancouver, bc. we were late');
   assert.equal(HH.slangFor('formal')('Okay, can you check the report?', 'Certainly, the report looks good.'), 'Okay, can you check the report?');
   assert.equal(HH.slangFor('formal')('Talked to the BC team, we was late', 'I spoke with the British Columbia team; we were late because of traffic.'), 'Talked to the BC team, we were late');
+});
+
+test('Fix only: a word swapped for an unrelated one is not a fix; verb agreement and spelling are', () => {
+  assert.equal(HH.cutsWords('Great work on the launch everyone', 'Great job on the launch, everyone!'), true);
+  assert.equal(HH.slangFor('fixOnly')('Great work on the launch everyone, really proud of this team.', 'Great job on the launch, everyone! Really proud of this team.'), 'Great work on the launch everyone, really proud of this team.');
+  assert.equal(HH.cutsWords('the files is ready', 'The files are ready.'), false);
+  assert.equal(HH.cutsWords('their going home', "They're going home."), false);
+  assert.equal(HH.cutsWords('it realy helped', 'It really helped.'), false);
+});
+
+test('"It\'s okay, let\'s try again" answers the message; the writer\'s own "It\'s okay" does not', () => {
+  assert.equal(HH.slangFor('friendly')('the login page is broken for me', "It's okay, let's try this again."), 'the login page is broken for me');
+  assert.equal(HH.slangFor('polish')("It's okay, we can talk later", "It's okay, we can talk later."), "It's okay, we can talk later.");
+});
+
+test('the writer\'s question survives being reworded; an added question does not', () => {
+  assert.equal(HH.slangFor('formal')('the api returns 500 when `user_id` is null, can u look?', 'The API returns a 500 error when `user_id` is null. Could you please assist?'),
+    'The API returns a 500 error when `user_id` is null. Could you please assist?');
+  assert.equal(HH.dropInvented('send the file', 'Send the file. What format do you want?'), 'Send the file.');
 });

@@ -258,9 +258,11 @@
       const fixed = countWord(right, out) + (spelled === right ? 0 : Math.max(0, countWord(spelled, out) - countWord(spelled, original)));
       if (fixed < hits.length) {
         let left = hits.length - fixed;
+        // "you" may be a new object ("met you earlier"), not a mangled "youre": never make it "you're".
+        const base = (right.match(/^([a-z]+)['’](?:re|s|ll|ve|d|m)$/i) || [])[1];
         out = out.replace(/[A-Za-z']+/g, (w) => {
           const l = w.toLowerCase();
-          if (left > 0 && !had.has(l) && l[0] === typo[0] && editDistance(l, typo) <= 2) { left--; return matchCase(right, w); }
+          if (left > 0 && !had.has(l) && l !== base && l[0] === typo[0] && editDistance(l, typo) <= 2) { left--; return matchCase(right, w); }
           return w;
         });
       }
@@ -283,10 +285,15 @@
   function cutsWords(original, rewrite) {
     const base = tokens(fixTypos(original, original)), left = new Map();
     for (const w of tokens(rewrite)) left.set(w, (left.get(w) || 0) + 1);
-    let missing = 0;
-    for (const w of base) { const n = left.get(w) || 0; if (n) left.set(w, n - 1); else missing++; }
-    return missing >= 2 && base.length - tokens(rewrite).length >= 2;
+    const gone = [];
+    for (const w of base) { const n = left.get(w) || 0; if (n) left.set(w, n - 1); else gone.push(w); }
+    if (gone.length >= 2 && base.length - tokens(rewrite).length >= 2) return true;
+    // A word swapped for an unrelated one ("Great work" → "Great job") is a rewrite, not a fix; "is" → "are" or "realy" → "really" is a fix.
+    const added = [...left].flatMap(([w, n]) => Array(n).fill(w));
+    const near = (a, b) => editDistance(a, b) <= 2 || a.slice(0, 3) === b.slice(0, 3) || (AUX.has(a) && AUX.has(b));
+    return gone.some((w) => !added.some((x) => near(w, x))) && added.some((w) => !gone.some((x) => near(w, x)));
   }
+  const AUX = new Set(['is', 'are', 'was', 'were', 'am', 'be', 'been', 'has', 'have', 'had', 'do', 'does', 'did']);
   // With code in the text, the fallback is the original untouched, so no code span can be corrected or swapped.
   const guardFixOnly = (original, rewrite) => (!cutsWords(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixTypos(original, original));
   // "I should of course check" is not a "should of" slip: if the model read it as one ("I should have checked"), the writer's words go back. Same as TextSafety.swift.
@@ -456,7 +463,9 @@
     if (parts.join('') !== rewrite) return rewrite;
     // Only sentences the model added, and only at the start or end: a rewritten sentence of the writer's always stays.
     let extra = parts.length - (original.match(SENTENCE) || [original]).length, a = 0, b = parts.length;
-    const unrelated = (p) => { const w = [...contentWords(p)]; return w.length > 0 && !w.some((x) => seen.has(x)); };
+    // The writer's own question reworded ("can u look?" → "Could you please assist?") stays, unless the model added a question.
+    const asks = (t) => (t.replace(CODE, ' ').match(/\?/g) || []).length, ownQuestion = asks(rewrite) <= asks(original);
+    const unrelated = (p) => { const w = [...contentWords(p)]; return w.length > 0 && !w.some((x) => seen.has(x)) && !(ownQuestion && /\?\s*$/.test(p)); };
     while (extra > 0 && b - a > 1 && unrelated(parts[b - 1])) { b--; extra--; }
     while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
@@ -464,7 +473,7 @@
   // Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send
   // it?" -> "Sure, I can send it."). Every style, Friendly too, then falls back to the deterministic fixes. Same as
   // TextSafety.swift (dropReply).
-  const REPLY = /^\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot)\b/i;
+  const REPLY = /^\W*(sure|no problem|of course|absolutely|certainly|you['’]re welcome|you are welcome|happy to|glad to|great question|my pleasure|anytime|no worries|shoot|it['’]?s (?:okay|ok|fine|alright|all right)|that['’]?s (?:okay|ok|fine)|don['’]?t worry)\b/i;
   const ASKS = /\b(?:can|could|would|will) you\b/i, OFFERS = /\bI(?:['’]ll| will| can(?!['’]t)| could)\b/i;
   const ACK = /^\W*(?:yep|yeah|yes|yup|ok|okay|sure|np|no prob|will do|got it|sounds good|of course|absolutely|certainly)\b/i;
   const LEAD_INTRO = /^\W*(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b[^.!?:\n]*[.!:]?\s*/i;
