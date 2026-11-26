@@ -66,7 +66,7 @@ enum TextSafety {
 
     private static func wordRegex(_ word: String) -> NSRegularExpression {
         let pattern = NSRegularExpression.escapedPattern(for: word).replacingOccurrences(of: "'", with: "['’]")
-        return try! NSRegularExpression(pattern: "(?<!['’])\\b" + pattern + "\\b(?!['’])", options: .caseInsensitive)
+        return try! NSRegularExpression(pattern: "(?<![A-Za-z]['’])\\b" + pattern + "\\b(?!['’][A-Za-z])", options: .caseInsensitive)
     }
 
     private static func count(_ word: String, in text: String) -> Int {

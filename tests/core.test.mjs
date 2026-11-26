@@ -241,6 +241,7 @@ test('keepSlang: slang the writer typed stays, except in Professional', () => {
   assert.equal(HH.keepSlang('thx, thank you all', 'Thanks, thank you all'), 'Thx, thank you all');
   assert.equal(HH.keepSlang('Thanks, see you', 'Thanks, see you'), 'Thanks, see you');
   assert.equal(HH.keepSlang('When ready, could u send the file?', 'When you’re ready, could you send the file?'), 'When you’re ready, could u send the file?');
+  assert.equal(HH.keepSlang("she said 'thx' and left", "She said 'thanks' and left."), "She said 'thx' and left.");
   assert.equal(HH.slangFor('formal')('thx', 'Thank you'), 'Thank you');
   assert.equal(HH.slangFor('polish')('thx', 'Thanks'), 'Thx');
 });

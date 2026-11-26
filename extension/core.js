@@ -275,8 +275,8 @@
   // Slang the writer typed stays when the model spelled it out ("thx" → "thanks"). Only new expansions are reverted.
   const SLANG_EXPANSIONS = { thx: ['thanks', 'thank you'], ty: ['thank you'], pls: ['please'], plz: ['please'], btw: ['by the way'], idk: ['i don\'t know', 'i do not know'],
     rn: ['right now'], imo: ['in my opinion'], tbh: ['to be honest'], u: ['you'], ur: ['your', 'you\'re'], gonna: ['going to'], wanna: ['want to'] };
-  // Not part of a contraction, so "you" in "you’re" is left alone.
-  const wordRe = (w) => new RegExp('(?<![\'’])\\b' + w.replace(/'/g, '[\'’]') + '\\b(?![\'’])', 'gi');
+  // Not part of a contraction ("you" in "you’re"); quoted words still count.
+  const wordRe = (w) => new RegExp('(?<![A-Za-z][\'’])\\b' + w.replace(/'/g, '[\'’]') + '\\b(?![\'’][A-Za-z])', 'gi');
   const countWord = (w, s) => (s.match(wordRe(w)) || []).length;
   function keepSlang(original, rewrite) {
     let out = rewrite;
