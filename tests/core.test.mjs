@@ -301,6 +301,10 @@ test('a rewrite that swaps who is speaking falls back to the safe fixes', () => 
   assert.equal(HH.slangFor('formal')('I attached the contract.', 'You will find the contract attached.'), 'You will find the contract attached.');
   assert.equal(HH.slangFor('formal')('do u have the logs? i need them', 'I need the logs. Could you send them?'), 'I need the logs. Could you send them?');
   assert.equal(HH.slangFor('polish')('i think ur right', 'I think you are right.'), 'I think you are right.');
+  assert.equal(HH.slangFor('formal')('I can send the file on request.', 'You can ask me to send the file.'), 'You can ask me to send the file.');
+  assert.equal(HH.slangFor('formal')('I really need the report today.', 'You really need the report today.'), 'I really need the report today.');
+  assert.equal(HH.slangFor('formal')('what time works for u?', "I'd like to know what time works for a call."), "I'd like to know what time works for a call.");
+  assert.equal(HH.slangFor('formal')(lunch, "Here is a professional version: I'm free for lunch on Thursday. There's a new ramen place near the office."), HH.fixGrammar(lunch, HH.fixTypos(lunch, lunch)));
 });
 
 test('dropInvented: no made-up causes or sentences, except in Friendly', () => {

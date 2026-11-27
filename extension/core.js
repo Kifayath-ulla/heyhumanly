@@ -546,14 +546,16 @@
   // The model swapped who is speaking: "Im running late" → "You are running late", or "r u free?" → "I'm free.".
   const I_LEAD = /^\W*(?:i['’]m|i['’]ll|i['’]ve|i['’]d|im|i am|i)\b/i, YOU_LEAD = /^\W*(?:you['’](?:re|ll|ve|d)|youre|you|ur|u)\b/i;
   const YOU = /\b(?:you|u|ur|your|youre|you['’](?:re|ll|ve|d))\b/i, ME = /\b(?:i|im|i['’]m|i['’]ll|i['’]ve|i['’]d|me|my)\b/i;
-  const SUBJECT_VERB = /^\W*(?:(?:am|are|is|was|were|will|would|have|has|had|r)\s+)*(\p{L}+)/iu;
+  const SUBJECT_VERB = /^\W*(?:(?:am|are|is|was|were|will|would|have|has|had|r|can|could|should|shall|may|might|must|do|does|did|just|also|still|really|\p{L}+ly)\s+)*(\p{L}+)/iu;
   const firstSentence = (s) => s.replace(CODE, ' ').trim().split(/(?<=[.!?])\s+/)[0];
   const marks = (s) => (s.replace(CODE, ' ').match(/\?+/g) || []).length;
   function swapsSpeaker(original, rewrite) {
-    const o = firstSentence(original), r = firstSentence(rewrite);
+    const o = firstSentence(original), r = firstSentence(rewrite.replace(LEAD_INTRO, ''));
     const verb = (s, lead) => ((s.replace(lead, '').match(SUBJECT_VERB) || [])[1] || '').toLowerCase().slice(0, 4);
     if (I_LEAD.test(o) && YOU_LEAD.test(r) && !YOU.test(o) && verb(o, I_LEAD) !== '' && verb(o, I_LEAD) === verb(r, YOU_LEAD)) return true;
-    return /\?/.test(o) && YOU.test(o) && !ME.test(o) && I_LEAD.test(r) && !YOU.test(r) && !/\?/.test(r) && marks(rewrite) < marks(original);
+    // An answer repeats the word asked about ("r u free?" → "I'm free."); "I'd like to know what time works" still asks.
+    const asked = new Set(tokens(o).map((w) => w.slice(0, 4)));
+    return /\?/.test(o) && YOU.test(o) && !ME.test(o) && I_LEAD.test(r) && !YOU.test(r) && !/\?/.test(r) && marks(rewrite) < marks(original) && asked.has(verb(r, I_LEAD));
   }
   const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original)) || swapsSpeaker(original, rewrite);
   const dropReply = (original, rewrite) =>

@@ -91,4 +91,7 @@ styledLacks Professional "Im running 10 mins late, start without me" "You are ru
 styledLacks Professional "r u free for lunch on thursday? theres a new ramen place near the office" "I'm free for lunch on Thursday. There's a new ramen place near the office." "I'm free"
 styled Professional "Im running 10 mins late, start without me" "I'm running 10 minutes late. Start without me." "I'm running 10 minutes late. Start without me."
 styled Professional "I attached the contract." "You will find the contract attached." "You will find the contract attached."
+styled Professional "I can send the file on request." "You can ask me to send the file." "You can ask me to send the file."
+styled Professional "what time works for u?" "I'd like to know what time works for a call." "I'd like to know what time works for a call."
+styledLacks Professional "r u free for lunch on thursday? theres a new ramen place near the office" "Here is a professional version: I'm free for lunch on Thursday. There's a new ramen place near the office." "I'm free"
 exit $fail
