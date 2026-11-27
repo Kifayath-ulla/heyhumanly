@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.26 — 2026-11-28
+
+- Professional no longer throws away a good rewrite when the model only adds the apostrophe you left out ("its fine, no worries!" → "It's fine; no worries!").
+- Not notarized by Apple.
+
 ## 0.1.25 — 2026-11-27
 
 - Professional no longer answers your question instead of rewording it when the model rewords the word you asked about ("r u free for lunch?" → "I'm available for lunch."), even if it adds a new question after. Your own "I'm free after 3", moved first, still stays.
