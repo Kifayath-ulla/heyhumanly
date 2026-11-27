@@ -66,6 +66,13 @@ struct OnboardingView: View {
             detail("To read your selection and put the rewrite back in Mail, Notes, Slack and other apps, macOS needs you to allow HeyHumanly in Accessibility. It's used only when you press \(model.shortcutLabel).")
             if model.accessibilityTrusted {
                 Label("Accessibility is on", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+            } else if model.fixingAccess {
+                HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Waiting for the switch…").foregroundStyle(.secondary) }
+                detail(model.fixingAccessHelp).font(.callout)
+                HStack(spacing: 12) {
+                    OpenAccessibilityLink()
+                    Button("Copy instead") { model.stopFixingAccess(); copyInstead = true; model.settings.copyInstead = true; model.settings.save() }.buttonStyle(.link)
+                }.font(.callout)
             } else if copyInstead {
                 Label("Copy instead: copy text with ⌘C, press \(model.shortcutLabel), and Enter copies the rewrite.", systemImage: "doc.on.clipboard")
                     .font(.callout).fixedSize(horizontal: false, vertical: true)
