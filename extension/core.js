@@ -548,14 +548,18 @@
   const YOU = /\b(?:you|u|ur|your|youre|you['’](?:re|ll|ve|d))\b/i, ME = /\b(?:i|im|i['’]m|i['’]ll|i['’]ve|i['’]d|me|my)\b/i;
   const SUBJECT_VERB = /^\W*(?:(?:am|are|is|was|were|will|would|have|has|had|r|can|could|should|shall|may|might|must|do|does|did|not|never|just|also|still|really|\p{L}+ly)\s+)*(\p{L}+)/iu;
   const firstSentence = (s) => s.replace(CODE, ' ').trim().split(/(?<=[.!?])\s+/)[0];
-  const marks = (s) => (s.replace(CODE, ' ').match(/\?+/g) || []).length;
+  // Answers that reword the word asked about: "r u free?" → "I'm available."
+  const ANSWER = { avai: 'free', free: 'avai' }, NOT = /\b(?:not|never|\w+n['’]t|cant|dont|wont|isnt|arent|wasnt|didnt|doesnt)\b/i;
   function swapsSpeaker(original, rewrite) {
     const o = firstSentence(original), r = firstSentence(rewrite.replace(LEAD_INTRO, ''));
     const verb = (s, lead) => ((s.replace(lead, '').match(SUBJECT_VERB) || [])[1] || '').toLowerCase().slice(0, 4);
     if (I_LEAD.test(o) && YOU_LEAD.test(r) && !YOU.test(o) && verb(o, I_LEAD) !== '' && verb(o, I_LEAD) === verb(r, YOU_LEAD)) return true;
-    // An answer repeats the word asked about ("r u free?" → "I'm free."); "I'd like to know what time works" still asks.
+    // An answer repeats the word asked about ("r u free?" → "I'm free."), even before a new question; "I'd like to know what time works" still asks.
     const asked = new Set(tokens(o).map((w) => w.slice(0, 4)));
-    return /\?/.test(o) && YOU.test(o) && !ME.test(o) && I_LEAD.test(r) && !YOU.test(r) && !/\?/.test(r) && marks(rewrite) < marks(original) && asked.has(verb(r, I_LEAD));
+    const v = verb(r, I_LEAD);
+    // The writer's own later "I'm free after 3", moved first, is not an answer.
+    const own = original.replace(CODE, ' ').trim().split(/(?<=[.!?])\s+/).slice(1).some((s) => I_LEAD.test(s) && verb(s, I_LEAD) === v && NOT.test(s) === NOT.test(r));
+    return /\?/.test(o) && YOU.test(o) && !ME.test(o) && I_LEAD.test(r) && !YOU.test(r) && !/\?/.test(r) && (asked.has(v) || asked.has(ANSWER[v])) && !own;
   }
   const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original)) || swapsSpeaker(original, rewrite);
   const dropReply = (original, rewrite) =>

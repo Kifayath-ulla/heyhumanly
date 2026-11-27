@@ -304,6 +304,11 @@ test('a rewrite that swaps who is speaking falls back to the safe fixes', () => 
   assert.equal(HH.slangFor('formal')('I can send the file on request.', 'You can ask me to send the file.'), 'You can ask me to send the file.');
   assert.equal(HH.slangFor('formal')('I really need the report today.', 'You really need the report today.'), 'I really need the report today.');
   assert.equal(HH.slangFor('formal')('r u free for lunch on thursday?', "I'm not free for lunch on Thursday."), 'r u free for lunch on thursday?');
+  assert.equal(HH.slangFor('formal')(lunch, "I'm available for lunch on Thursday. There's a new ramen place near the office that I'd love to try."), HH.fixGrammar(lunch, HH.fixTypos(lunch, lunch)));
+  assert.equal(HH.slangFor('formal')(lunch, "I'm available for lunch on Thursday. There's a new ramen place near the office. Would you be free to join me?"), HH.fixGrammar(lunch, HH.fixTypos(lunch, lunch)));
+  assert.equal(HH.slangFor('formal')(lunch, 'Are you available for lunch on Thursday? There is a new ramen place near the office.'), 'Are you available for lunch on Thursday? There is a new ramen place near the office.');
+  assert.equal(HH.slangFor('formal')('r u free tomorrow? im not free after 3', "I'm free after 3."), 'r u free tomorrow? im not free after 3');
+  assert.equal(HH.slangFor('formal')('r u free tomorrow? im free after 3', "I'm free after 3. Are you free tomorrow?"), "I'm free after 3. Are you free tomorrow?");
   assert.equal(HH.slangFor('formal')('what time works for u?', "I'd like to know what time works for a call."), "I'd like to know what time works for a call.");
   assert.equal(HH.slangFor('formal')(lunch, "Here is a professional version: I'm free for lunch on Thursday. There's a new ramen place near the office."), HH.fixGrammar(lunch, HH.fixTypos(lunch, lunch)));
 });
