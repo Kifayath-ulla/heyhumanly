@@ -25,6 +25,9 @@ DEV_DIR="$HOME/Library/Application Support/HeyHumanlyDev"
 DEV_KC="$HOME/Library/Keychains/heyhumanly-dev.keychain-db"
 if [ -f "$DEV_DIR/kc-pass" ] && [ -f "$DEV_KC" ]; then
   security unlock-keychain -p "$(cat "$DEV_DIR/kc-pass")" "$DEV_KC" >/dev/null 2>&1 || true
+  # codesign only finds identities in keychains on the search list.
+  security list-keychains -d user | grep -q heyhumanly-dev.keychain-db \
+    || security list-keychains -d user -s "${(@f)$(security list-keychains -d user | sed 's/^ *"//; s/"$//')}" "$DEV_KC"
   if codesign --force --deep --keychain "$DEV_KC" --sign "HeyHumanly Local Dev" "$APP" >/dev/null 2>&1; then
     echo "Signed with HeyHumanly Local Dev"
   else

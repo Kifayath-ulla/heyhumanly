@@ -55,14 +55,20 @@ private struct GeneralSettings: View {
                 LabeledContent("Accessibility") {
                     if model.accessibilityTrusted {
                         Label("Allowed", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                    } else if model.fixingAccess {
+                        HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Waiting for the switch…").foregroundStyle(.secondary) }
                     } else {
-                        Button("Allow…") { AccessibilityBridge.requestTrust() }
+                        HStack(spacing: 6) {
+                            Label("Missing", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                            Button("Fix access") { model.fixAccessibility() }
+                        }
                     }
                 }
             } footer: {
                 Text(model.accessibilityTrusted ? "HeyHumanly can read your selection and replace it in other apps."
-                     : "Without it, copy text first: ⌃⌥Space rewrites what you copied and Enter copies the result.")
-                    .font(.caption).foregroundStyle(.secondary)
+                     : model.fixingAccess ? model.fixingAccessHelp
+                     : model.accessibilityHelp + " Until then, \(model.shortcutLabel) can only rewrite text you copied.")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Section("Never read text in") {
                 ForEach(pausedApps, id: \.id) { app in

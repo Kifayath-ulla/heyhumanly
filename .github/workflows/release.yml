@@ -12,7 +12,10 @@ jobs:
       - name: Check versions match the tag
         env: { TAG: '${{ inputs.tag }}' }
         run: python3 scripts/check-versions.py "$TAG"
-      - name: Build universal DMG (ad-hoc signed unless secrets are added later)
+      - name: Build universal DMG (self-signed when the SIGNING_CERT_* secrets exist, else ad-hoc)
+        env:
+          SIGNING_CERT_P12: '${{ secrets.SIGNING_CERT_P12 }}'
+          SIGNING_CERT_PASSWORD: '${{ secrets.SIGNING_CERT_PASSWORD }}'
         run: ./scripts/release.sh
       - name: Build the Chrome extension zip the website links to
         env: { TAG: '${{ inputs.tag }}' }

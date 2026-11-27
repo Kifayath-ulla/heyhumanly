@@ -34,6 +34,9 @@ struct AppSettings: Codable {
     var dotActionRaw: String?
     var suggestStyleRaw: Bool?
     var typingPauseRaw: Double?
+    var copyInsteadRaw: Bool?
+    /// Chose "Copy instead" of Accessibility: the shortcut rewrites the clipboard right away.
+    var copyInstead: Bool { get { copyInsteadRaw ?? false } set { copyInsteadRaw = newValue } }
     /// Clicking the dot starts a lesson (default) or opens the ready-made fix.
     var dotTeaches: Bool { get { dotActionRaw != "fix" } set { dotActionRaw = newValue ? "teach" : "fix" } }
     /// Also suggest clearer wording, not only real mistakes.
@@ -287,6 +290,20 @@ final class AccessibilityBridge {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
+    /// Removes HeyHumanly's own Accessibility entry (never another app's). An ad-hoc signed update no longer matches
+    /// the old entry, so macOS ignores it even though its switch still looks on; a fresh entry has to be granted.
+    static func resetOwnGrant() async -> Bool {
+        guard let id = Bundle.main.bundleIdentifier, !id.isEmpty else { return false }
+        return await withCheckedContinuation { done in
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+            p.arguments = ["reset", "Accessibility", id]
+            p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
+            p.terminationHandler = { done.resume(returning: $0.terminationStatus == 0) }
+            do { try p.run() } catch { done.resume(returning: false) }
+        }
+    }
+
     /// 1) Accessibility API, 2) simulated Cmd+C with the clipboard saved and restored.
     func selectedText() async -> String? {
         if let text = axSelectedText() { return text }
@@ -356,16 +373,48 @@ final class HotKey {
     private var handlerInstalled = false
 
     /// True when an enabled macOS symbolic hotkey (Spotlight, input sources, Mission Control…) uses this combo.
+    /// The input-source shortcuts (⌃Space, ⌃⌥Space by default) only count with two or more keyboard input sources:
+    /// with one, macOS has nothing to switch to and the shortcut still reaches HeyHumanly.
     static func isUsedByMacOS(keyCode: UInt32, modifiers: UInt32) -> Bool {
         var unmanaged: Unmanaged<CFArray>?
         guard CopySymbolicHotKeys(&unmanaged) == noErr, let array = unmanaged?.takeRetainedValue() as? [[String: Any]] else { return false }
         let mask = UInt32(cmdKey | optionKey | controlKey | shiftKey)
-        return array.contains { entry in
+        let matches = array.filter { entry in
             guard (entry[kHISymbolicHotKeyEnabled as String] as? Bool) == true,
                   let code = entry[kHISymbolicHotKeyCode as String] as? Int,
                   let mods = entry[kHISymbolicHotKeyModifiers as String] as? Int else { return false }
             return UInt32(code) == keyCode && (UInt32(mods) & mask) == (modifiers & mask)
+        }.count
+        guard matches > 0 else { return false }
+        let inputSource = inputSourceHotKeys().filter { $0.keyCode == keyCode && $0.modifiers == modifiers & mask }.count
+        return matches > inputSource || keyboardInputSourceCount() > 1
+    }
+
+    /// The enabled "Select the previous / next input source" shortcuts (ids 60 and 61 in com.apple.symbolichotkeys).
+    static func inputSourceHotKeys() -> [(keyCode: UInt32, modifiers: UInt32)] {
+        let saved = UserDefaults(suiteName: "com.apple.symbolichotkeys")?.dictionary(forKey: "AppleSymbolicHotKeys") ?? [:]
+        let defaults: [String: (keyCode: UInt32, modifiers: UInt32)] = ["60": (UInt32(kVK_Space), UInt32(controlKey)),
+                                                                         "61": (UInt32(kVK_Space), UInt32(controlKey | optionKey))]
+        return defaults.compactMap { id, standard in
+            // Never changed in System Settings: on, with the standard keys.
+            guard let entry = saved[id] as? [String: Any] else { return standard }
+            guard (entry["enabled"] as? Bool) == true else { return nil }
+            guard let p = (entry["value"] as? [String: Any])?["parameters"] as? [Int], p.count == 3 else { return standard }
+            let cocoa = NSEvent.ModifierFlags(rawValue: UInt(p[2]))
+            var carbon = 0
+            if cocoa.contains(.command) { carbon |= cmdKey }
+            if cocoa.contains(.shift) { carbon |= shiftKey }
+            if cocoa.contains(.option) { carbon |= optionKey }
+            if cocoa.contains(.control) { carbon |= controlKey }
+            return (UInt32(p[1]), UInt32(carbon))
         }
+    }
+
+    /// Enabled keyboard layouts and input methods the input-source shortcuts cycle through.
+    static func keyboardInputSourceCount() -> Int {
+        let filter = [kTISPropertyInputSourceIsSelectCapable as String: true,
+                      kTISPropertyInputSourceCategory as String: kTISCategoryKeyboardInputSource as String] as CFDictionary
+        return (TISCreateInputSourceList(filter, false)?.takeRetainedValue() as? [TISInputSource])?.count ?? 0
     }
 
     /// Installs the Carbon event handler once, then (re)registers the key. Returns the OSStatus.

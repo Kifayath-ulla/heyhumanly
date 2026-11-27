@@ -17,7 +17,7 @@ final class QuickSession: ObservableObject {
     @Published var notice: String?
     @Published var showWhy = false
     @Published var appName = ""
-    /// No Accessibility permission: the text comes from the clipboard and Enter copies the rewrite.
+    /// No Accessibility permission: the panel says so and offers Fix access; ⌘R rewrites the clipboard and Enter copies it.
     @Published var copyOnly = false
 
     weak var model: CoachModel?
@@ -102,7 +102,8 @@ final class QuickSession: ObservableObject {
         original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? fail("Type or select some text in the box, then press \(model.shortcutLabel).") : run()
     }
 
-    /// Without Accessibility HeyHumanly can't read the selection, so it rewrites what you copied; Enter copies the result.
+    /// Without Accessibility HeyHumanly can't read the selection. The panel says so and offers Fix access; the copied text
+    /// is only rewritten when you ask (⌘R), unless you chose "Copy instead" in the welcome window. Enter copies the result.
     func openFromClipboard(model: CoachModel, front: NSRunningApplication) {
         self.model = model
         task?.cancel(); generation += 1
@@ -115,7 +116,11 @@ final class QuickSession: ObservableObject {
         original = NSPasteboard.general.string(forType: .string) ?? ""
         show()
         if original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            fail("Copy some text with ⌘C, then press \(model.shortcutLabel). To replace text in place, turn on Accessibility in Settings.")
+            original = ""
+            layout()
+        } else if !model.settings.copyInstead {
+            notice = "Shown: the text you last copied, not your selection. ⌘R rewrites it and Enter copies the result."
+            layout()
         } else if model.isOnline {
             // The clipboard may hold something older than the selection, so nothing is sent online until you ask.
             notice = "This is the text you last copied. Press ⌘R to rewrite it online."
@@ -133,6 +138,18 @@ final class QuickSession: ObservableObject {
         } else {
             run()
         }
+    }
+
+    func fixAccess() { model?.fixAccessibility(fromPanel: true) }
+
+    /// Fix access worked: say so where the panel last was, so the next shortcut press replaces the selection.
+    func accessRestored(model: CoachModel) {
+        self.model = model
+        task?.cancel(); generation += 1
+        original = ""; streamed = ""; rewrite = nil; changes = []; error = nil; cache = [:]; copyOnly = false
+        element = nil; range = nil; sample = nil; sampleRange = nil
+        notice = "Accessibility is on again. Select text in \(appName) and press \(model.shortcutLabel) to replace it."
+        show()
     }
 
     private func show() {
@@ -461,6 +478,31 @@ final class QuickSession: ObservableObject {
     }
 }
 
+/// The panel's warning when Accessibility is off, with the one-click fix.
+struct AccessMissing: View {
+    @ObservedObject var model: CoachModel
+    let fix: () -> Void
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.system(size: 14))
+            VStack(alignment: .leading, spacing: 6) {
+                Text("HeyHumanly can't read or replace your selection: Accessibility access is missing.")
+                    .font(.system(size: 12.5, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
+                Text(model.fixingAccess ? model.fixingAccessHelp : model.accessibilityHelp)
+                    .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                if model.fixingAccess {
+                    HStack(spacing: 6) { ProgressView().controlSize(.small).scaleEffect(0.7).frame(width: 14, height: 14); Text("Waiting for the switch…").font(.system(size: 12)).foregroundStyle(.secondary) }
+                } else {
+                    Button("Fix access", action: fix).controlSize(.small)
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.orange.opacity(0.12)))
+    }
+}
+
 /// Borderless, non-activating, but able to take key so the panel's shortcuts work.
 final class QuickPanelWindow: NSPanel {
     var onResignKey: (() -> Void)?
@@ -530,6 +572,7 @@ struct QuickPanelView: View {
 
     @ViewBuilder private var content: some View {
         VStack(alignment: .leading, spacing: 10) {
+            if session.copyOnly, let model = session.model { AccessMissing(model: model) { session.fixAccess() } }
             if session.hasText {
                 ScrollView {
                     Text(session.displayed)
