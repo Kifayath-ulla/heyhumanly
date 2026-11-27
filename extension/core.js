@@ -561,7 +561,7 @@
     const own = original.replace(CODE, ' ').trim().split(/(?<=[.!?])\s+/).slice(1).some((s) => I_LEAD.test(s) && verb(s, I_LEAD) === v && NOT.test(s) === NOT.test(r));
     return /\?/.test(o) && YOU.test(o) && !ME.test(o) && I_LEAD.test(r) && !YOU.test(r) && !/\?/.test(r) && (asked.has(v) || asked.has(ANSWER[v])) && !own;
   }
-  const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original)) || swapsSpeaker(original, rewrite);
+  const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/['’]/g, '').includes(opener(rewrite).replace(/'/g, ''))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original)) || swapsSpeaker(original, rewrite);
   const dropReply = (original, rewrite) =>
     !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
   // A leading "Sure," the writer didn't type is filler when a rewrite follows it ("Sure, could you send…"), not a reply.

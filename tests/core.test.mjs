@@ -391,6 +391,9 @@ test('Fix only: a word swapped for an unrelated one is not a fix; verb agreement
 test('"It\'s okay, let\'s try again" answers the message; the writer\'s own "It\'s okay" does not', () => {
   assert.equal(HH.slangFor('friendly')('the login page is broken for me', "It's okay, let's try this again."), 'the login page is broken for me');
   assert.equal(HH.slangFor('polish')("It's okay, we can talk later", "It's okay, we can talk later."), "It's okay, we can talk later.");
+  // The writer's own opener typed without an apostrophe ("its fine") is not a reply when the model adds one.
+  assert.equal(HH.slangFor('formal')('its fine, no worries! we can try again next week', "It's fine; no worries! We can try again next week."), "It's fine; no worries! We can try again next week.");
+  assert.equal(HH.slangFor('formal')('can u check the logs?', "It's fine, I will check them."), 'can u check the logs?');
 });
 
 test('the writer\'s question survives being reworded; an added question does not', () => {
