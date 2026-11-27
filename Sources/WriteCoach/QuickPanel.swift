@@ -492,6 +492,7 @@ struct AccessMissing: View {
                     .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 if model.fixingAccess {
                     HStack(spacing: 6) { ProgressView().controlSize(.small).scaleEffect(0.7).frame(width: 14, height: 14); Text("Waiting for the switch…").font(.system(size: 12)).foregroundStyle(.secondary) }
+                    OpenAccessibilityLink().font(.system(size: 12))
                 } else {
                     Button("Fix access", action: fix).controlSize(.small)
                 }
@@ -500,6 +501,13 @@ struct AccessMissing: View {
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.orange.opacity(0.12)))
+    }
+}
+
+/// Fallback while Fix access waits, for when macOS shows no prompt.
+struct OpenAccessibilityLink: View {
+    var body: some View {
+        Button("Open Accessibility settings") { AccessibilityBridge.openSystemSettings() }.buttonStyle(.link)
     }
 }
 

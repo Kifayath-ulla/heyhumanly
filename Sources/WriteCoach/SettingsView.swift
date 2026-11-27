@@ -56,7 +56,10 @@ private struct GeneralSettings: View {
                     if model.accessibilityTrusted {
                         Label("Allowed", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                     } else if model.fixingAccess {
-                        HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Waiting for the switch…").foregroundStyle(.secondary) }
+                        VStack(alignment: .trailing, spacing: 2) {
+                            HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Waiting for the switch…").foregroundStyle(.secondary) }
+                            OpenAccessibilityLink().font(.caption)
+                        }
                     } else {
                         HStack(spacing: 6) {
                             Label("Missing", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)

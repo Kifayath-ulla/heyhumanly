@@ -266,18 +266,17 @@ final class CoachModel: ObservableObject {
 
     /// One plain sentence on why access is missing, for Settings, the panel and the welcome window.
     let accessibilityHelp = "macOS needs HeyHumanly switched on in Accessibility, and again after each update, even if its switch already looks on."
-    let fixingAccessHelp = "Switch HeyHumanly on in the Accessibility list that opened. HeyHumanly picks it up by itself."
+    let fixingAccessHelp = "In the macOS prompt, click Open System Settings, then switch HeyHumanly on. HeyHumanly picks it up by itself."
 
-    /// Fix access: removes HeyHumanly's stale Accessibility entry, asks macOS again, opens the list and waits for the switch.
+    /// Fix access: removes HeyHumanly's stale Accessibility entry, asks macOS again and waits for the switch.
+    /// System Settings isn't opened here: it would cover the macOS prompt, and the list only gains HeyHumanly once
+    /// the prompt is answered. The prompt's own button opens the list; views offer a link in case no prompt appears.
     func fixAccessibility(fromPanel: Bool = false) {
         fixingAccess = true
         Task {
             let reset = await AccessibilityBridge.resetOwnGrant()
             appLog.notice("fix access: tccutil reset ok=\(reset)")
             AccessibilityBridge.requestTrust()
-            // The prompt adds HeyHumanly back to the list; opened sooner, the list can miss it.
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            AccessibilityBridge.openSystemSettings()
             watchAccessibility(fromPanel: fromPanel)
         }
     }
