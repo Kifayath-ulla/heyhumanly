@@ -475,3 +475,36 @@ test('Friendly keeps an added friendly line but drops a question the writer neve
 test('review: Friendly keeps the writer\'s own question even when it is reworded and split off', () => {
   assert.equal(HH.dropInvented('thx for the help, any update on it?', 'Thanks so much for the help! What\'s the latest?', true), 'Thanks so much for the help! What\'s the latest?');
 });
+
+test('a statement that rewords the writer\'s last clause stays; an added one with the clause covered still goes', () => {
+  assert.equal(HH.dropInvented('ngl the new design is way better, nice job', 'The new design is much better. Well done!'), 'The new design is much better. Well done!');
+  assert.equal(HH.dropInvented('The server costs went up 40% this month, we need to look into it.', 'The server costs have increased by 40% this month. We need to investigate this matter further.'),
+    'The server costs have increased by 40% this month. We need to investigate this matter further.');
+  assert.equal(HH.dropInvented('Thanks for the update! I will review it tonight.', 'Thanks for the update! I will review it tonight. Let me know if you need anything else.'), 'Thanks for the update! I will review it tonight.');
+  assert.equal(HH.dropInvented('the deploy broke prod', 'The deploy broke production. We are investigating the issue.'), 'The deploy broke production.');
+});
+
+test('Fix only does not turn a statement into a question', () => {
+  const o = 'can u send me the slides before the call? i need to review them first';
+  assert.equal(HH.cutsWords(o, 'can u send me the slides before the call? i need to review them first?'), true);
+  assert.equal(HH.cutsWords(o, 'can u send me the slides before the call? i need to review them first.'), false);
+  assert.equal(HH.cutsWords('is it ready??', 'Is it ready?'), false);
+});
+
+test('a claim added after the reworded last clause still goes; Fix only may add the "?" a question was missing', () => {
+  assert.equal(HH.dropInvented('ngl the new design is way better, nice job', 'The new design is much better. Well done! I will share this with the team.'), 'The new design is much better. Well done!');
+  assert.equal(HH.cutsWords('is it ready', 'is it ready?'), false);
+  assert.equal(HH.cutsWords('hey, can u check it', 'hey, can u check it?'), false);
+  assert.equal(HH.cutsWords('what time works for u', 'what time works for u?'), false);
+  assert.equal(HH.cutsWords('i need to review them first', 'i need to review them first?'), true);
+});
+
+test('two reworded edge clauses both stay; a "?" added to a statement is caught sentence by sentence', () => {
+  assert.equal(HH.dropInvented('the build is fine now. nice job, great effort', 'The build is fine now. Well done! Fantastic work.'), 'The build is fine now. Well done! Fantastic work.');
+  assert.equal(HH.cutsWords('Hey can you check? i need to review them first', 'Hey, can you check? i need to review them first?'), true);
+  assert.equal(HH.cutsWords('Hey can you check it', 'Hey, can you check it?'), false);
+});
+
+test('a reworded question does not keep a place for an invented statement after it', () => {
+  assert.equal(HH.dropInvented('the deploy broke prod, can u look?', 'The deploy broke production. Could you please assist? I will share the logs tonight.'), 'The deploy broke production. Could you please assist?');
+});
