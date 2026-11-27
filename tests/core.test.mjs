@@ -292,6 +292,29 @@ test('dropReply: answering the message instead of rewriting it falls back to the
   assert.equal(HH.slangFor('friendly')('Can you check? I will send it after.', "Could you check? I'll send it after."), "Could you check? I'll send it after.");
 });
 
+test('a rewrite that swaps who is speaking falls back to the safe fixes', () => {
+  const late = 'Im running 10 mins late, start without me', lunch = 'r u free for lunch on thursday? theres a new ramen place near the office';
+  assert.equal(HH.slangFor('formal')(late, 'You are running 10 minutes late, and I need to start without you.'), HH.fixGrammar(late, HH.fixTypos(late, late)));
+  assert.equal(HH.slangFor('formal')(lunch, "I'm free for lunch on Thursday. There's a new ramen place near the office."), HH.fixGrammar(lunch, HH.fixTypos(lunch, lunch)));
+  assert.equal(HH.slangFor('formal')(late, "I'm running 10 minutes late. Start without me."), "I'm running 10 minutes late. Start without me.");
+  assert.equal(HH.slangFor('formal')(lunch, "Are you free for lunch on Thursday? There's a new ramen place near the office."), "Are you free for lunch on Thursday? There's a new ramen place near the office.");
+  assert.equal(HH.slangFor('formal')('I attached the contract.', 'You will find the contract attached.'), 'You will find the contract attached.');
+  assert.equal(HH.slangFor('formal')('do u have the logs? i need them', 'I need the logs. Could you send them?'), 'I need the logs. Could you send them?');
+  assert.equal(HH.slangFor('polish')('i think ur right', 'I think you are right.'), 'I think you are right.');
+  assert.equal(HH.slangFor('formal')('I can send the file on request.', 'You can ask me to send the file.'), 'You can ask me to send the file.');
+  assert.equal(HH.slangFor('formal')('I really need the report today.', 'You really need the report today.'), 'I really need the report today.');
+  assert.equal(HH.slangFor('formal')('r u free for lunch on thursday?', "I'm not free for lunch on Thursday."), 'r u free for lunch on thursday?');
+  assert.equal(HH.slangFor('formal')('what time works for u?', "I'd like to know what time works for a call."), "I'd like to know what time works for a call.");
+  assert.equal(HH.slangFor('formal')(lunch, "Here is a professional version: I'm free for lunch on Thursday. There's a new ramen place near the office."), HH.fixGrammar(lunch, HH.fixTypos(lunch, lunch)));
+});
+
+test('a rewrite that thanks the writer for their compliment is a reply', () => {
+  const o = 'ngl the new design is way better, nice job';
+  assert.equal(HH.slangFor('formal')(o, "Thank you for sharing your feedback on the new design. I'm glad to hear that it has exceeded your expectations, and I appreciate your recognition of the improvements we've made."), HH.fixGrammar(o, HH.fixTypos(o, o)));
+  assert.equal(HH.slangFor('formal')(o, 'NGL, the new design is way better! Nice job!'), 'NGL, the new design is way better! Nice job!');
+  assert.equal(HH.slangFor('formal')('thx for the feedback, i will fix it', 'Thank you for the feedback. I will fix it.'), 'Thank you for the feedback. I will fix it.');
+});
+
 test('dropInvented: no made-up causes or sentences, except in Friendly', () => {
   assert.equal(HH.dropInvented('we was late, their is a bug', 'We were late due to a bug.'), 'we were late, there is a bug');
   assert.equal(HH.dropInvented('We were late because of traffic.', 'We were late because of the traffic.'), 'We were late because of the traffic.');

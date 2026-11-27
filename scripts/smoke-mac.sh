@@ -11,6 +11,10 @@ styled() { # style original rewrite expected
   local got; got="$("$BIN" --guard "$2" "$3" --style "$1")"
   if [[ "$got" == "$4" ]]; then echo "ok   [$1] $2 -> $got"; else echo "FAIL [$1] $2 -> $got (expected: $4)"; fail=1; fi
 }
+styledLacks() { # style original rewrite forbidden-substring
+  local got; got="$("$BIN" --guard "$2" "$3" --style "$1")"
+  if [[ "$got" != *"$4"* ]]; then echo "ok   [$1] $2 -> $got"; else echo "FAIL [$1] $2 -> $got (must not contain: $4)"; fail=1; fi
+}
 lacks() { # original rewrite forbidden-substring
   local got; got="$("$BIN" --guard "$1" "$2")"
   if [[ "$got" != *"$3"* ]]; then echo "ok   $1 -> $got"; else echo "FAIL $1 -> $got (must not contain: $3)"; fail=1; fi
@@ -83,4 +87,12 @@ fixonly "I has finished the slides" "I haven't finished the slides" "I have fini
 fixonly "The files is ready" "The files are ready." "The files are ready."
 styled Friendly "the login page is broken for me" "It's okay, let's try this again." "the login page is broken for me"
 styled Professional 'The api returns 500 when `user_id` is null, can you look?' 'The API returns a 500 error when `user_id` is null. Could you please assist?' 'The API returns a 500 error when `user_id` is null. Could you please assist?'
+styledLacks Professional "Im running 10 mins late, start without me" "You are running 10 minutes late, and I need to start without you." "You are"
+styledLacks Professional "r u free for lunch on thursday? theres a new ramen place near the office" "I'm free for lunch on Thursday. There's a new ramen place near the office." "I'm free"
+styled Professional "Im running 10 mins late, start without me" "I'm running 10 minutes late. Start without me." "I'm running 10 minutes late. Start without me."
+styled Professional "I attached the contract." "You will find the contract attached." "You will find the contract attached."
+styled Professional "I can send the file on request." "You can ask me to send the file." "You can ask me to send the file."
+styled Professional "what time works for u?" "I'd like to know what time works for a call." "I'd like to know what time works for a call."
+styledLacks Professional "r u free for lunch on thursday? theres a new ramen place near the office" "Here is a professional version: I'm free for lunch on Thursday. There's a new ramen place near the office." "I'm free"
+styledLacks Professional "ngl the new design is way better, nice job" "Thank you for sharing your feedback on the new design. I'm glad to hear that it has exceeded your expectations." "Thank you for sharing"
 exit $fail
