@@ -1,6 +1,8 @@
 #!/bin/zsh
 # Builds a universal HeyHumanly.app and a versioned DMG with an Applications shortcut, plus a SHA-256 checksum.
 # Usage: scripts/release.sh            (ad-hoc signed; NOT notarized)
+#        SIGNING_CERT_P12=<base64 .p12> SIGNING_CERT_PASSWORD=… scripts/release.sh
+#          (self-signed, free: keeps Accessibility across updates; NOT notarized; see scripts/make-signing-cert.sh)
 #        DEVELOPER_ID="Developer ID Application: Name (TEAMID)" NOTARY_PROFILE=heyhumanly scripts/release.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; cd "$ROOT"
@@ -18,6 +20,19 @@ mkdir -p "$APP/Contents/Resources/Fonts" && cp Resources/Fonts/*.ttf "$APP/Conte
 lipo -archs "$APP/Contents/MacOS/HeyHumanly"
 if [ -n "${DEVELOPER_ID:-}" ]; then
   codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID" "$APP"
+elif [ -n "${SIGNING_CERT_P12:-}" ]; then
+  # Same certificate every release => same designated requirement => macOS keeps the Accessibility grant.
+  KC="$(mktemp -d)/heyhumanly-release.keychain-db"; KCPASS="$(openssl rand -hex 16)"; P12="${KC:h}/signing.p12"
+  OLD_KCS=("${(@f)$(security list-keychains -d user | sed 's/^ *"//; s/"$//')}")
+  trap 'security list-keychains -d user -s "${OLD_KCS[@]}"; security delete-keychain "$KC" 2>/dev/null; rm -rf "${KC:h}"' EXIT
+  print -rn -- "$SIGNING_CERT_P12" | base64 --decode > "$P12"
+  security create-keychain -p "$KCPASS" "$KC"; security set-keychain-settings "$KC"; security unlock-keychain -p "$KCPASS" "$KC"
+  security import "$P12" -k "$KC" -P "${SIGNING_CERT_PASSWORD:-}" -T /usr/bin/codesign >/dev/null
+  security set-key-partition-list -S apple-tool:,apple: -s -k "$KCPASS" "$KC" >/dev/null
+  security list-keychains -d user -s "$KC" "${OLD_KCS[@]}"   # codesign only finds identities in the search list
+  IDENTITY="$(security find-identity -p codesigning "$KC" | awk '/^ *1\)/ {print $2; exit}')"
+  codesign --force --keychain "$KC" --sign "$IDENTITY" "$APP"
+  codesign -d -r- "$APP" 2>&1 | grep designated; echo "WARNING: self-signed, not notarized."
 else
   codesign --force --sign - "$APP"; echo "WARNING: ad-hoc signed, not notarized. Not a frictionless public release."
 fi

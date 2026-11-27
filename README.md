@@ -46,7 +46,7 @@ xcode-select --install        # Command Line Tools (Swift 6)
 open HeyHumanly.app
 ```
 
-`release.sh` ad-hoc signs by default. For a notarized build set `DEVELOPER_ID` and `NOTARY_PROFILE` (needs an Apple Developer account). CI builds and publishes on a version tag: see `.github/workflows/release.yml`.
+`release.sh` ad-hoc signs by default. Ad-hoc builds get a new code hash every release, so macOS silently drops the Accessibility permission after each update (the app then offers **Fix access**). To keep it, sign every release with the same free self-signed certificate: run `scripts/make-signing-cert.sh` once and add `SIGNING_CERT_P12` and `SIGNING_CERT_PASSWORD` as GitHub Actions secrets; `release.sh` then uses it. This is not notarization. For a notarized build set `DEVELOPER_ID` and `NOTARY_PROFILE` (needs an Apple Developer account). CI builds and publishes on a version tag: see `.github/workflows/release.yml`.
 
 The website lives in `site-src/` and `scripts/build-site.py` (static, deployed to Cloudflare). Release version and download URL come from `site-src/release.json`.
 

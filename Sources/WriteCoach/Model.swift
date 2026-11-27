@@ -24,6 +24,9 @@ final class CoachModel: ObservableObject {
     @Published var ollama: OllamaStatus = .checking
     @Published var installedModels: [String] = []
     @Published var accessibilityTrusted = AccessibilityBridge.isTrusted
+    /// Fix access was pressed and HeyHumanly is waiting for the Accessibility switch.
+    @Published var fixingAccess = false
+    private var accessPoll: Task<Void, Never>?
     @Published var isRecordingShortcut = false
     @Published var shortcutLabel = "⌃⌥Space"
     @Published var shortcutError: String?
@@ -82,8 +85,9 @@ final class CoachModel: ObservableObject {
         inline.model = self
         watcher.model = self; watcher.session = inline; watcher.start()
         let status = registerHotKey(keyCode: settings.shortcutKeyCode, modifiers: settings.shortcutModifiers)
+        appLog.notice("accessibility trusted at launch: \(self.accessibilityTrusted)")
         if HotKey.isUsedByMacOS(keyCode: settings.shortcutKeyCode, modifiers: settings.shortcutModifiers) {
-            shortcutError = "\(shortcutLabel) is also a macOS shortcut, so it may not reach HeyHumanly. Pick a different shortcut in Settings."
+            shortcutError = shortcutConflict
         } else if status != noErr {
             shortcutError = "\(shortcutLabel) couldn't be registered (error \(status)). It may be taken by macOS or another app. Pick a different shortcut in Settings."
         }
@@ -133,6 +137,7 @@ final class CoachModel: ObservableObject {
     /// Re-checks Ollama (and the installed models) and Accessibility. Cheap; called when windows appear.
     func refreshStatus() {
         accessibilityTrusted = AccessibilityBridge.isTrusted
+        refreshShortcutConflict()
         dismissedCount = RewriteGuard.dismissed.count
         appleAvailability = AppleModel.availabilityDescription
         if settings.engine == .offlineManaged { Task { await runtime.startServer() } }
@@ -241,12 +246,59 @@ final class CoachModel: ObservableObject {
             settings.shortcutLabel = label
             settings.save()
             shortcutLabel = label
-            shortcutError = isDefault && HotKey.isUsedByMacOS(keyCode: keyCode, modifiers: modifiers)
-                ? "\(label) is also a macOS shortcut, so it may not reach HeyHumanly. Pick a different shortcut if it doesn't work." : nil
+            shortcutError = isDefault && HotKey.isUsedByMacOS(keyCode: keyCode, modifiers: modifiers) ? shortcutConflict : nil
         } else {
             // Put the previous shortcut back so the user is never left without one.
             registerHotKey(keyCode: settings.shortcutKeyCode, modifiers: settings.shortcutModifiers)
             shortcutError = "\(label) couldn't be registered (error \(status)). It's probably used by macOS or another app. Still using \(shortcutLabel)."
+        }
+    }
+
+    private var shortcutConflict: String { "\(shortcutLabel) is also a macOS shortcut, so it may not reach HeyHumanly. Pick a different shortcut in Settings." }
+
+    /// Input sources can be added or removed while HeyHumanly runs, so the warning is checked again when windows appear.
+    private func refreshShortcutConflict() {
+        let used = HotKey.isUsedByMacOS(keyCode: settings.shortcutKeyCode, modifiers: settings.shortcutModifiers)
+        if used, shortcutError == nil { shortcutError = shortcutConflict } else if !used, shortcutError == shortcutConflict { shortcutError = nil }
+    }
+
+    // MARK: Accessibility
+
+    /// One plain sentence on why access is missing, for Settings, the panel and the welcome window.
+    let accessibilityHelp = "macOS needs HeyHumanly switched on in Accessibility, and again after each update, even if its switch already looks on."
+    let fixingAccessHelp = "Switch HeyHumanly on in the Accessibility list that opened. HeyHumanly picks it up by itself."
+
+    /// Fix access: removes HeyHumanly's stale Accessibility entry, asks macOS again, opens the list and waits for the switch.
+    func fixAccessibility(fromPanel: Bool = false) {
+        fixingAccess = true
+        Task {
+            let reset = await AccessibilityBridge.resetOwnGrant()
+            appLog.notice("fix access: tccutil reset ok=\(reset)")
+            AccessibilityBridge.requestTrust()
+            // The prompt adds HeyHumanly back to the list; opened sooner, the list can miss it.
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            AccessibilityBridge.openSystemSettings()
+            watchAccessibility(fromPanel: fromPanel)
+        }
+    }
+
+    private func watchAccessibility(fromPanel: Bool) {
+        accessPoll?.cancel()
+        let started = Date()
+        accessPoll = Task { [weak self] in
+            // Up to 10 minutes, once a second: macOS reports the new switch without a relaunch.
+            for _ in 0..<600 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                guard let self, !Task.isCancelled else { return }
+                self.accessibilityTrusted = AccessibilityBridge.isTrusted
+                if self.accessibilityTrusted {
+                    self.fixingAccess = false
+                    appLog.notice("fix access: trusted again after \(Int(Date().timeIntervalSince(started)))s")
+                    if fromPanel { self.quick.accessRestored(model: self) }
+                    return
+                }
+            }
+            self?.fixingAccess = false
         }
     }
 
