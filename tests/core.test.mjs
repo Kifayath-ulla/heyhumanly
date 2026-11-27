@@ -307,6 +307,13 @@ test('a rewrite that swaps who is speaking falls back to the safe fixes', () => 
   assert.equal(HH.slangFor('formal')(lunch, "Here is a professional version: I'm free for lunch on Thursday. There's a new ramen place near the office."), HH.fixGrammar(lunch, HH.fixTypos(lunch, lunch)));
 });
 
+test('a rewrite that thanks the writer for their compliment is a reply', () => {
+  const o = 'ngl the new design is way better, nice job';
+  assert.equal(HH.slangFor('formal')(o, "Thank you for sharing your feedback on the new design. I'm glad to hear that it has exceeded your expectations, and I appreciate your recognition of the improvements we've made."), HH.fixGrammar(o, HH.fixTypos(o, o)));
+  assert.equal(HH.slangFor('formal')(o, 'NGL, the new design is way better! Nice job!'), 'NGL, the new design is way better! Nice job!');
+  assert.equal(HH.slangFor('formal')('thx for the feedback, i will fix it', 'Thank you for the feedback. I will fix it.'), 'Thank you for the feedback. I will fix it.');
+});
+
 test('dropInvented: no made-up causes or sentences, except in Friendly', () => {
   assert.equal(HH.dropInvented('we was late, their is a bug', 'We were late due to a bug.'), 'we were late, there is a bug');
   assert.equal(HH.dropInvented('We were late because of traffic.', 'We were late because of the traffic.'), 'We were late because of the traffic.');

@@ -94,4 +94,5 @@ styled Professional "I attached the contract." "You will find the contract attac
 styled Professional "I can send the file on request." "You can ask me to send the file." "You can ask me to send the file."
 styled Professional "what time works for u?" "I'd like to know what time works for a call." "I'd like to know what time works for a call."
 styledLacks Professional "r u free for lunch on thursday? theres a new ramen place near the office" "Here is a professional version: I'm free for lunch on Thursday. There's a new ramen place near the office." "I'm free"
+styledLacks Professional "ngl the new design is way better, nice job" "Thank you for sharing your feedback on the new design. I'm glad to hear that it has exceeded your expectations." "Thank you for sharing"
 exit $fail

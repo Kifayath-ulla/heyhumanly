@@ -464,7 +464,7 @@
   // rewrite whose content words are all new (none of the writer's) falls back to the deterministic fixes. Friendly may add warmth and sentences,
   // so it only gets the assistant and content checks. Same as TextSafety.swift (dropInvented).
   const CAUSAL = /\b(?:due to|because|cuz|coz|bcuz|b\/c|therefore|as a result|caused by|so that|hence|thus)\b/gi;
-  const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bno problem at all\b|\bfeel free to ask\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\b(?:sorry|sry) to hear\b|\bhope this helps\b/gi;
+  const ASSISTANT = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b|\bI['’]?d be (?:happy|glad) to help\b|\bI['’]?m (?:happy|glad) to help\b|\bno problem at all\b|\bfeel free to ask\b|\bask me again\b|\bif you need (?:any )?(?:more|further|additional) (?:help|info|information|assistance)\b|\b(?:sorry|sry) to hear\b|\b(?:thank(?:s| you)|thx|ty) for (?:sharing )?(?:your|the) (?:feedback|kind words|compliment)\b|\bI['’]?m (?:so |really )?glad (?:to hear|you like)\b|\bI appreciate your (?:feedback|kind words|recognition)\b|\bhope this helps\b/gi;
   const INTRO = /\b(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b/gi;
   const APOLOGY = /\b(?:apologi[sz]e[sd]?|apologies|sorry|sry|srry|soz|my (?:mistake|bad)|oops)\b/gi;
   const STOP = new Set(['have', 'that', 'this', 'with', 'from', 'your', 'will', 'would', 'could', 'should', 'there', 'their', 'what', 'when', 'been',
