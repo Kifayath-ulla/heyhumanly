@@ -204,6 +204,8 @@ enum TextSafety {
         let word = ns.substring(with: m.range(at: 1))
         guard !original.lowercased().contains(word.lowercased()) else { return rewrite }
         let rest = ns.substring(from: m.range.upperBound), whole = NSRange(location: 0, length: (rest as NSString).length)
+        // "Sure, lmk if thats ok." keeps only a scrap of the message: still a reply, not a rewrite.
+        if tokens(rest).count * 2 < tokens(original).count { return rewrite }
         if offerLead.firstMatch(in: rest, range: whole) != nil || reply.firstMatch(in: rest, range: whole) != nil { return rewrite }
         // "Can you check it?" → "Certainly, the report looks good." answers the request; the rest of a rewrite still asks it.
         func plain(_ t: String) -> String { codeRegex.stringByReplacingMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length), withTemplate: " ") }

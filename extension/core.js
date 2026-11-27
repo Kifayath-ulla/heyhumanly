@@ -527,6 +527,8 @@
     const m = rewrite.match(FILLER);
     if (!m || original.toLowerCase().includes(m[1].toLowerCase())) return rewrite;
     const rest = rewrite.slice(m[0].length);
+    // "Sure, lmk if thats ok." keeps only a scrap of the message: still a reply, not a rewrite.
+    if (tokens(rest).length * 2 < tokens(original).length) return rewrite;
     // "Can you check it?" → "Certainly, the report looks good." answers the request; the rest of a rewrite still asks it.
     if (OFFER_LEAD.test(rest) || REPLY.test(rest) || (WRITER_ASKS.test(original.replace(CODE, ' ')) && !STILL_ASKS.test(rest.replace(CODE, ' ')))) return rewrite;
     // "Is it ready?" → "Sure, it is ready." answers the question instead of rewriting it.
