@@ -75,11 +75,9 @@ enum TextSafety {
         if lost.contains(where: { !aux.contains($0) }) { return true }
         // "I have finished" → "I haven't finished" flips the meaning; so does a writer's slang turned into another word ("ngl" → "ngg").
         if negations(base) != negations(after) || gone.contains(where: { chat.contains($0) }) { return true }
-        // A statement turned into a question ("review them first" → "review them first?") changes the meaning too.
-        func asks(_ t: String) -> Int {
-            codeRegex.stringByReplacingMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length), withTemplate: " ").filter { $0 == "?" }.count
-        }
-        if asks(rewrite) > asks(original) { return true }
+        // A statement turned into a question ("review them first" → "review them first?") changes the meaning too; a "?" added to
+        // a question ("is it ready" → "is it ready?") is a fix.
+        if statementQuestions(rewrite) > statementQuestions(original) { return true }
         return !lost.isEmpty && added.contains { w in !gone.contains { near(w, $0) } }
     }
     private static func negations(_ ws: [String]) -> Int {
@@ -193,12 +191,13 @@ enum TextSafety {
         }
         // A statement that rewords the writer's first or last clause ("nice job" → "Well done!") stays: the rest doesn't cover that clause.
         let clauses = plainOriginal.components(separatedBy: CharacterSet(charactersIn: ".!?;,")).map(known).filter { !$0.isEmpty }
-        func covered(_ p: String, _ clause: Set<String>?, _ rest: ArraySlice<String>) -> Bool {
-            guard let clause, !p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?") else { return true }
+        // Only the unrelated sentence next to the writer's text can be that reworded clause: one further out still goes.
+        func covered(_ p: String, _ clause: Set<String>?, _ rest: ArraySlice<String>, _ next: String) -> Bool {
+            guard let clause, !p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?"), !unrelated(next) else { return true }
             return !clause.isDisjoint(with: contentWords(rest.joined(separator: " ")))
         }
-        while extra > 0, b - a > 1, unrelated(parts[b - 1]), covered(parts[b - 1], clauses.last, parts[a..<(b - 1)]) { b -= 1; extra -= 1 }
-        while extra > 0, b - a > 1, unrelated(parts[a]), covered(parts[a], clauses.first, parts[(a + 1)..<b]) { a += 1; extra -= 1 }
+        while extra > 0, b - a > 1, unrelated(parts[b - 1]), covered(parts[b - 1], clauses.last, parts[a..<(b - 1)], parts[b - 2]) { b -= 1; extra -= 1 }
+        while extra > 0, b - a > 1, unrelated(parts[a]), covered(parts[a], clauses.first, parts[(a + 1)..<b], parts[a + 1]) { a += 1; extra -= 1 }
         return a == 0 && b == parts.count ? rewrite : parts[a..<b].joined().trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -324,6 +323,17 @@ enum TextSafety {
         return codeRegex.matches(in: ns as String, range: NSRange(location: 0, length: ns.length)).map(\.range)
     }
     private static let codeRegex = try! NSRegularExpression(pattern: "`[^`\\n]+`")
+    private static let questionLead = try! NSRegularExpression(pattern: "^(?:is|are|am|was|were|do|does|did|can|could|would|will|should|shall|may|might|must|have|has|had|what|why|how|when|where|who|whom|whose|which|r|u|any|anyone|anybody|isn['’]?t|aren['’]?t|don['’]?t|doesn['’]?t|didn['’]?t|can['’]?t|won['’]?t|wouldn['’]?t|shouldn['’]?t)\\b", options: .caseInsensitive)
+    private static let sentencePiece = try! NSRegularExpression(pattern: "[^.!?\\n]*[.!?]+|[^.!?\\n]+")
+    private static func statementQuestions(_ t: String) -> Int {
+        let p = codeRegex.stringByReplacingMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length), withTemplate: " ") as NSString
+        return sentencePiece.matches(in: p as String, range: NSRange(location: 0, length: p.length)).map { p.substring(with: $0.range) }.filter { piece in
+            piece.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?") && !piece.components(separatedBy: CharacterSet(charactersIn: ",;:")).contains { c in
+                let lead = c.replacingOccurrences(of: "^\\W+", with: "", options: .regularExpression)
+                return questionLead.firstMatch(in: lead, range: NSRange(location: 0, length: (lead as NSString).length)) != nil
+            }
+        }.count
+    }
 
     /// Puts every backtick span of the original back into the rewrite unchanged, each in place of the rewrite span
     /// closest to it (so reordered spans keep their own code). If the rewrite lost or added a span, the original is returned.
