@@ -122,8 +122,8 @@ enum TextSafety {
         let written = contentWords((original + " " + fixed).replacingOccurrences(of: "`", with: " "))
         let spelled = (TextSafety.slang + [("ok", ["okay"])]).filter { count($0.0, in: plain(original)) > 0 }.map { $0.1.joined(separator: " ") }
         let seen = written.union(contentWords(spelled.joined(separator: " ")))
-        var out = rewrite
-        if !friendly { out = dropAddedSentences(original: original, rewrite: rewrite, seen: seen) }
+        // Friendly may add a friendly line, but not a question or proposal the writer never made ("How about grabbing a coffee?").
+        var out = dropAddedSentences(original: original, rewrite: rewrite, seen: seen, questionsOnly: friendly)
         // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
         let lead = sentence.firstMatch(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length)).map { (rewrite as NSString).substring(with: $0.range) } ?? rewrite
         let opener = intro.stringByReplacingMatches(in: lead, range: NSRange(location: 0, length: (lead as NSString).length), withTemplate: " ")
@@ -161,7 +161,7 @@ enum TextSafety {
 
     private static let writerAsks = try! NSRegularExpression(pattern: "\\b(?:can|could|would|will) (?:you|u)\\b|\\b(?:please|pls|plz)\\b", options: .caseInsensitive)
     private static let request = try! NSRegularExpression(pattern: "^\\W*(?:(?:can|could|would|will) (?:you|u)\\b|please\\b)", options: .caseInsensitive)
-    private static func dropAddedSentences(original: String, rewrite: String, seen: Set<String>) -> String {
+    private static func dropAddedSentences(original: String, rewrite: String, seen: Set<String>, questionsOnly: Bool = false) -> String {
         let ns = rewrite as NSString
         let parts = sentence.matches(in: rewrite, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range) }
         guard parts.joined() == rewrite else { return rewrite }
@@ -178,6 +178,7 @@ enum TextSafety {
         let ownRequest = asks(rewrite) <= asks(original) && has(writerAsks, plainOriginal)
         func unrelated(_ p: String) -> Bool {
             let w = contentWords(p)
+            if questionsOnly && !p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?") { return false }
             return !w.isEmpty && w.isDisjoint(with: seen) && !(ownRequest && has(request, p) && p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?"))
         }
         while extra > 0, b - a > 1, unrelated(parts[b - 1]) { b -= 1; extra -= 1 }

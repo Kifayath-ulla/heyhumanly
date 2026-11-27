@@ -465,3 +465,9 @@ test('a "Sure," before a scrap of the message stays a reply, so the writer\'s wo
   assert.equal(HH.dropFiller(o, 'Sure, lmk if thats ok.'), 'Sure, lmk if thats ok.');
   assert.equal(HH.slangFor('polish')(o, 'Sure, lmk if thats ok.'), o);
 });
+
+test('Friendly keeps an added friendly line but drops a question the writer never asked', () => {
+  const o = 'Their going to announce it monday';
+  assert.equal(HH.dropInvented(o, "They're going to announce it on Monday. How about grabbing a coffee together to celebrate this news?", true), "They're going to announce it on Monday.");
+  assert.equal(HH.dropInvented('Great work on the launch everyone, really proud of this team.', 'Great work on the launch, everyone! Really proud of this team. Let\'s keep up the great work!', true), 'Great work on the launch, everyone! Really proud of this team. Let\'s keep up the great work!');
+});
