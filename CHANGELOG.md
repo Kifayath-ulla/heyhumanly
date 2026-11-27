@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.24 — 2026-11-27
+
+- A rewrite that answers your message instead of rewording it falls back to your text with only the safe spelling and grammar fixes. This now also catches a rewrite that swaps who is speaking ("Im running late" → "You are running late"), answers your question ("r u free for lunch?" → "I'm free for lunch."), or thanks you for your compliment ("…nice job" → "Thank you for sharing your feedback…").
+- Not notarized by Apple.
+
 ## 0.1.23 — 2026-11-27
 
 - A rewrite that rewords your first or last phrase ("nice job" → "Well done!") keeps it, instead of dropping it as an added sentence. A sentence the model invents after it is still removed.
