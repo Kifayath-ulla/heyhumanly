@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.21 — 2026-11-27
+
+- After an update, the Mac app no longer loses Accessibility silently. If macOS dropped it (the switch in System Settings can still look on), the panel says access is missing and offers **Fix access**. That resets only HeyHumanly's own entry, asks macOS again and opens the list. Access comes back without a relaunch. The copied text is no longer rewritten in its place unless you ask, or you chose "Copy instead".
+- The "⌃⌥Space is also a macOS shortcut" warning only shows when that shortcut can actually switch input sources (two or more keyboard sources).
+- Friendly no longer adds a question or proposal you never made ("How about grabbing a coffee together?"). Your own question stays, even reworded. Mac, Chrome and online.
+- A "Sure," the model put before a scrap of your message no longer drops the rest of it.
+- Not notarized by Apple.
+
 ## 0.1.20 — 2026-11-27
 
 - A rewrite that drops your request falls back to your text with the safe fixes: "…without running tests. pls fix asap" can't lose "pls fix asap". Mac, Chrome and online.
