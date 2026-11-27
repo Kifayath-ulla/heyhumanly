@@ -557,7 +557,9 @@
     // An answer repeats the word asked about ("r u free?" → "I'm free."), even before a new question; "I'd like to know what time works" still asks.
     const asked = new Set(tokens(o).map((w) => w.slice(0, 4)));
     const v = verb(r, I_LEAD);
-    return /\?/.test(o) && YOU.test(o) && !ME.test(o) && I_LEAD.test(r) && !YOU.test(r) && !/\?/.test(r) && (asked.has(v) || asked.has(ANSWER[v]));
+    // The writer's own later "I'm free after 3", moved first, is not an answer.
+    const own = original.replace(CODE, ' ').trim().split(/(?<=[.!?])\s+/).slice(1).some((s) => I_LEAD.test(s) && verb(s, I_LEAD) === v);
+    return /\?/.test(o) && YOU.test(o) && !ME.test(o) && I_LEAD.test(r) && !YOU.test(r) && !/\?/.test(r) && (asked.has(v) || asked.has(ANSWER[v])) && !own;
   }
   const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original)) || swapsSpeaker(original, rewrite);
   const dropReply = (original, rewrite) =>

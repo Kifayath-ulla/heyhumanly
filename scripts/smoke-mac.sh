@@ -96,4 +96,5 @@ styled Professional "what time works for u?" "I'd like to know what time works f
 styledLacks Professional "r u free for lunch on thursday? theres a new ramen place near the office" "Here is a professional version: I'm free for lunch on Thursday. There's a new ramen place near the office." "I'm free"
 styledLacks Professional "ngl the new design is way better, nice job" "Thank you for sharing your feedback on the new design. I'm glad to hear that it has exceeded your expectations." "Thank you for sharing"
 styledLacks Professional "r u free for lunch on thursday? theres a new ramen place near the office" "I'm available for lunch on Thursday. There's a new ramen place near the office. Would you be free to join me?" "available"
+styled Professional "r u free tomorrow? im free after 3" "I'm free after 3. Are you free tomorrow?" "I'm free after 3. Are you free tomorrow?"
 exit $fail

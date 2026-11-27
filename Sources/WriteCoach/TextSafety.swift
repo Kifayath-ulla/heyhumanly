@@ -283,8 +283,15 @@ enum TextSafety {
         }
         // An answer repeats the word asked about ("r u free?" → "I'm free."), even before a new question; "I'd like to know what time works" still asks.
         let asked = Set(tokens(o).map { String($0.prefix(4)) })
+        // The writer's own later "I'm free after 3", moved first, is not an answer.
+        func ownStatement(_ v: String) -> Bool {
+            let p = plain(original).trimmingCharacters(in: .whitespacesAndNewlines)
+            let split = try! NSRegularExpression(pattern: "(?<=[.!?])\\s+").stringByReplacingMatches(in: p, range: NSRange(location: 0, length: (p as NSString).length), withTemplate: "\n")
+            return split.components(separatedBy: "\n").dropFirst().contains { has(iLead, $0) && verb($0, iLead) == v }
+        }
         return o.contains("?") && has(youWord, o) && !has(meWord, o) && has(iLead, r) && !has(youWord, r) && !r.contains("?")
             && (asked.contains(verb(r, iLead)) || answer[verb(r, iLead)].map(asked.contains) == true)
+            && !ownStatement(verb(r, iLead))
     }
 
     static func dropReply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
