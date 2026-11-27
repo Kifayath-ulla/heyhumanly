@@ -268,7 +268,8 @@ enum TextSafety {
             let end = try! NSRegularExpression(pattern: "(?<=[.!?])\\s+").firstMatch(in: p as String, range: NSRange(location: 0, length: p.length))
             return end.map { p.substring(to: $0.range.location) } ?? p as String
         }
-        func marks(_ t: String) -> Int { let p = plain(t); return try! NSRegularExpression(pattern: "\\?+").numberOfMatches(in: p, range: NSRange(location: 0, length: (p as NSString).length)) }
+        // Answers that reword the word asked about: "r u free?" → "I'm available."
+        let answer = ["avai": "free", "free": "avai"]
         func verb(_ s: String, _ lead: NSRegularExpression) -> String {
             let rest = lead.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: "") as NSString
             guard let m = subjectVerb.firstMatch(in: rest as String, range: NSRange(location: 0, length: rest.length)) else { return "" }
@@ -280,10 +281,10 @@ enum TextSafety {
             let v = verb(o, iLead)
             if !v.isEmpty && v == verb(r, youLead) { return true }
         }
-        // An answer repeats the word asked about ("r u free?" → "I'm free."); "I'd like to know what time works" still asks.
+        // An answer repeats the word asked about ("r u free?" → "I'm free."), even before a new question; "I'd like to know what time works" still asks.
         let asked = Set(tokens(o).map { String($0.prefix(4)) })
         return o.contains("?") && has(youWord, o) && !has(meWord, o) && has(iLead, r) && !has(youWord, r) && !r.contains("?")
-            && marks(rewrite) < marks(original) && asked.contains(verb(r, iLead))
+            && (asked.contains(verb(r, iLead)) || answer[verb(r, iLead)].map(asked.contains) == true)
     }
 
     static func dropReply(original: String, rewrite: String, preserve: [String] = [], keepSlang slang: Bool = true) -> String {
