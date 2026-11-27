@@ -543,7 +543,19 @@
   const ACK = /^\W*(?:yep|yeah|yes|yup|ok|okay|sure|np|no prob|will do|got it|sounds good|of course|absolutely|certainly)\b/i;
   const LEAD_INTRO = /^\W*(?:here['’]?s|here is) (?:a|an|the|your) [^.!?:\n]*\b(?:version|rewrite|message)\b[^.!?:\n]*[.!:]?\s*/i;
   const opener = (s) => ((s.replace(LEAD_INTRO, '').match(REPLY) || [])[1] || '').toLowerCase().replace(/’/g, "'");
-  const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original));
+  // The model swapped who is speaking: "Im running late" → "You are running late", or "r u free?" → "I'm free.".
+  const I_LEAD = /^\W*(?:i['’]m|i['’]ll|i['’]ve|i['’]d|im|i am|i)\b/i, YOU_LEAD = /^\W*(?:you['’](?:re|ll|ve|d)|youre|you|ur|u)\b/i;
+  const YOU = /\b(?:you|u|ur|your|youre|you['’](?:re|ll|ve|d))\b/i, ME = /\b(?:i|im|i['’]m|i['’]ll|i['’]ve|i['’]d|me|my)\b/i;
+  const SUBJECT_VERB = /^\W*(?:(?:am|are|is|was|were|will|would|have|has|had|r)\s+)*(\p{L}+)/iu;
+  const firstSentence = (s) => s.replace(CODE, ' ').trim().split(/(?<=[.!?])\s+/)[0];
+  const marks = (s) => (s.replace(CODE, ' ').match(/\?+/g) || []).length;
+  function swapsSpeaker(original, rewrite) {
+    const o = firstSentence(original), r = firstSentence(rewrite);
+    const verb = (s, lead) => ((s.replace(lead, '').match(SUBJECT_VERB) || [])[1] || '').toLowerCase().slice(0, 4);
+    if (I_LEAD.test(o) && YOU_LEAD.test(r) && !YOU.test(o) && verb(o, I_LEAD) !== '' && verb(o, I_LEAD) === verb(r, YOU_LEAD)) return true;
+    return /\?/.test(o) && YOU.test(o) && !ME.test(o) && I_LEAD.test(r) && !YOU.test(r) && !/\?/.test(r) && marks(rewrite) < marks(original);
+  }
+  const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !original.toLowerCase().replace(/’/g, "'").includes(opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original)) || swapsSpeaker(original, rewrite);
   const dropReply = (original, rewrite) =>
     !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
   // A leading "Sure," the writer didn't type is filler when a rewrite follows it ("Sure, could you send…"), not a reply.
