@@ -466,7 +466,8 @@
     const written = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
     const spelled = Object.entries({ ...SLANG_EXPANSIONS, ok: ['okay'] }).filter(([short]) => countWord(short, original.replace(CODE, ' '))).map(([, longs]) => longs.join(' '));
     const seen = new Set([...written, ...contentWords(spelled.join(' '))]);
-    const out = friendly ? rewrite : dropAddedSentences(original, rewrite, seen);
+    // Friendly may add a friendly line, but not a question or proposal the writer never made ("How about grabbing a coffee?").
+    const out = dropAddedSentences(original, rewrite, seen, friendly);
     // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
     const lead = rewrite.split(/(?<=[.!?])\s+/)[0].replace(INTRO, ' ');
     if (hits(ASSISTANT, lead) > hits(ASSISTANT, original)) return fallback;
@@ -493,7 +494,7 @@
   const STILL_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz|kindly|let me know|lmk)\b|\?/i;
   const WRITER_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b/i;
   const REQUEST = /^\W*(?:(?:can|could|would|will) (?:you|u)\b|please\b)/i;
-  function dropAddedSentences(original, rewrite, seen) {
+  function dropAddedSentences(original, rewrite, seen, questionsOnly = false) {
     const SENTENCE = /(?:`[^`\n]+`|[.!?]+(?=\S)|[^.!?])+(?:[.!?]+|$)\s*/g;
     const parts = rewrite.match(SENTENCE) || [rewrite];
     if (parts.join('') !== rewrite) return rewrite;
@@ -503,7 +504,7 @@
     // Only a request the writer made ("can u…", "pls…") reworded as one ("Could you…?"); any other new question still goes.
     const asks = (t) => (t.replace(CODE, ' ').match(/\?/g) || []).length;
     const ownRequest = asks(rewrite) <= asks(original) && WRITER_ASKS.test(original.replace(CODE, ' '));
-    const unrelated = (p) => { const w = [...contentWords(p)]; return w.length > 0 && !w.some((x) => seen.has(x)) && !(ownRequest && REQUEST.test(p) && /\?\s*$/.test(p)); };
+    const unrelated = (p) => { const w = [...contentWords(p)]; return (!questionsOnly || (/\?\s*$/.test(p) && asks(rewrite) > asks(original))) && w.length > 0 && !w.some((x) => seen.has(x)) && !(ownRequest && REQUEST.test(p) && /\?\s*$/.test(p)); };
     while (extra > 0 && b - a > 1 && unrelated(parts[b - 1])) { b--; extra--; }
     while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
