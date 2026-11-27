@@ -22,7 +22,13 @@ def fetch(url, method="HEAD"):
 problems = []
 for name, url in urls.items():
     try: fetch(url)
-    except urllib.error.HTTPError as e: problems.append(f"{name}: HTTP {e.code} {url}")
+    except urllib.error.HTTPError as e:
+        # GitHub sometimes answers HEAD on a release page with 5xx while GET works.
+        try:
+            if e.code < 500: raise
+            fetch(url, "GET")
+        except urllib.error.HTTPError as e: problems.append(f"{name}: HTTP {e.code} {url}")
+        except urllib.error.URLError as e: problems.append(f"{name}: {e.reason} {url}")
     except urllib.error.URLError as e: problems.append(f"{name}: {e.reason} {url}")
 if not problems:
     published = fetch(urls["DMG checksum"], "GET").decode().split()[0]
