@@ -394,6 +394,9 @@ test('"It\'s okay, let\'s try again" answers the message; the writer\'s own "It\
   // The writer's own opener typed without an apostrophe ("its fine") is not a reply when the model adds one.
   assert.equal(HH.slangFor('formal')('its fine, no worries! we can try again next week', "It's fine; no worries! We can try again next week."), "It's fine; no worries! We can try again next week.");
   assert.equal(HH.slangFor('formal')('can u check the logs?', "It's fine, I will check them."), 'can u check the logs?');
+  // Mid-sentence ("read its fine print") is a possessive, not the writer's "It's fine".
+  assert.equal(HH.slangFor('formal')('can u read its fine print?', "It's fine, I will read it."), 'can u read its fine print?');
+  assert.equal(HH.slangFor('formal')('ok. its fine, we can try again', "Okay. It's fine; we can try again."), "Okay. It's fine; we can try again.");
 });
 
 test('the writer\'s question survives being reworded; an added question does not', () => {
