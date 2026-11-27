@@ -281,6 +281,12 @@ final class CoachModel: ObservableObject {
         }
     }
 
+    /// Stops waiting for the switch, e.g. when the user picks Copy instead after declining the prompt.
+    func stopFixingAccess() {
+        accessPoll?.cancel()
+        fixingAccess = false
+    }
+
     private func watchAccessibility(fromPanel: Bool) {
         accessPoll?.cancel()
         let started = Date()

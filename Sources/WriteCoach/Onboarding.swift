@@ -69,7 +69,10 @@ struct OnboardingView: View {
             } else if model.fixingAccess {
                 HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Waiting for the switch…").foregroundStyle(.secondary) }
                 detail(model.fixingAccessHelp).font(.callout)
-                OpenAccessibilityLink().font(.callout)
+                HStack(spacing: 12) {
+                    OpenAccessibilityLink()
+                    Button("Copy instead") { model.stopFixingAccess(); copyInstead = true; model.settings.copyInstead = true; model.settings.save() }.buttonStyle(.link)
+                }.font(.callout)
             } else if copyInstead {
                 Label("Copy instead: copy text with ⌘C, press \(model.shortcutLabel), and Enter copies the rewrite.", systemImage: "doc.on.clipboard")
                     .font(.callout).fixedSize(horizontal: false, vertical: true)
