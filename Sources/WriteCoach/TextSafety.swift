@@ -190,13 +190,18 @@ enum TextSafety {
             return !w.isEmpty && w.isDisjoint(with: seen) && !(ownRequest && has(request, p) && p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?"))
         }
         // A statement that rewords the writer's first or last clause ("nice job" → "Well done!") stays: the rest doesn't cover that clause.
-        let clauses = plainOriginal.components(separatedBy: CharacterSet(charactersIn: ".!?;,")).map(known).filter { !$0.isEmpty }
+        // A reworded question of the writer's is kept or dropped as a question, so only their statements hold a place here.
+        let po = plainOriginal as NSString
+        let clauses: [(w: Set<String>, q: Bool)] = clausePiece.matches(in: plainOriginal, range: NSRange(location: 0, length: po.length)).compactMap { m in
+            let w = known(po.substring(with: m.range(at: 1)))
+            return w.isEmpty ? nil : (w, po.substring(with: m.range(at: 2)).contains("?"))
+        }
         // As many unrelated statements next to the writer's text stay as there are edge clauses it doesn't cover; the rest still go.
         func isQ(_ p: String) -> Bool { p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?") }
-        func uncovered(_ cl: [Set<String>], _ core: ArraySlice<String>) -> Int {
+        func uncovered(_ cl: [(w: Set<String>, q: Bool)], _ core: ArraySlice<String>) -> Int {
             let w = contentWords(core.joined(separator: " "))
             var n = 0
-            for c in cl { if !c.isDisjoint(with: w) { break }; n += 1 }
+            for c in cl { if !c.w.isDisjoint(with: w) { break }; if !c.q { n += 1 } }
             return n
         }
         var r = b
@@ -333,6 +338,7 @@ enum TextSafety {
     }
     private static let codeRegex = try! NSRegularExpression(pattern: "`[^`\\n]+`")
     private static let questionLead = try! NSRegularExpression(pattern: "^(?:is|are|am|was|were|do|does|did|can|could|would|will|should|shall|may|might|must|have|has|had|what|why|how|when|where|who|whom|whose|which|r|u|any|anyone|anybody|isn['’]?t|aren['’]?t|don['’]?t|doesn['’]?t|didn['’]?t|can['’]?t|won['’]?t|wouldn['’]?t|shouldn['’]?t)\\b", options: .caseInsensitive)
+    private static let clausePiece = try! NSRegularExpression(pattern: "([^.!?;,]*)([.!?;,]*)")
     private static let sentencePiece = try! NSRegularExpression(pattern: "[^.!?\\n]*[.!?]+|[^.!?\\n]+")
     /// Sentence by sentence, so a "?" another sentence already had (or a comma added before "can you") can't hide it.
     private static func questionsAStatement(original: String, rewrite: String) -> Bool {

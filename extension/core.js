@@ -521,10 +521,12 @@
     const ownRequest = asks(rewrite) <= asks(original) && WRITER_ASKS.test(original.replace(CODE, ' '));
     const unrelated = (p) => { const w = [...contentWords(p)]; return (!questionsOnly || (/\?\s*$/.test(p) && asks(rewrite) > asks(original))) && w.length > 0 && !w.some((x) => seen.has(x)) && !(ownRequest && REQUEST.test(p) && /\?\s*$/.test(p)); };
     // A statement that rewords the writer's first or last clause ("nice job" → "Well done!") stays: the rest doesn't cover that clause.
-    const clauses = original.replace(CODE, ' ').split(/[.!?;,]+/).map(known).filter((w) => w.size);
+    // A reworded question of the writer's is kept or dropped as a question, so only their statements hold a place here.
+    const segs = original.replace(CODE, ' ').split(/([.!?;,]+)/), clauses = [];
+    for (let i = 0; i < segs.length; i += 2) { const w = known(segs[i]); if (w.size) clauses.push({ w, q: (segs[i + 1] || '').includes('?') }); }
     // As many unrelated statements next to the writer's text stay as there are edge clauses it doesn't cover; the rest still go.
     const isQ = (p) => /\?\s*$/.test(p);
-    const uncovered = (cl, core) => { const w = [...contentWords(core.join(' '))]; let n = 0; for (const c of cl) { if (w.some((x) => c.has(x))) break; n++; } return n; };
+    const uncovered = (cl, core) => { const w = [...contentWords(core.join(' '))]; let n = 0; for (const c of cl) { if (w.some((x) => c.w.has(x))) break; if (!c.q) n++; } return n; };
     let r = b; while (r - a > 1 && unrelated(parts[r - 1])) r--;
     const keepEnd = uncovered([...clauses].reverse(), parts.slice(a, r));
     while (extra > 0 && b > r && (isQ(parts[b - 1]) || parts.slice(r, b - 1).filter((p) => !isQ(p)).length >= keepEnd)) { b--; extra--; }

@@ -504,3 +504,7 @@ test('two reworded edge clauses both stay; a "?" added to a statement is caught 
   assert.equal(HH.cutsWords('Hey can you check? i need to review them first', 'Hey, can you check? i need to review them first?'), true);
   assert.equal(HH.cutsWords('Hey can you check it', 'Hey, can you check it?'), false);
 });
+
+test('a reworded question does not keep a place for an invented statement after it', () => {
+  assert.equal(HH.dropInvented('the deploy broke prod, can u look?', 'The deploy broke production. Could you please assist? I will share the logs tonight.'), 'The deploy broke production. Could you please assist?');
+});
