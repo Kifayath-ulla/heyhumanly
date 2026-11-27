@@ -459,3 +459,9 @@ test('review: "Sure," before an answer to a question stays a reply; a lowercase 
 test('review: "??" tidied to "?" after a "Sure," filler still counts as the same question', () => {
   assert.equal(HH.dropFiller('hey can u send me the report??', 'Sure, could you send me the report?'), 'Could you send me the report?');
 });
+
+test('a "Sure," before a scrap of the message stays a reply, so the writer\'s words are not lost', () => {
+  const o = 'sry, cant make it tmrw cuz im sick, lmk if thats ok';
+  assert.equal(HH.dropFiller(o, 'Sure, lmk if thats ok.'), 'Sure, lmk if thats ok.');
+  assert.equal(HH.slangFor('polish')(o, 'Sure, lmk if thats ok.'), o);
+});
