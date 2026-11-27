@@ -307,12 +307,18 @@
     if (negations(base) !== negations(tokens(rewrite)) || gone.some((w) => CHAT.has(w))) return true;
     // A statement turned into a question ("review them first" → "review them first?") changes the meaning too; a "?" added to
     // a question ("is it ready" → "is it ready?") is a fix.
-    if (statementQuestions(rewrite) > statementQuestions(original)) return true;
+    if (questionsAStatement(original, rewrite)) return true;
     return lost.length > 0 && added.some((w) => !gone.some((x) => near(w, x)));
   }
   const QUESTION_LEAD = /^(?:is|are|am|was|were|do|does|did|can|could|would|will|should|shall|may|might|must|have|has|had|what|why|how|when|where|who|whom|whose|which|r|u|any|anyone|anybody|isn['’]?t|aren['’]?t|don['’]?t|doesn['’]?t|didn['’]?t|can['’]?t|won['’]?t|wouldn['’]?t|shouldn['’]?t)\b/i;
-  const statementQuestions = (t) => (t.replace(CODE, ' ').match(/[^.!?\n]*[.!?]+|[^.!?\n]+/g) || [])
-    .filter((p) => /\?\s*$/.test(p) && !p.split(/[,;:]/).some((c) => QUESTION_LEAD.test(c.replace(/^\W+/, '')))).length;
+  // Sentence by sentence, so a "?" another sentence already had (or a comma added before "can you") can't hide it.
+  const questionsAStatement = (original, rewrite) => {
+    const pieces = (t) => t.replace(CODE, ' ').match(/[^.!?\n]*[.!?]+|[^.!?\n]+/g) || [];
+    const asked = (p) => /\?\s*$/.test(p);
+    const statement = (p) => asked(p) && !p.split(/[,;:]/).some((c) => QUESTION_LEAD.test(c.replace(/^\W+/, '')));
+    const o = pieces(original), r = pieces(rewrite);
+    return o.length === r.length ? r.some((p, i) => statement(p) && !asked(o[i])) : r.filter(statement).length > o.filter(statement).length;
+  };
   const negations = (ws) => ws.filter((w) => /^(?:not|no|noone|never|nothing|nobody|none|nor|cannot|dont|doesnt|didnt|cant|couldnt|wont|wouldnt|shouldnt|isnt|arent|wasnt|werent|havent|hasnt|hadnt|aint|mustnt|neednt)$|n't$/.test(w)).length;
   // Chat shorthand Fix only never changes. Same list as RewriteGuard.slang in Guard.swift.
   const CHAT = new Set(('gng ngl tbh idk imo imho fr rn btw lol lmao brb omg ikr smh fyi asap bro bruh gonna wanna gotta kinda sorta yeah yep yup nope nah ok okay pls plz ' +
@@ -516,10 +522,15 @@
     const unrelated = (p) => { const w = [...contentWords(p)]; return (!questionsOnly || (/\?\s*$/.test(p) && asks(rewrite) > asks(original))) && w.length > 0 && !w.some((x) => seen.has(x)) && !(ownRequest && REQUEST.test(p) && /\?\s*$/.test(p)); };
     // A statement that rewords the writer's first or last clause ("nice job" → "Well done!") stays: the rest doesn't cover that clause.
     const clauses = original.replace(CODE, ' ').split(/[.!?;,]+/).map(known).filter((w) => w.size);
-    // Only the unrelated sentence next to the writer's text can be that reworded clause: one further out still goes.
-    const covered = (p, clause, rest, next) => /\?\s*$/.test(p) || !clause || unrelated(next) || [...contentWords(rest.join(' '))].some((x) => clause.has(x));
-    while (extra > 0 && b - a > 1 && unrelated(parts[b - 1]) && covered(parts[b - 1], clauses[clauses.length - 1], parts.slice(a, b - 1), parts[b - 2])) { b--; extra--; }
-    while (extra > 0 && b - a > 1 && unrelated(parts[a]) && covered(parts[a], clauses[0], parts.slice(a + 1, b), parts[a + 1])) { a++; extra--; }
+    // As many unrelated statements next to the writer's text stay as there are edge clauses it doesn't cover; the rest still go.
+    const isQ = (p) => /\?\s*$/.test(p);
+    const uncovered = (cl, core) => { const w = [...contentWords(core.join(' '))]; let n = 0; for (const c of cl) { if (w.some((x) => c.has(x))) break; n++; } return n; };
+    let r = b; while (r - a > 1 && unrelated(parts[r - 1])) r--;
+    const keepEnd = uncovered([...clauses].reverse(), parts.slice(a, r));
+    while (extra > 0 && b > r && (isQ(parts[b - 1]) || parts.slice(r, b - 1).filter((p) => !isQ(p)).length >= keepEnd)) { b--; extra--; }
+    let l = a; while (b - l > 1 && unrelated(parts[l])) l++;
+    const keepStart = uncovered(clauses, parts.slice(l, b));
+    while (extra > 0 && a < l && (isQ(parts[a]) || parts.slice(a + 1, l).filter((p) => !isQ(p)).length >= keepStart)) { a++; extra--; }
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
   }
   // Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send

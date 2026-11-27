@@ -498,3 +498,9 @@ test('a claim added after the reworded last clause still goes; Fix only may add 
   assert.equal(HH.cutsWords('what time works for u', 'what time works for u?'), false);
   assert.equal(HH.cutsWords('i need to review them first', 'i need to review them first?'), true);
 });
+
+test('two reworded edge clauses both stay; a "?" added to a statement is caught sentence by sentence', () => {
+  assert.equal(HH.dropInvented('the build is fine now. nice job, great effort', 'The build is fine now. Well done! Fantastic work.'), 'The build is fine now. Well done! Fantastic work.');
+  assert.equal(HH.cutsWords('Hey can you check? i need to review them first', 'Hey, can you check? i need to review them first?'), true);
+  assert.equal(HH.cutsWords('Hey can you check it', 'Hey, can you check it?'), false);
+});
