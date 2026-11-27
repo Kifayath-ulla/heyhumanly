@@ -300,9 +300,9 @@ enum TextSafety {
         let body = leadIntro.stringByReplacingMatches(in: rewrite, range: NSRange(location: 0, length: (rewrite as NSString).length), withTemplate: "")
         let lead = reply.firstMatch(in: body, range: NSRange(location: 0, length: (body as NSString).length))
             .map { (body as NSString).substring(with: $0.range(at: 1)).lowercased().replacingOccurrences(of: "’", with: "'") }
-        let quoted = original.lowercased().replacingOccurrences(of: "’", with: "'")
+        let quoted = original.lowercased().replacingOccurrences(of: "’", with: "").replacingOccurrences(of: "'", with: "")
         let acked = has(ack, original) && (!original.contains("?") || rewrite.contains("?"))
-        let answers = (lead.map { !acked && !quoted.contains($0) } ?? false) || (has(asks, original) && has(offers, rewrite) && !has(offers, original))
+        let answers = (lead.map { !acked && !quoted.contains($0.replacingOccurrences(of: "'", with: "")) } ?? false) || (has(asks, original) && has(offers, rewrite) && !has(offers, original))
             || swapsSpeaker(original: original, rewrite: rewrite)
         guard answers else { return rewrite }
         return codeRanges(original as NSString).isEmpty ? apply(original: original, rewrite: original, preserve: preserve, keepSlang: slang) : original

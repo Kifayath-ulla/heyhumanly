@@ -86,6 +86,7 @@ fixonly "hey r u coming to the standup tmrw?" "hey, u coming to the standup tmrw
 fixonly "I has finished the slides" "I haven't finished the slides" "I have finished the slides"
 fixonly "The files is ready" "The files are ready." "The files are ready."
 styled Friendly "the login page is broken for me" "It's okay, let's try this again." "the login page is broken for me"
+styled Professional "its fine, no worries! we can try again next week" "It's fine; no worries! We can try again next week." "It's fine; no worries! We can try again next week."
 styled Professional 'The api returns 500 when `user_id` is null, can you look?' 'The API returns a 500 error when `user_id` is null. Could you please assist?' 'The API returns a 500 error when `user_id` is null. Could you please assist?'
 styledLacks Professional "Im running 10 mins late, start without me" "You are running 10 minutes late, and I need to start without you." "You are"
 styledLacks Professional "r u free for lunch on thursday? theres a new ramen place near the office" "I'm free for lunch on Thursday. There's a new ramen place near the office." "I'm free"
