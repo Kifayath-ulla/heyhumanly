@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.23 — 2026-11-27
+
+- A rewrite that rewords your first or last phrase ("nice job" → "Well done!") keeps it, instead of dropping it as an added sentence. A sentence the model invents after it is still removed.
+- Fix only no longer turns a statement into a question ("i need to review them first" → "…first?"). Adding the "?" a question was missing ("is it ready" → "is it ready?") still works.
+- Not notarized by Apple.
+
 ## 0.1.22 — 2026-11-27
 
 - The welcome window's "Allow Accessibility…" no longer opens System Settings on top of the macOS prompt, where the list had no HeyHumanly row yet. The prompt stays in front; its Open System Settings adds the row. While HeyHumanly waits for the switch, an "Open Accessibility settings" link and Copy instead stay available.
