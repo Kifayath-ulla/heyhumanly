@@ -305,6 +305,9 @@
     if (lost.some((w) => !AUX.has(w))) return true;
     // "I have finished" → "I haven't finished" flips the meaning; so does a writer's slang turned into another word ("ngl" → "ngg").
     if (negations(base) !== negations(tokens(rewrite)) || gone.some((w) => CHAT.has(w))) return true;
+    // A statement turned into a question ("review them first" → "review them first?") changes the meaning too.
+    const asks = (s) => (s.replace(CODE, ' ').match(/\?/g) || []).length;
+    if (asks(rewrite) > asks(original)) return true;
     return lost.length > 0 && added.some((w) => !gone.some((x) => near(w, x)));
   }
   const negations = (ws) => ws.filter((w) => /^(?:not|no|noone|never|nothing|nobody|none|nor|cannot|dont|doesnt|didnt|cant|couldnt|wont|wouldnt|shouldnt|isnt|arent|wasnt|werent|havent|hasnt|hadnt|aint|mustnt|neednt)$|n't$/.test(w)).length;
@@ -463,11 +466,13 @@
     const fallback = /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));
     if (!friendly && hits(CAUSAL, rewrite) > hits(CAUSAL, original) + hits(/\bbc\b/g, original)) return fallback;
     // The writer's own slang spelled out ("lmk if thats ok" → "let me know if that is okay") is not added content.
-    const written = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' '));
-    const spelled = Object.entries({ ...SLANG_EXPANSIONS, ok: ['okay'] }).filter(([short]) => countWord(short, original.replace(CODE, ' '))).map(([, longs]) => longs.join(' '));
-    const seen = new Set([...written, ...contentWords(spelled.join(' '))]);
+    const known = (s) => {
+      const spelled = Object.entries({ ...SLANG_EXPANSIONS, ok: ['okay'] }).filter(([short]) => countWord(short, s.replace(CODE, ' '))).map(([, longs]) => longs.join(' '));
+      return new Set([...contentWords((s + ' ' + fixTypos(s, s)).replace(/`/g, ' ')), ...contentWords(spelled.join(' '))]);
+    };
+    const written = contentWords((original + ' ' + fixTypos(original, original)).replace(/`/g, ' ')), seen = known(original);
     // Friendly may add a friendly line, but not a question or proposal the writer never made ("How about grabbing a coffee?").
-    const out = dropAddedSentences(original, rewrite, seen, friendly);
+    const out = dropAddedSentences(original, rewrite, known, friendly);
     // A rewrite that opens with an assistant line ("Sorry to hear that!") is a reply, even if that line gets trimmed below.
     const lead = rewrite.split(/(?<=[.!?])\s+/)[0].replace(INTRO, ' ');
     if (hits(ASSISTANT, lead) > hits(ASSISTANT, original)) return fallback;
@@ -494,7 +499,8 @@
   const STILL_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz|kindly|let me know|lmk)\b|\?/i;
   const WRITER_ASKS = /\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|pls|plz)\b/i;
   const REQUEST = /^\W*(?:(?:can|could|would|will) (?:you|u)\b|please\b)/i;
-  function dropAddedSentences(original, rewrite, seen, questionsOnly = false) {
+  function dropAddedSentences(original, rewrite, known, questionsOnly = false) {
+    const seen = known(original);
     const SENTENCE = /(?:`[^`\n]+`|[.!?]+(?=\S)|[^.!?])+(?:[.!?]+|$)\s*/g;
     const parts = rewrite.match(SENTENCE) || [rewrite];
     if (parts.join('') !== rewrite) return rewrite;
@@ -505,8 +511,11 @@
     const asks = (t) => (t.replace(CODE, ' ').match(/\?/g) || []).length;
     const ownRequest = asks(rewrite) <= asks(original) && WRITER_ASKS.test(original.replace(CODE, ' '));
     const unrelated = (p) => { const w = [...contentWords(p)]; return (!questionsOnly || (/\?\s*$/.test(p) && asks(rewrite) > asks(original))) && w.length > 0 && !w.some((x) => seen.has(x)) && !(ownRequest && REQUEST.test(p) && /\?\s*$/.test(p)); };
-    while (extra > 0 && b - a > 1 && unrelated(parts[b - 1])) { b--; extra--; }
-    while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
+    // A statement that rewords the writer's first or last clause ("nice job" → "Well done!") stays: the rest doesn't cover that clause.
+    const clauses = original.replace(CODE, ' ').split(/[.!?;,]+/).map(known).filter((w) => w.size);
+    const covered = (p, clause, rest) => /\?\s*$/.test(p) || !clause || [...contentWords(rest.join(' '))].some((x) => clause.has(x));
+    while (extra > 0 && b - a > 1 && unrelated(parts[b - 1]) && covered(parts[b - 1], clauses[clauses.length - 1], parts.slice(a, b - 1))) { b--; extra--; }
+    while (extra > 0 && b - a > 1 && unrelated(parts[a]) && covered(parts[a], clauses[0], parts.slice(a + 1, b))) { a++; extra--; }
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();
   }
   // Small models sometimes answer the message instead of rewriting it ("thx for the help" -> "No problem at all!", "Can you send
