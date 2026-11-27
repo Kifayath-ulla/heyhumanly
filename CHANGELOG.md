@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.27 — 2026-11-28
+
+- A possessive mid-sentence ("can u read its fine print?") no longer lets a model reply starting "It's fine, …" replace your message. "its fine" at the start of a sentence, also inside quotes, still keeps its rewrite.
+- Not notarized by Apple.
+
 ## 0.1.26 — 2026-11-28
 
 - Professional no longer throws away a good rewrite when the model only adds the apostrophe you left out ("its fine, no worries!" → "It's fine; no worries!").
