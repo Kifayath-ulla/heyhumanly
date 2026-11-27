@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.22 — 2026-11-27
+
+- The welcome window's "Allow Accessibility…" no longer opens System Settings on top of the macOS prompt, where the list had no HeyHumanly row yet. The prompt stays in front; its Open System Settings adds the row. While HeyHumanly waits for the switch, an "Open Accessibility settings" link and Copy instead stay available.
+- Not notarized by Apple.
+
 ## 0.1.21 — 2026-11-27
 
 - After an update, the Mac app no longer loses Accessibility silently. If macOS dropped it (the switch in System Settings can still look on), the panel says access is missing and offers **Fix access**. That resets only HeyHumanly's own entry, asks macOS again and opens the list. Access comes back without a relaunch. The copied text is no longer rewritten in its place unless you ask, or you chose "Copy instead".
