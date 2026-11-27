@@ -270,6 +270,7 @@ enum TextSafety {
         }
         // Answers that reword the word asked about: "r u free?" → "I'm available."
         let answer = ["avai": "free", "free": "avai"]
+        let negation = try! NSRegularExpression(pattern: "\\b(?:not|never|\\w+n(?:'|’)t|cant|dont|wont|isnt|arent|wasnt|didnt|doesnt)\\b", options: .caseInsensitive)
         func verb(_ s: String, _ lead: NSRegularExpression) -> String {
             let rest = lead.stringByReplacingMatches(in: s, range: NSRange(location: 0, length: (s as NSString).length), withTemplate: "") as NSString
             guard let m = subjectVerb.firstMatch(in: rest as String, range: NSRange(location: 0, length: rest.length)) else { return "" }
@@ -287,7 +288,7 @@ enum TextSafety {
         func ownStatement(_ v: String) -> Bool {
             let p = plain(original).trimmingCharacters(in: .whitespacesAndNewlines)
             let split = try! NSRegularExpression(pattern: "(?<=[.!?])\\s+").stringByReplacingMatches(in: p, range: NSRange(location: 0, length: (p as NSString).length), withTemplate: "\n")
-            return split.components(separatedBy: "\n").dropFirst().contains { has(iLead, $0) && verb($0, iLead) == v }
+            return split.components(separatedBy: "\n").dropFirst().contains { has(iLead, $0) && verb($0, iLead) == v && has(negation, $0) == has(negation, r) }
         }
         return o.contains("?") && has(youWord, o) && !has(meWord, o) && has(iLead, r) && !has(youWord, r) && !r.contains("?")
             && (asked.contains(verb(r, iLead)) || answer[verb(r, iLead)].map(asked.contains) == true)
