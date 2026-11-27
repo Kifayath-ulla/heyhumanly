@@ -471,3 +471,7 @@ test('Friendly keeps an added friendly line but drops a question the writer neve
   assert.equal(HH.dropInvented(o, "They're going to announce it on Monday. How about grabbing a coffee together to celebrate this news?", true), "They're going to announce it on Monday.");
   assert.equal(HH.dropInvented('Great work on the launch everyone, really proud of this team.', 'Great work on the launch, everyone! Really proud of this team. Let\'s keep up the great work!', true), 'Great work on the launch, everyone! Really proud of this team. Let\'s keep up the great work!');
 });
+
+test('review: Friendly keeps the writer\'s own question even when it is reworded and split off', () => {
+  assert.equal(HH.dropInvented('thx for the help, any update on it?', 'Thanks so much for the help! What\'s the latest?', true), 'Thanks so much for the help! What\'s the latest?');
+});

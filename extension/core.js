@@ -504,7 +504,7 @@
     // Only a request the writer made ("can u…", "pls…") reworded as one ("Could you…?"); any other new question still goes.
     const asks = (t) => (t.replace(CODE, ' ').match(/\?/g) || []).length;
     const ownRequest = asks(rewrite) <= asks(original) && WRITER_ASKS.test(original.replace(CODE, ' '));
-    const unrelated = (p) => { const w = [...contentWords(p)]; return (!questionsOnly || /\?\s*$/.test(p)) && w.length > 0 && !w.some((x) => seen.has(x)) && !(ownRequest && REQUEST.test(p) && /\?\s*$/.test(p)); };
+    const unrelated = (p) => { const w = [...contentWords(p)]; return (!questionsOnly || (/\?\s*$/.test(p) && asks(rewrite) > asks(original))) && w.length > 0 && !w.some((x) => seen.has(x)) && !(ownRequest && REQUEST.test(p) && /\?\s*$/.test(p)); };
     while (extra > 0 && b - a > 1 && unrelated(parts[b - 1])) { b--; extra--; }
     while (extra > 0 && b - a > 1 && unrelated(parts[a])) { a++; extra--; }
     return a === 0 && b === parts.length ? rewrite : parts.slice(a, b).join('').trim();

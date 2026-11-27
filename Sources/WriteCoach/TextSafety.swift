@@ -178,7 +178,8 @@ enum TextSafety {
         let ownRequest = asks(rewrite) <= asks(original) && has(writerAsks, plainOriginal)
         func unrelated(_ p: String) -> Bool {
             let w = contentWords(p)
-            if questionsOnly && !p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?") { return false }
+            // Only a question the writer didn't ask: their own question, reworded or split off, stays.
+            if questionsOnly && (!p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?") || asks(rewrite) <= asks(original)) { return false }
             return !w.isEmpty && w.isDisjoint(with: seen) && !(ownRequest && has(request, p) && p.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("?"))
         }
         while extra > 0, b - a > 1, unrelated(parts[b - 1]) { b -= 1; extra -= 1 }
