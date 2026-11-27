@@ -69,7 +69,7 @@ struct OnboardingView: View {
             } else if copyInstead {
                 Label("Copy instead: copy text with ⌘C, press \(model.shortcutLabel), and Enter copies the rewrite.", systemImage: "doc.on.clipboard")
                     .font(.callout).fixedSize(horizontal: false, vertical: true)
-                Button("Allow Accessibility after all") { model.settings.copyInstead = false; model.settings.save(); model.fixAccessibility() }.buttonStyle(.link)
+                Button("Allow Accessibility after all") { copyInstead = false; model.settings.copyInstead = false; model.settings.save(); model.fixAccessibility() }.buttonStyle(.link)
             } else {
                 HStack {
                     Button("Allow Accessibility…") { model.fixAccessibility() }.controlSize(.large)
