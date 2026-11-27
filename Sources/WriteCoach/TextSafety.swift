@@ -259,7 +259,7 @@ enum TextSafety {
     private static let youLead = try! NSRegularExpression(pattern: "^\\W*(?:you['’](?:re|ll|ve|d)|youre|you|ur|u)\\b", options: .caseInsensitive)
     private static let youWord = try! NSRegularExpression(pattern: "\\b(?:you|u|ur|your|youre|you['’](?:re|ll|ve|d))\\b", options: .caseInsensitive)
     private static let meWord = try! NSRegularExpression(pattern: "\\b(?:i|im|i['’]m|i['’]ll|i['’]ve|i['’]d|me|my)\\b", options: .caseInsensitive)
-    private static let subjectVerb = try! NSRegularExpression(pattern: "^\\W*(?:(?:am|are|is|was|were|will|would|have|has|had|r|can|could|should|shall|may|might|must|do|does|did|just|also|still|really|\\p{L}+ly)\\s+)*(\\p{L}+)", options: .caseInsensitive)
+    private static let subjectVerb = try! NSRegularExpression(pattern: "^\\W*(?:(?:am|are|is|was|were|will|would|have|has|had|r|can|could|should|shall|may|might|must|do|does|did|not|never|just|also|still|really|\\p{L}+ly)\\s+)*(\\p{L}+)", options: .caseInsensitive)
     static func swapsSpeaker(original: String, rewrite: String) -> Bool {
         func has(_ re: NSRegularExpression, _ s: String) -> Bool { re.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil }
         func plain(_ t: String) -> String { codeRegex.stringByReplacingMatches(in: t, range: NSRange(location: 0, length: (t as NSString).length), withTemplate: " ") }

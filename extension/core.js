@@ -546,7 +546,7 @@
   // The model swapped who is speaking: "Im running late" → "You are running late", or "r u free?" → "I'm free.".
   const I_LEAD = /^\W*(?:i['’]m|i['’]ll|i['’]ve|i['’]d|im|i am|i)\b/i, YOU_LEAD = /^\W*(?:you['’](?:re|ll|ve|d)|youre|you|ur|u)\b/i;
   const YOU = /\b(?:you|u|ur|your|youre|you['’](?:re|ll|ve|d))\b/i, ME = /\b(?:i|im|i['’]m|i['’]ll|i['’]ve|i['’]d|me|my)\b/i;
-  const SUBJECT_VERB = /^\W*(?:(?:am|are|is|was|were|will|would|have|has|had|r|can|could|should|shall|may|might|must|do|does|did|just|also|still|really|\p{L}+ly)\s+)*(\p{L}+)/iu;
+  const SUBJECT_VERB = /^\W*(?:(?:am|are|is|was|were|will|would|have|has|had|r|can|could|should|shall|may|might|must|do|does|did|not|never|just|also|still|really|\p{L}+ly)\s+)*(\p{L}+)/iu;
   const firstSentence = (s) => s.replace(CODE, ' ').trim().split(/(?<=[.!?])\s+/)[0];
   const marks = (s) => (s.replace(CODE, ' ').match(/\?+/g) || []).length;
   function swapsSpeaker(original, rewrite) {
