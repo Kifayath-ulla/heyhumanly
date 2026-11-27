@@ -305,7 +305,7 @@ enum TextSafety {
         func own(_ op: String) -> Bool {
             if quoted.contains(op) { return true }
             let bare = quoted.replacingOccurrences(of: "'", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let pattern = "(?:^|[.!?]\\s+)" + NSRegularExpression.escapedPattern(for: op.replacingOccurrences(of: "'", with: "")) + "\\b"
+            let pattern = "(?:^|[.!?]\\s+)\\W*" + NSRegularExpression.escapedPattern(for: op.replacingOccurrences(of: "'", with: "")) + "\\b"
             return (try? NSRegularExpression(pattern: pattern))?.firstMatch(in: bare, range: NSRange(location: 0, length: (bare as NSString).length)) != nil
         }
         let acked = has(ack, original) && (!original.contains("?") || rewrite.contains("?"))

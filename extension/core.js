@@ -563,7 +563,7 @@
   }
   // The writer's own opener, also when typed without its apostrophe at the start of a sentence ("its fine, no worries" → "It's fine").
   const ownOpener = (original, op) => original.toLowerCase().replace(/’/g, "'").includes(op) ||
-    new RegExp('(?:^|[.!?]\\s+)' + op.replace(/'/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(original.toLowerCase().replace(/['’]/g, '').trim());
+    new RegExp('(?:^|[.!?]\\s+)\\W*' + op.replace(/'/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(original.toLowerCase().replace(/['’]/g, '').trim());
   const replies = (original, rewrite) => (opener(rewrite) !== '' && !(ACK.test(original) && (!original.includes('?') || rewrite.includes('?'))) && !ownOpener(original, opener(rewrite))) || (ASKS.test(original) && OFFERS.test(rewrite) && !OFFERS.test(original)) || swapsSpeaker(original, rewrite);
   const dropReply = (original, rewrite) =>
     !replies(original, rewrite) ? rewrite : /`[^`\n]+`/.test(original) ? original : fixGrammar(original, fixTypos(original, original));

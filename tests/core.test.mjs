@@ -397,6 +397,7 @@ test('"It\'s okay, let\'s try again" answers the message; the writer\'s own "It\
   // Mid-sentence ("read its fine print") is a possessive, not the writer's "It's fine".
   assert.equal(HH.slangFor('formal')('can u read its fine print?', "It's fine, I will read it."), 'can u read its fine print?');
   assert.equal(HH.slangFor('formal')('ok. its fine, we can try again', "Okay. It's fine; we can try again."), "Okay. It's fine; we can try again.");
+  assert.equal(HH.slangFor('formal')('“its fine, we can try again”', '“It’s fine; we can try again.”'), '“It’s fine; we can try again.”');
 });
 
 test('the writer\'s question survives being reworded; an added question does not', () => {
